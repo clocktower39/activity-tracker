@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React from 'react';
+import { useSelector } from 'react-redux';
 import { Grid, Typography } from '@material-ui/core';
 import LogItem from './LogItem';
 
@@ -18,7 +18,7 @@ export const Log = (props) => {
                 <Typography variant={'h4'}>Target</Typography>
             </Grid>
         </Grid>
-            {goals.map(goal => <LogItem goal={goal} />)}
+            {goals.map((goal, index) => <LogItem goal={goal} achieved={goal.achieved} index={index} key={index} />)}
         </Grid>
     )
 }

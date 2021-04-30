@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React from 'react';
+import { useDispatch } from 'react-redux';
 import { Box, CircularProgress, Grid, IconButton, Typography } from '@material-ui/core';
 import { updateActivity } from '../../Redux/actions';
 
 export default function LogItem(props) {
+    const circularProgressPercent = Number(props.achieved/props.goal.targetPerDuration*100)>100?100:Number(props.achieved/props.goal.targetPerDuration*100);
     const dispatch = useDispatch();
-    const handleActivityUpdate = (task) => {
-        dispatch(updateActivity(task))
+    const handleActivityUpdate = (taskIndex, newAchieved) => {
+        dispatch(updateActivity(taskIndex, newAchieved))
     }
     return (
       <Grid container item xs={12} variant={"h3"}>
@@ -18,10 +19,10 @@ export default function LogItem(props) {
         </Grid>
         <Grid item xs={4}>
             <IconButton
-                onClick={()=>handleActivityUpdate(props.goal.task)}
+                onClick={()=>handleActivityUpdate(props.index, (props.goal.achieved + 1))}
             >
                 <Box position="relative" display="inline-flex">
-                    <CircularProgress variant="determinate" value={Number(props.goal.achieved/props.goal.targetPerDuration*100)} />
+                    <CircularProgress variant="determinate" value={circularProgressPercent} />
                     <Box
                         top={0}
                         left={0}

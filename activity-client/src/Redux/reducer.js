@@ -6,7 +6,7 @@ export let reducer = (state = { goals }, action) => {
 
     case UPDATE_ACTIVITY:
         return { 
-            ...state,
+            goals: [...action.newState.goals]
         }
 
     default:
