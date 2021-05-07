@@ -23,7 +23,7 @@ export default function LogItem(props) {
         </Grid>
         <Grid item xs={8} container alignItems={'center'}>
             <IconButton
-                onClick={()=>handleActivityUpdate(props.index, (props.goal.achieved - 1))}
+                onClick={()=>(props.goal.achieved>0)?handleActivityUpdate(props.index, (props.goal.achieved - 1)):null}
             >
                 <RemoveCircle/>
             </IconButton>
