@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { Grid, Typography } from '@material-ui/core';
+import { Grid } from '@material-ui/core';
 import LogItem from './LogItem';
 
 export const Log = (props) => {
