@@ -17,9 +17,9 @@ export default function LogItem(props) {
         dispatch(updateActivity(taskIndex, newAchieved))
     }
     return (
-      <Grid container item xs={12} variant={"h3"}>
+      <Grid container item xs={12} sm={6} >
         <Grid container item xs={4} alignItems={'center'}>
-            <Typography variant={'h5'} >{props.goal.task}</Typography>
+            <Typography variant={'h6'} >{props.goal.task}</Typography>
         </Grid>
         <Grid item xs={8} container alignItems={'center'}>
             <IconButton
@@ -28,7 +28,7 @@ export default function LogItem(props) {
                 <RemoveCircle/>
             </IconButton>
             <Box position="relative" display="inline-flex" alignItems={'center'}>
-                <CircularProgress variant="determinate" value={circularProgressPercent} size={100}/>
+                <CircularProgress variant="determinate" value={circularProgressPercent} size={50}/>
                 <Box
                     top={0}
                     left={0}
