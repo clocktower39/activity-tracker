@@ -6,7 +6,7 @@ import LogItem from './LogItem';
 export const Log = (props) => {
     const goals = useSelector(state => state.goals);
     return (
-        <Grid container>
+        <Grid container justify="center">
             {goals.map((goal, index) => <LogItem goal={goal} achieved={goal.achieved} index={index} key={index} />)}
         </Grid>
     )

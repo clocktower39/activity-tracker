@@ -8,16 +8,16 @@ import './App.css';
 
 function App() {
   return (
-    <Container maxWidth={'sm'}>
-      <Router>
+    <Router>
+      <Container maxWidth={'md'}>
         <Switch>
           <Route exact path='/' component={Log} />
           <Route exact path='/goals' children={<>Update Goals</>} />
           <Route exact path='/progress' children={<>Progress</>} />
         </Switch>
-        <Navbar />
-      </Router>
-    </Container>
+      </Container>
+      <Navbar />
+    </Router>
   );
 }
 

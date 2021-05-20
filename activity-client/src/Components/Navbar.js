@@ -7,11 +7,9 @@ import { Link, useLocation } from 'react-router-dom';
 
 const useStyles = makeStyles({
   root: {
-    display: 'flex',
-    justifyContent: 'center',
-    width: '100%',
     position: 'fixed',
     bottom: 0,
+    width: '100%',
   },
 });
 

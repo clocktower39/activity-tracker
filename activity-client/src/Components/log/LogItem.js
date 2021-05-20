@@ -17,7 +17,7 @@ export default function LogItem(props) {
         dispatch(updateActivity(taskIndex, newAchieved))
     }
     return (
-      <Grid container item xs={12} sm={6} >
+      <Grid container item xs={12} md={6} justify={'center'} >
         <Grid container item xs={4} alignItems={'center'}>
             <Typography variant={'h6'} >{props.goal.task}</Typography>
         </Grid>
