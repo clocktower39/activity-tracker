@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDispatch } from 'react-redux';
-import { Box, CircularProgress, Grid, IconButton, Typography } from '@material-ui/core';
+import { Box, CircularProgress, Grid, IconButton, Typography, Paper } from '@material-ui/core';
 import { AddCircle, RemoveCircle } from '@material-ui/icons';
 import { updateActivity } from '../../Redux/actions';
 
@@ -18,10 +18,12 @@ export default function LogItem(props) {
     }
     return (
       <Grid container item xs={12} md={6} justify={'center'} >
-        <Grid container item xs={4} alignItems={'center'}>
+          <Paper style={{width: '100%',}}>
+      <Grid container>
+        <Grid container item xs={6} alignItems={'center'} >
             <Typography variant={'h6'} >{props.goal.task}</Typography>
         </Grid>
-        <Grid item xs={8} container alignItems={'center'}>
+        <Grid item xs={6} container alignItems={'center'}>
             <IconButton
                 onClick={()=>(props.goal.achieved>0)?handleActivityUpdate(props.index, (props.goal.achieved - 1)):null}
             >
@@ -52,6 +54,8 @@ export default function LogItem(props) {
             </IconButton>
             <Typography variant={'caption'}>{props.goal.achieved}/{props.goal.targetPerDuration}</Typography>
         </Grid>
+        </Grid>
+        </Paper>
       </Grid>
     );
 }
