@@ -37,13 +37,15 @@ export const Log = (props) => {
             </Grid>
             {goals.map((goal, index) => {
                 let circularProgressPercent = Number(
-                    (goal.IconButtonachieved / goal.targetPerDuration) * 100
+                    (goal.achieved / goal.targetPerDuration) * 100
                 );
                 if (circularProgressPercent > 100) {
                     circularProgressPercent = 100;
                 } else if (circularProgressPercent < 0) {
                     circularProgressPercent = 0;
                 }
+                console.log(goal.task)
+                console.log(circularProgressPercent)
               return goal.category === category ? (
                 <Grid item xs={2}>
                   <IconButton
