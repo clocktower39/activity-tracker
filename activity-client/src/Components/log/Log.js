@@ -1,4 +1,5 @@
 import React from "react";
+import { useLongPress } from "react-use";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
@@ -6,14 +7,13 @@ import {
   Grid,
   IconButton,
   Typography,
-  Paper,
 } from "@material-ui/core";
-import { AddCircle, RemoveCircle } from "@material-ui/icons";
 import { updateActivity } from "../../Redux/actions";
-import LogItem from "./LogItem";
 
-export const Log = (props) => {
+export const Log = () => {
+  const dispatch = useDispatch();
   const goals = useSelector((state) => state.goals);
+
   let categories = [];
 
   goals.forEach((goal) => {
@@ -22,10 +22,18 @@ export const Log = (props) => {
     }
   });
 
-  const dispatch = useDispatch();
   const handleActivityUpdate = (taskIndex, newAchieved) => {
     dispatch(updateActivity(taskIndex, newAchieved));
   };
+
+  const onLongPress = () => {
+    console.log('calls callback after long pressing 300ms');
+  };
+  const defaultOptions = {
+    isPreventDefault: true,
+    delay: 300,
+  };
+  const longPressEvent = useLongPress(onLongPress, defaultOptions);
 
   return (
     <Grid container justify="center">
@@ -36,73 +44,74 @@ export const Log = (props) => {
               <Typography variant="body2">{category}</Typography>
             </Grid>
             {goals.map((goal, index) => {
-                let circularProgressPercent = Number(
-                    (goal.achieved / goal.targetPerDuration) * 100
-                );
-                if (circularProgressPercent > 100) {
-                    circularProgressPercent = 100;
-                } else if (circularProgressPercent < 0) {
-                    circularProgressPercent = 0;
-                }
-                console.log(goal.task)
-                console.log(circularProgressPercent)
-              return goal.category === category ? (
-                <Grid item xs={2}>
-                  <IconButton
-              onClick={() =>
-                goal.achieved > 0
-                  ? handleActivityUpdate(index, goal.achieved - 1)
-                  : null
+              let circularProgressPercent = Number(
+                (goal.achieved / goal.targetPerDuration) * 100
+              );
+              if (circularProgressPercent > 100) {
+                circularProgressPercent = 100;
+              } else if (circularProgressPercent < 0) {
+                circularProgressPercent = 0;
               }
-            >
-              <RemoveCircle />
-            </IconButton>
-            <Box
-              position="relative"
-              display="inline-flex"
-              alignItems={"center"}
-            >
-              <CircularProgress
-                variant="determinate"
-                value={circularProgressPercent}
-                size={50}
-              />
-              <Box
-                top={0}
-                left={0}
-                bottom={0}
-                right={0}
-                position="absolute"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Typography
-                  variant="caption"
-                  component="div"
-                  color="textSecondary"
-                >
-                  {`${Math.round(
-                    Number(
-                      (goal.achieved / goal.targetPerDuration) * 100
-                    )
-                  )}%`}
-                </Typography>
-              </Box>
-            </Box>
 
-            <IconButton
-              onClick={() =>
-                handleActivityUpdate(index, goal.achieved + 1)
-              }
-            >
-              <AddCircle />
-            </IconButton>
-            <Typography variant={"caption"}>
-              {goal.achieved}/{goal.targetPerDuration}
-            </Typography>
+              return goal.category === category ? (
+                <Grid container item xs={3}>
+                    <Grid container item xs={12} justify="center">
+                  {/* <IconButton
+                    onClick={() =>
+                      goal.achieved > 0
+                        ? handleActivityUpdate(index, goal.achieved - 1)
+                        : null
+                    }
+                  >
+                    <RemoveCircle />
+                  </IconButton> */}
+                  <IconButton
+                    {...longPressEvent}
+                    onClick={() =>
+                        handleActivityUpdate(index, goal.achieved + 1)
+                      }
+                    >
+                  <Box
+                    position="relative"
+                    display="inline-flex"
+                    alignItems={"center"}
+                  >
+                    <CircularProgress
+                      variant="determinate"
+                      value={circularProgressPercent===0? 100: circularProgressPercent}
+                      size={50}
+                      style={
+                        circularProgressPercent===0? {color: '#ccc'}: {color: 'green'}
+                      }
+                    />
+                    <Box
+                      top={0}
+                      left={0}
+                      bottom={0}
+                      right={0}
+                      position="absolute"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <Typography
+                        variant="caption"
+                        component="div"
+                        color="textSecondary"
+                      >
+                        {`${Math.round(
+                          Number((goal.achieved / goal.targetPerDuration) * 100)
+                        )}%`}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  </IconButton>
+                  </Grid>
+                    <Grid container item xs={12} justify="center" >
+                        <Typography variant="body2" style={{fontSize: '10px',}} >{goal.task}</Typography>
+                    </Grid>
+                    
                 </Grid>
-                
               ) : (
                 <></>
               );
@@ -110,8 +119,6 @@ export const Log = (props) => {
           </Grid>
         );
       })}
-
-      {/* {goals.map((goal, index) => <LogItem goal={goal} achieved={goal.achieved} index={index} key={index} />)} */}
     </Grid>
   );
 };
