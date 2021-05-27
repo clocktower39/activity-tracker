@@ -1,6 +1,6 @@
 import React from "react";
 import { useLongPress } from "react-use";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
   Box,
   CircularProgress,
@@ -20,22 +20,15 @@ export default function GoalTracker(props) {
     circularProgressPercent = 0;
   }
   const dispatch = useDispatch();
-  const goals = useSelector((state) => state.goals);
-
-  let categories = [];
-
-  goals.forEach((goal) => {
-    if (!categories.includes(goal.category)) {
-      categories.push(goal.category);
-    }
-  });
 
   const handleActivityUpdate = (taskIndex, newAchieved) => {
     dispatch(updateActivity(taskIndex, newAchieved));
   };
 
   const onLongPress = () => {
-    console.log('calls callback after long pressing 300ms');
+      if(props.goal.achieved > 0){
+        handleActivityUpdate(props.index, props.goal.achieved - 1)
+      }
   };
   const defaultOptions = {
     isPreventDefault: true,
@@ -46,15 +39,6 @@ export default function GoalTracker(props) {
   return props.goal.category === props.category ? (
     <Grid container item xs={3}>
       <Grid container item xs={12} justify="center">
-        {/* <IconButton
-                    onClick={() =>
-                      goal.achieved > 0
-                        ? handleActivityUpdate(index, goal.achieved - 1)
-                        : null
-                    }
-                  >
-                    <RemoveCircle />
-                  </IconButton> */}
         <IconButton
           {...longPressEvent}
           onClick={() => handleActivityUpdate(props.index, props.goal.achieved + 1)}
@@ -63,13 +47,15 @@ export default function GoalTracker(props) {
             <CircularProgress
               variant="determinate"
               value={
-                circularProgressPercent === 0 ? 100 : circularProgressPercent
+                circularProgressPercent === 0 ? -100 : circularProgressPercent
               }
               size={50}
               style={
-                circularProgressPercent === 0
+                circularProgressPercent <= 0
                   ? { color: "#ccc" }
-                  : { color: "green" }
+                  : circularProgressPercent < 51
+                  ? { color: "yellow" }
+                  : { color: "green"}
               }
             />
             <Box
