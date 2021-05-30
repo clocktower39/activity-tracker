@@ -25,23 +25,28 @@ export default function GoalTracker(props) {
     dispatch(updateActivity(taskIndex, newAchieved));
   };
 
+  const onClick = () => {
+    handleActivityUpdate(props.index, props.goal.achieved + 1)
+  }
+
   const onLongPress = () => {
-      if(props.goal.achieved > 0){
-        handleActivityUpdate(props.index, props.goal.achieved - 1)
+      if(props.goal.achieved - 1 > 0){
+        handleActivityUpdate(props.index, props.goal.achieved - 2)
       }
   };
+
   const defaultOptions = {
     isPreventDefault: true,
     delay: 300,
   };
-  const longPressEvent = useLongPress(onLongPress, defaultOptions);
+  const longPressEvent = useLongPress(onLongPress, onClick, defaultOptions);
 
   return props.goal.category === props.category ? (
     <Grid container item xs={3}>
       <Grid container item xs={12} justify="center">
         <IconButton
+        onMouseDownCapture={onClick}
           {...longPressEvent}
-          onClick={() => handleActivityUpdate(props.index, props.goal.achieved + 1)}
         >
           <Box position="relative" display="inline-flex" alignItems={"center"}>
             <CircularProgress
