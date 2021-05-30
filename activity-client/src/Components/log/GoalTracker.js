@@ -37,22 +37,22 @@ export default function GoalTracker(props) {
 
   const defaultOptions = {
     isPreventDefault: true,
-    delay: 300,
+    delay: 1000,
   };
-  const longPressEvent = useLongPress(onLongPress, onClick, defaultOptions);
+  const longPressEvent = useLongPress(onLongPress, defaultOptions);
 
   return props.goal.category === props.category ? (
     <Grid container item xs={3}>
       <Grid container item xs={12} justify="center">
         <IconButton
-        onMouseDownCapture={onClick}
+          onMouseDownCapture={onClick}
           {...longPressEvent}
         >
           <Box position="relative" display="inline-flex" alignItems={"center"}>
             <CircularProgress
               variant="determinate"
               value={
-                circularProgressPercent === 0 ? -100 : circularProgressPercent
+                circularProgressPercent === 0 ? -0 : circularProgressPercent
               }
               size={50}
               style={
