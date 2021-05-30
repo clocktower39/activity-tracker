@@ -1,17 +1,21 @@
 import React from "react";
-import {  useSelector } from "react-redux";
-import {
-  Grid,
-  Paper,
-  Typography,
-  makeStyles
-} from "@material-ui/core";
-import GoalTracker from './GoalTracker';
+import { useSelector } from "react-redux";
+import { Grid, Paper, Typography, makeStyles } from "@material-ui/core";
+import GoalTracker from "./GoalTracker";
 
 const useStyles = makeStyles({
-  Paper:{
-    width: '100%',
-    padding: '12.5px',
+  root: {
+      paddingBottom: '56px',
+  },
+  Paper: {
+    width: "100%",
+    margin: "12.5px",
+  },
+  categoryBackground: {
+      backgroundColor: '#f3f3f3',
+      width:'100%',
+      height: '100%',
+      padding: '15px',
   }
 });
 
@@ -28,15 +32,28 @@ export const Log = () => {
   });
 
   return (
-    <Grid container justify="center">
+    <Grid container justify="center" className={classes.root}>
       {categories.map((category, i) => {
         return (
           <Paper variant="outlined" className={classes.Paper}>
-            <Grid container item xs={12} justify={"center"} key={`${category}-${i}`} >
-              <Grid item xs={12}>
+            <Grid
+              container
+              item
+              xs={12}
+              justify={"center"}
+              key={`${category}-${i}`}
+            >
+              <Grid item xs={12} className={classes.categoryBackground} >
                 <Typography variant="h6">{category}</Typography>
               </Grid>
-              {goals.map((goal, index) => <GoalTracker key={`${goal.task}-${index}`} goal={goal} index={index} category={category}/>)}
+              {goals.map((goal, index) => (
+                <GoalTracker
+                  key={`${goal.task}-${index}`}
+                  goal={goal}
+                  index={index}
+                  category={category}
+                />
+              ))}
             </Grid>
           </Paper>
         );
