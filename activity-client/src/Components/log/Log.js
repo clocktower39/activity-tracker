@@ -1,21 +1,21 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { Grid, Paper, Typography, makeStyles } from "@material-ui/core";
+import { Grid, Paper, TextField, Typography, makeStyles } from "@material-ui/core";
 import GoalTracker from "./GoalTracker";
 
 const useStyles = makeStyles({
   root: {
-      paddingBottom: '56px',
+    paddingBottom: '56px',
   },
   Paper: {
     width: "100%",
     margin: "12.5px",
   },
   categoryBackground: {
-      backgroundColor: '#f3f3f3',
-      width:'100%',
-      height: '100%',
-      padding: '15px',
+    backgroundColor: '#f3f3f3',
+    width: '100%',
+    height: '100%',
+    padding: '15px',
   }
 });
 
@@ -33,6 +33,20 @@ export const Log = () => {
 
   return (
     <Grid container justify="center" className={classes.root}>
+      <Grid item xs={12} container justify="center">
+        <TextField
+          id="date"
+          label="Date"
+          type="date"
+
+          //late in day will show tomorrow due to timezone, need to fix later
+          defaultValue={new Date().toISOString().substr(0,10)}
+          className={classes.textField}
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+      </Grid>
       {categories.map((category, i) => {
         return (
           <Paper variant="outlined" className={classes.Paper}>
