@@ -29,7 +29,7 @@ mongoose.connect(dbUrl,
     console.log('mongo db connection', err)
 })
 
-let Goal = mongoose.model('Message', {
+let Goal = mongoose.model('Goal', {
     task: String,
     interval: String,
     targetPerDuration: Number,
@@ -38,8 +38,8 @@ let Goal = mongoose.model('Message', {
 });
 
 app.get('/', (req,res) => {
-    Goal.find({}, (err,messages)=>{
-        res.json(messages)
+    Goal.find({}, (err, goal)=>{
+        res.json(goal)
         console.log(req.socket.remoteAddress);
     })
 })
@@ -57,6 +57,7 @@ app.post('/addGoal', (req, res) => {
             }
         });
     }
+    saveGoal();
 })
 
 let server = http.listen(PORT, ()=> {
