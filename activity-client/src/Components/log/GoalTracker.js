@@ -11,9 +11,20 @@ import {
 import { updateActivity } from "../../Redux/actions";
 
 export default function GoalTracker(props) {
-  let circularProgressPercent = Number(
-    (props.goal.achieved / props.goal.targetPerDuration) * 100
-  );
+
+  let currentDayStats = props.goal.history.filter(day => day.date === props.selectedDate)[0];
+
+  let circularProgressPercent = (currentDayStats === undefined)?
+  currentDayStats = {
+    date: props.selectedDate,
+    targetPerDuration: 0,
+    achieved: 0,
+  }
+  :Number(
+    (currentDayStats.achieved / currentDayStats.targetPerDuration) * 100
+  )
+
+
   if (circularProgressPercent > 100) {
     circularProgressPercent = 100;
   } else if (circularProgressPercent < 0) {
@@ -79,7 +90,7 @@ export default function GoalTracker(props) {
                 color="textSecondary"
               >
                 {`${Math.round(
-                  Number((props.goal.achieved / props.goal.targetPerDuration) * 100)
+                  Number((currentDayStats.achieved / currentDayStats.targetPerDuration) * 100)
                 )}%`}
               </Typography>
             </Box>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { Grid, Paper, TextField, Typography, makeStyles } from "@material-ui/core";
 import GoalTracker from "./GoalTracker";
@@ -22,6 +22,7 @@ const useStyles = makeStyles({
 export const Log = () => {
   const classes = useStyles();
   const goals = useSelector((state) => state.goals);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().substr(0,10));
 
   let categories = [];
 
@@ -40,8 +41,9 @@ export const Log = () => {
           type="date"
 
           //late in day will show tomorrow due to timezone, need to fix later
-          defaultValue={new Date().toISOString().substr(0,10)}
+          defaultValue={selectedDate}
           className={classes.textField}
+          onChange={(e)=> setSelectedDate(e.target.value)}
           InputLabelProps={{
             shrink: true,
           }}
@@ -66,6 +68,7 @@ export const Log = () => {
                   goal={goal}
                   index={index}
                   category={category}
+                  selectedDate={selectedDate}
                 />
               ))}
             </Grid>
