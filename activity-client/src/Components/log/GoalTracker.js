@@ -33,7 +33,7 @@ export default function GoalTracker(props) {
   const dispatch = useDispatch();
 
   const handleActivityUpdate = (taskIndex, newAchieved) => {
-    dispatch(updateActivity(taskIndex, newAchieved));
+    dispatch(updateActivity(taskIndex, newAchieved, props.selectedDate));
   };
 
   const onClick = () => {
