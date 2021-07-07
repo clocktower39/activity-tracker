@@ -33,8 +33,8 @@ useEffect(()=>{
   return (
     <BottomNavigation value={value} onChange={handleChange} className={classes.root}>
       <BottomNavigationAction disabled={disableNav} label="Log" value="/" to='/' icon={<Home />} component={Link} />
-      <BottomNavigationAction disabled={disableNav} label="Goals" value="/goals" to='/goals' icon={<Search />} component={Link} />
-      <BottomNavigationAction disabled={disableNav} label="Progress" value="/progress" to='/progress' icon={<AddCircle />} component={Link} />
+      <BottomNavigationAction disabled={disableNav} label="Progress" value="/progress" to='/progress' icon={<Search />} component={Link} />
+      <BottomNavigationAction disabled={disableNav} label="Add Goal" value="/add" to='/add' icon={<AddCircle />} component={Link} />
     </BottomNavigation>
   );
 }
