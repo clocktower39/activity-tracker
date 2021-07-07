@@ -1,5 +1,5 @@
 import React from "react";
-import { useLongPress } from "react-use";
+import useLongPress from '../../Hooks/useLongPress';
 import { useDispatch } from "react-redux";
 import {
   Box,
@@ -42,22 +42,21 @@ export default function GoalTracker(props) {
   }
 
   const onLongPress = () => {
-    if (currentDayStats.achieved - 1 > 0) {
-      handleActivityUpdate(props.index, -2)
+    if (currentDayStats.achieved - 1 >= 0) {
+      handleActivityUpdate(props.index, -1)
     }
   };
 
   const defaultOptions = {
-    isPreventDefault: true,
+    shouldPreventDefault: true,
     delay: 1000,
   };
-  const longPressEvent = useLongPress(onLongPress, defaultOptions);
+  const longPressEvent = useLongPress(onLongPress, onClick, defaultOptions);
 
   return props.goal.category === props.category ? (
     <Grid container item xs={3}>
       <Grid container item xs={12} justify="center">
         <IconButton
-          onMouseDownCapture={onClick}
           {...longPressEvent}
         >
           <Box position="relative" display="inline-flex" alignItems={"center"}>

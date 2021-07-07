@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
-import { TextField } from "@material-ui/core";
+import { Grid, TextField } from "@material-ui/core";
 
 export default function Progress() {
     const goals = useSelector(state => state.goals);
@@ -13,10 +13,14 @@ export default function Progress() {
     return (
         <div>
             <TextField label="Search" fullWidth value={search} onChange={handleChange} />
-
-            {goals.filter(goal => search === '' ? true : goal.task === search).map((goal, index) => (
-                <div>{goal.task}</div>
-            ))}
+            <Grid container >
+                {goals.filter(goal => search === '' ? true : goal.task === search).map((goal, index) => (
+                    <Grid container item xs={12}>
+                        <Grid item xs={6} >{goal.task}</Grid>
+                        <Grid item xs={6} >{goal.category}</Grid>
+                    </Grid>
+                ))}
+            </Grid>
         </div>
     )
 }
