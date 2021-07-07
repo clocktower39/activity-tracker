@@ -1,6 +1,6 @@
 export const UPDATE_ACTIVITY = 'UPDATE_ACTIVITY';
 
-export function updateActivity(index, achieved, date) {
+export function updateActivityProgress(index, achieved, date) {
     return async (dispatch, getState) => {
         const newState = { ...getState() };
         newState.goals.map((goal, i) => {

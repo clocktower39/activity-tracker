@@ -3,6 +3,7 @@ export const goals = [
         task: 'Water',
         interval: 'daily',
         category: 'Health',
+        defaultTarget: 2,
         history: [
                 {
                     date: '2021-07-05',
@@ -20,6 +21,7 @@ export const goals = [
         task: 'Levothyroxine',
         interval: 'daily',
         category: 'Health',
+        defaultTarget: 1,
         history: [
                 {
                     date: '2021-07-06',
@@ -32,6 +34,7 @@ export const goals = [
         task: 'Brush Teeth',
         interval: 'daily',
         category: 'Health',
+        defaultTarget: 2,
         history: [
                 {
                     date: '2021-07-06',
@@ -44,6 +47,7 @@ export const goals = [
         task: 'Floss',
         interval: 'daily',
         category: 'Health',
+        defaultTarget: 2,
         history: [
                 {
                     date: '2021-07-06',
@@ -56,6 +60,7 @@ export const goals = [
         task: 'Face Lotion',
         interval: 'daily',
         category: 'Health',
+        defaultTarget: 2,
         history: [
                 {
                     date: '2021-07-06',
@@ -68,6 +73,7 @@ export const goals = [
         task: 'Breakfast',
         interval: 'daily',
         category: 'Meals',
+        defaultTarget: 1,
         history: [
                 {
                     date: '2021-07-06',
@@ -80,6 +86,7 @@ export const goals = [
         task: 'Lunch',
         interval: 'daily',
         category: 'Meals',
+        defaultTarget: 1,
         history: [
                 {
                     date: '2021-07-06',
@@ -92,6 +99,7 @@ export const goals = [
         task: 'Dinner',
         interval: 'daily',
         category: 'Meals',
+        defaultTarget: 1,
         history: [
                 {
                     date: '2021-07-06',
@@ -104,6 +112,7 @@ export const goals = [
         task: 'Sustain Protein Shake',
         interval: 'daily',
         category: 'Meals',
+        defaultTarget: 2,
         history: [
                 {
                     date: '2021-07-06',
@@ -116,6 +125,7 @@ export const goals = [
         task: 'Iso Protein Shake',
         interval: 'daily',
         category: 'Meals',
+        defaultTarget: 1,
         history: [
                 {
                     date: '2021-07-06',
@@ -128,6 +138,7 @@ export const goals = [
         task: 'Programming',
         interval: 'daily',
         category: 'Education',
+        defaultTarget: 5,
         history: [
                 {
                     date: '2021-07-06',
@@ -140,6 +151,7 @@ export const goals = [
         task: 'Greek lesson',
         interval: 'daily',
         category: 'Education',
+        defaultTarget: 1,
         history: [
                 {
                     date: '2021-07-06',
@@ -152,6 +164,7 @@ export const goals = [
         task: 'Workout',
         interval: 'daily',
         category: 'Fitness',
+        defaultTarget: 1,
         history: [
                 {
                     date: '2021-07-06',
@@ -164,6 +177,7 @@ export const goals = [
         task: 'Cardio',
         interval: 'daily',
         category: 'Fitness',
+        defaultTarget: 1,
         history: [
                 {
                     date: '2021-07-06',
@@ -176,6 +190,7 @@ export const goals = [
         task: 'Stretch',
         interval: 'daily',
         category: 'Fitness',
+        defaultTarget: 1,
         history: [
                 {
                     date: '2021-07-05',

@@ -8,19 +8,20 @@ import {
   IconButton,
   Typography,
 } from "@material-ui/core";
-import { updateActivity } from "../../Redux/actions";
+import { updateActivityProgress } from "../../Redux/actions";
 
 export default function GoalTracker(props) {
 
   let currentDayStats = props.goal.history.filter(day => day.date === props.selectedDate)[0];
 
-  let circularProgressPercent = (currentDayStats === undefined)?
-  currentDayStats = {
-    date: props.selectedDate,
-    targetPerDuration: 0,
-    achieved: 0,
+  if (currentDayStats === undefined) {
+    currentDayStats = {
+      date: props.selectedDate,
+      targetPerDuration: Number(props.goal.defaultTarget),
+      achieved: 0,
+    }
   }
-  :Number(
+  let circularProgressPercent = Number(
     (currentDayStats.achieved / currentDayStats.targetPerDuration) * 100
   )
 
@@ -33,7 +34,7 @@ export default function GoalTracker(props) {
   const dispatch = useDispatch();
 
   const handleActivityUpdate = (taskIndex, newAchieved) => {
-    dispatch(updateActivity(taskIndex, newAchieved, props.selectedDate));
+    dispatch(updateActivityProgress(taskIndex, newAchieved, props.selectedDate));
   };
 
   const onClick = () => {
@@ -41,9 +42,9 @@ export default function GoalTracker(props) {
   }
 
   const onLongPress = () => {
-      if(currentDayStats.achieved - 1 > 0){
-        handleActivityUpdate(props.index, -2)
-      }
+    if (currentDayStats.achieved - 1 > 0) {
+      handleActivityUpdate(props.index, -2)
+    }
   };
 
   const defaultOptions = {
@@ -70,8 +71,8 @@ export default function GoalTracker(props) {
                 circularProgressPercent <= 0
                   ? { color: "#ccc" }
                   : circularProgressPercent < 51
-                  ? { color: "yellow" }
-                  : { color: "green"}
+                    ? { color: "yellow" }
+                    : { color: "green" }
               }
             />
             <Box
