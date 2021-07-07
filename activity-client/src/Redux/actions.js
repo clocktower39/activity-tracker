@@ -5,7 +5,7 @@ export function updateActivityProgress(index, achieved, date) {
         const newState = { ...getState() };
         newState.goals.map((goal, i) => {
             if (i === index) {
-                (goal.history.some( day => day[date] === date))?
+                (goal.history.some( day => day.date === date))?
                 goal.history.map(day => {
                     if (day.date === date) {
                         day.achieved = day.achieved + achieved;
