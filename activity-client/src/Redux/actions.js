@@ -7,7 +7,7 @@ export function updateActivity(index, achieved, date) {
             if (i === index) {
                 goal.history.map(day => {
                     if (day.date === date) {
-                        day.achieved++;
+                        day.achieved = day.achieved + achieved;
                     }
                     return day;
                 })

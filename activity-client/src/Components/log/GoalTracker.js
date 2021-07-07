@@ -37,12 +37,12 @@ export default function GoalTracker(props) {
   };
 
   const onClick = () => {
-    handleActivityUpdate(props.index, props.goal.achieved + 1)
+    handleActivityUpdate(props.index, 1)
   }
 
   const onLongPress = () => {
-      if(props.goal.achieved - 1 > 0){
-        handleActivityUpdate(props.index, props.goal.achieved - 2)
+      if(currentDayStats.achieved - 1 > 0){
+        handleActivityUpdate(props.index, -2)
       }
   };
 
