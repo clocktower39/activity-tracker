@@ -4,205 +4,105 @@ export const goals = [
         interval: 'daily',
         category: 'Health',
         defaultTarget: 2,
-        history: [
-                {
-                    date: '2021-07-05',
-                    targetPerDuration: 2,
-                    achieved: 2,
-                },
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 2,
-                    achieved: 1,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Levothyroxine',
         interval: 'daily',
         category: 'Health',
         defaultTarget: 1,
-        history: [
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 1,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Brush Teeth',
         interval: 'daily',
         category: 'Health',
         defaultTarget: 2,
-        history: [
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 2,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Floss',
         interval: 'daily',
         category: 'Health',
         defaultTarget: 2,
-        history: [
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 2,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Face Lotion',
         interval: 'daily',
         category: 'Health',
         defaultTarget: 2,
-        history: [
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 2,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Breakfast',
         interval: 'daily',
         category: 'Meals',
         defaultTarget: 1,
-        history: [
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 1,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Lunch',
         interval: 'daily',
         category: 'Meals',
         defaultTarget: 1,
-        history: [
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 1,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Dinner',
         interval: 'daily',
         category: 'Meals',
         defaultTarget: 1,
-        history: [
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 1,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Sustain Protein Shake',
         interval: 'daily',
         category: 'Meals',
         defaultTarget: 2,
-        history: [
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 2,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Iso Protein Shake',
         interval: 'daily',
         category: 'Meals',
         defaultTarget: 1,
-        history: [
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 1,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Programming',
         interval: 'daily',
         category: 'Education',
         defaultTarget: 5,
-        history: [
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 5,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Greek lesson',
         interval: 'daily',
         category: 'Education',
         defaultTarget: 1,
-        history: [
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 1,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Workout',
         interval: 'daily',
         category: 'Fitness',
         defaultTarget: 1,
-        history: [
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 1,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Cardio',
         interval: 'daily',
         category: 'Fitness',
         defaultTarget: 1,
-        history: [
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 1,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
     {
         task: 'Stretch',
         interval: 'daily',
         category: 'Fitness',
         defaultTarget: 1,
-        history: [
-                {
-                    date: '2021-07-05',
-                    targetPerDuration: 1,
-                    achieved: 0,
-                },
-                {
-                    date: '2021-07-06',
-                    targetPerDuration: 1,
-                    achieved: 0,
-                },
-            ],
+        history: [],
     },
 
 ]
