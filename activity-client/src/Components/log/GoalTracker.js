@@ -98,7 +98,7 @@ export default function GoalTracker(props) {
         </IconButton>
       </Grid>
       <Grid container item xs={12} justify="center">
-        <Typography variant="body2" style={{ fontSize: "10px" }}>
+        <Typography variant="body2" style={{ fontSize: "12px" }}>
           {props.goal.task}
         </Typography>
       </Grid>

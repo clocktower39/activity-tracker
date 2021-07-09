@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import { Container } from '@material-ui/core';
 import Log from './Components/log/Log';
 import Navbar from './Components/Navbar';
-import Progress from './Components/Progress';
+import Progress from './Components/Progress/Progress';
 import { getActivities } from "./Redux/actions";
 import './App.css';
 
