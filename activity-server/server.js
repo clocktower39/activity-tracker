@@ -32,9 +32,9 @@ mongoose.connect(dbUrl,
 let Goal = mongoose.model('Goal', {
     task: String,
     interval: String,
-    targetPerDuration: Number,
-    achieved: Number,
+    defaultTarget: Number,
     category: String,
+    history: Array,
 });
 
 app.get('/', (req,res) => {
@@ -42,6 +42,16 @@ app.get('/', (req,res) => {
         res.json(goal)
         console.log(req.socket.remoteAddress);
     })
+})
+
+app.post('/update', async (req, res) => {
+    let updatedGoal = req.body;
+
+    let doc = await Goal.findOneAndUpdate({task: updatedGoal.task }, updatedGoal, {
+        new: true
+    });
+
+    res.send(updatedGoal);
 })
 
 app.post('/addGoal', (req, res) => {
