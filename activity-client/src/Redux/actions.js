@@ -5,30 +5,30 @@ export function updateActivityProgress(index, achieved, date) {
         const newState = { ...getState() };
         newState.goals.map((goal, i) => {
             if (i === index) {
-                (goal.history.some( day => day.date === date))?
-                goal.history.map(day => {
-                    if (day.date === date) {
-                        day.achieved = day.achieved + achieved;
-                    }
-                    return day;
-                }):
-                goal.history.push({
-                    date,
-                    targetPerDuration: goal.defaultTarget,
-                    achieved,
+                (goal.history.some(day => day.date === date)) ?
+                    goal.history.map(day => {
+                        if (day.date === date) {
+                            day.achieved = day.achieved + achieved;
+                        }
+                        return day;
+                    }) :
+                    goal.history.push({
+                        date,
+                        targetPerDuration: goal.defaultTarget,
+                        achieved,
+                    })
+                fetch('http://192.168.0.205:8000/update', {
+                    method: 'POST', // *GET, POST, PUT, DELETE, etc.
+                    mode: 'cors', // no-cors, *cors, same-origin
+                    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+                    credentials: 'same-origin', // include, *same-origin, omit
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // 'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+                    body: JSON.stringify(goal) // body data type must match "Content-Type" header
                 })
-            fetch('http://localhost:8000/update', {
-                method: 'POST', // *GET, POST, PUT, DELETE, etc.
-                mode: 'cors', // no-cors, *cors, same-origin
-                cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-                credentials: 'same-origin', // include, *same-origin, omit
-                headers: {
-                  'Content-Type': 'application/json'
-                  // 'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-                body: JSON.stringify(goal) // body data type must match "Content-Type" header
-              })
             }
             return goal;
         })
@@ -44,7 +44,7 @@ export function addDateToHistory(index, historyObject) {
         const newState = { ...getState() };
         newState.goals.map((goal, i) => {
             if (i === index) {
-                goal.history.push({historyObject})
+                goal.history.push({ historyObject })
             }
 
             return goal;
@@ -59,7 +59,7 @@ export function addDateToHistory(index, historyObject) {
 export function getActivities() {
     return async (dispatch, getState) => {
         const newState = { ...getState() };
-        newState.goals = await fetch('http://localhost:8000/').then(res => res.json());
+        newState.goals = await fetch('http://192.168.0.205:8000/').then(res => res.json());
 
         return dispatch({
             type: UPDATE_ACTIVITY,

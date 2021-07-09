@@ -22,7 +22,16 @@ const useStyles = makeStyles({
 export const Log = () => {
   const classes = useStyles();
   const goals = useSelector((state) => state.goals);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().substr(0,10));
+  const dateToISOLikeButLocal = (date) => {
+    const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+    const msLocal =  date.getTime() - offsetMs;
+    const dateLocal = new Date(msLocal);
+    const iso = dateLocal.toISOString();
+    const isoLocal = iso.slice(0, 19);
+    return isoLocal;
+}
+
+  const [selectedDate, setSelectedDate] = useState(dateToISOLikeButLocal(new Date()).substr(0,10));
 
   let categories = [];
 
@@ -40,7 +49,6 @@ export const Log = () => {
           label="Date"
           type="date"
 
-          //late in day will show tomorrow due to timezone, need to fix later
           defaultValue={selectedDate}
           className={classes.textField}
           onChange={(e)=> setSelectedDate(e.target.value)}
