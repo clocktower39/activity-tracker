@@ -16,11 +16,12 @@ export default function Progress() {
             <TextField label="Search" fullWidth value={search} onChange={handleChange} />
             <Grid container >
                 <Grid container item xs={12}>
-                        <Grid item xs={4} ><Typography variant="h6" >Task</Typography></Grid>
-                        <Grid item xs={4} ><Typography variant="h6" >Category</Typography></Grid>
-                        <Grid item xs={4} ><Typography variant="h6" >Target</Typography></Grid>
+                        <Grid item xs={3} ><Typography variant="h6" >Task</Typography></Grid>
+                        <Grid item xs={3} ><Typography variant="h6" >Category</Typography></Grid>
+                        <Grid item xs={3} ><Typography variant="h6" >Target</Typography></Grid>
+                        <Grid item xs={3} ><Typography variant="h6" ></Typography></Grid>
                 </Grid>
-                {goals.filter(goal => search === '' ? true : goal.task === search).map((goal, index) => <EditGoal goal={goal}/>)}
+                {goals.filter(goal => search === '' ? true : goal.task === search).map((goal, index) => <EditGoal goal={goal} index={index} />)}
             </Grid>
         </div>
     )

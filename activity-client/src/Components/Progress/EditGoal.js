@@ -1,7 +1,10 @@
 import React, { useState } from "react";
+import { useDispatch } from 'react-redux';
 import { Button, Grid, TextField, Typography } from "@material-ui/core";
+import { EditActivity } from "../../Redux/actions";
 
 export default function EditGoal(props) {
+    const dispatch = useDispatch();
     const [editMode, setEditMode] = useState(false);
     const [task, setTask] = useState(props.goal.task);
     const [category, setCategory] = useState(props.goal.category);
@@ -12,7 +15,11 @@ export default function EditGoal(props) {
     }
 
     const toggleEditMode = () => {
-        setEditMode(!editMode);
+        editMode?dispatch(EditActivity(props.index, {
+            task,
+            category,
+            defaultTarget
+        })).then(()=>setEditMode(!editMode)):setEditMode(!editMode);
     }
 
     return editMode?(
