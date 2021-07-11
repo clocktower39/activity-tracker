@@ -16,7 +16,30 @@ const useStyles = makeStyles({
     width: '100%',
     height: '100%',
     padding: '15px',
-  }
+  },
+  TextField: {
+    borderBottomColor: '#ccc',
+    "& input": {
+      color: "#ccc",
+    },
+    "& label": {
+      color: "#ccc",
+    },
+    "& label.Mui-focused": {
+      color: "#ccc",
+    },
+    "& .MuiOutlinedInput-root": {
+      "&.Mui-focused fieldset": {
+        borderColor: "#ccc",
+      },
+    },
+    "& .MuiInput-underline:before": {
+      borderBottomColor: "white",
+    },
+    "& .MuiInput-underline:after": {
+      borderBottomColor: "white",
+    },
+  },
 });
 
 export const Log = () => {
@@ -50,7 +73,7 @@ export const Log = () => {
           type="date"
 
           defaultValue={selectedDate}
-          className={classes.textField}
+          className={classes.TextField}
           onChange={(e)=> setSelectedDate(e.target.value)}
           InputLabelProps={{
             shrink: true,

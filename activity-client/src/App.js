@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import { Container } from '@material-ui/core';
+import { Container, makeStyles } from '@material-ui/core';
 import Log from './Components/log/Log';
 import Navbar from './Components/Navbar';
 import EditLayout from './Components/Edit/EditLayout';
 import { getActivities } from "./Redux/actions";
 import './App.css';
 
+const useStyles = makeStyles({
+  Container:{
+    backgroundColor: '#292929',
+  }
+})
+
 function App() {
+  const classes = useStyles();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +27,7 @@ function App() {
   return loading?<>Loading</>:
   (
     <Router>
-      <Container maxWidth={'md'}>
+      <Container className={classes.Container} maxWidth={'md'}>
         <Switch>
           <Route exact path='/' component={Log} />
           <Route exact path='/edit' children={<EditLayout />} />
