@@ -5,17 +5,12 @@ import EditGoal from './EditGoal';
 import { AddCircle } from '@material-ui/icons';
 import { AddNewActivity } from "../../Redux/actions";
 
-export default function Progress() {
+export default function EditLayout() {
     const dispatch = useDispatch();
     const goals = useSelector(state => state.goals);
-    const [search, setSearch] = useState('');
     const [newTask, setNewTask] = useState('');
     const [newCategory, setNewCategory] = useState('');
     const [newTarget, setNewTarget] = useState('');
-
-    const handleSearchChange = (e) => {
-        setSearch(e.target.value);
-    }
 
     const handleNewEntryFields = (e, setter) => {
         setter(e.target.value);
@@ -31,7 +26,6 @@ export default function Progress() {
 
     return (
         <div>
-            <TextField label="Search" fullWidth value={search} onChange={handleSearchChange} />
             <Grid container >
                 <Grid container item xs={12}>
                         <Grid item xs={3} ><Typography variant="h6" >Task</Typography></Grid>
@@ -39,7 +33,7 @@ export default function Progress() {
                         <Grid item xs={3} ><Typography variant="h6" >Target</Typography></Grid>
                         <Grid item xs={3} ><Typography variant="h6" ></Typography></Grid>
                 </Grid>
-                {goals.filter(goal => search === '' ? true : goal.task === search).map((goal, index) => <EditGoal goal={goal} index={index} />)}
+                {goals.map((goal, index) => <EditGoal goal={goal} index={index} />)}
 
                 <Grid container item xs={12}>
                     <Grid item xs={3} ><TextField label="Task" value={newTask} onChange={(e)=>handleNewEntryFields(e, setNewTask)} fullWidth/></Grid>

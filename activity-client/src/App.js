@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import { Container } from '@material-ui/core';
 import Log from './Components/log/Log';
 import Navbar from './Components/Navbar';
-import Progress from './Components/Progress/Progress';
+import EditLayout from './Components/Edit/EditLayout';
 import { getActivities } from "./Redux/actions";
 import './App.css';
 
@@ -23,8 +23,8 @@ function App() {
       <Container maxWidth={'md'}>
         <Switch>
           <Route exact path='/' component={Log} />
-          <Route exact path='/progress' children={<Progress />} />
-          <Route exact path='/add' children={<>Add Goals</>} />
+          <Route exact path='/edit' children={<EditLayout />} />
+          <Route exact path='/metrics' children={<>Metrics</>} />
         </Switch>
       </Container>
       <Navbar />

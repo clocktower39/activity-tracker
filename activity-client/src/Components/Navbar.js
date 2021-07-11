@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import BottomNavigation from '@material-ui/core/BottomNavigation';
 import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
-import { Home, Search, AddCircle } from '@material-ui/icons';
+import { Home, Edit, Assessment } from '@material-ui/icons';
 import { Link, useLocation } from 'react-router-dom';
 
 const useStyles = makeStyles({
@@ -33,8 +33,8 @@ useEffect(()=>{
   return (
     <BottomNavigation value={value} onChange={handleChange} className={classes.root}>
       <BottomNavigationAction disabled={disableNav} label="Log" value="/" to='/' icon={<Home />} component={Link} />
-      <BottomNavigationAction disabled={disableNav} label="Progress" value="/progress" to='/progress' icon={<Search />} component={Link} />
-      <BottomNavigationAction disabled={disableNav} label="Add Goal" value="/add" to='/add' icon={<AddCircle />} component={Link} />
+      <BottomNavigationAction disabled={disableNav} label="Edit" value="/edit" to='/edit' icon={<Edit />} component={Link} />
+      <BottomNavigationAction disabled={disableNav} label="Metrics" value="/metrics" to='/metrics' icon={<Assessment />} component={Link} />
     </BottomNavigation>
   );
 }
