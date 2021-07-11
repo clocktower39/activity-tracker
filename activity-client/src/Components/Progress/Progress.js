@@ -1,19 +1,37 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
-import { Grid, TextField, Typography } from "@material-ui/core";
+import { useDispatch, useSelector } from "react-redux";
+import { Grid, IconButton, TextField, Typography } from "@material-ui/core";
 import EditGoal from './EditGoal';
+import { AddCircle } from '@material-ui/icons';
+import { AddNewActivity } from "../../Redux/actions";
 
 export default function Progress() {
+    const dispatch = useDispatch();
     const goals = useSelector(state => state.goals);
     const [search, setSearch] = useState('');
+    const [newTask, setNewTask] = useState('');
+    const [newCategory, setNewCategory] = useState('');
+    const [newTarget, setNewTarget] = useState('');
 
-    const handleChange = (e) => {
+    const handleSearchChange = (e) => {
         setSearch(e.target.value);
+    }
+
+    const handleNewEntryFields = (e, setter) => {
+        setter(e.target.value);
+    }
+
+    const handleAddClick = () => {
+        dispatch(AddNewActivity({
+            task: newTask,
+            category: newCategory,
+            defaultTarget: newTarget
+        }))
     }
 
     return (
         <div>
-            <TextField label="Search" fullWidth value={search} onChange={handleChange} />
+            <TextField label="Search" fullWidth value={search} onChange={handleSearchChange} />
             <Grid container >
                 <Grid container item xs={12}>
                         <Grid item xs={3} ><Typography variant="h6" >Task</Typography></Grid>
@@ -22,6 +40,13 @@ export default function Progress() {
                         <Grid item xs={3} ><Typography variant="h6" ></Typography></Grid>
                 </Grid>
                 {goals.filter(goal => search === '' ? true : goal.task === search).map((goal, index) => <EditGoal goal={goal} index={index} />)}
+
+                <Grid container item xs={12}>
+                    <Grid item xs={3} ><TextField label="Task" value={newTask} onChange={(e)=>handleNewEntryFields(e, setNewTask)} fullWidth/></Grid>
+                    <Grid item xs={3} ><TextField label="Category" value={newCategory} onChange={(e)=>handleNewEntryFields(e, setNewCategory)} fullWidth/></Grid>
+                    <Grid item xs={3} ><TextField label="Target" value={newTarget} onChange={(e)=>handleNewEntryFields(e, setNewTarget)} fullWidth/></Grid>
+                    <Grid item xs={3} ><IconButton onClick={handleAddClick}><AddCircle /></IconButton></Grid>
+                </Grid>
             </Grid>
         </div>
     )
