@@ -82,13 +82,12 @@ export const Log = () => {
       </Grid>
       {categories.map((category, i) => {
         return (
-          <Paper variant="outlined" className={classes.Paper}>
+          <Paper variant="outlined" className={classes.Paper} key={`${category}-${i}`}>
             <Grid
               container
               item
               xs={12}
               justify={"center"}
-              key={`${category}-${i}`}
             >
               <Grid item xs={12} className={classes.categoryBackground} >
                 <Typography variant="h6">{category}</Typography>

@@ -69,7 +69,9 @@ export default function GoalTracker(props) {
               style={
                 circularProgressPercent <= 0
                   ? { color: "#ccc" }
-                  : circularProgressPercent < 51
+                  : circularProgressPercent < 34
+                    ? { color: "red" }
+                    : circularProgressPercent < 51
                     ? { color: "yellow" }
                     : { color: "green" }
               }
