@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
-import { Grid, Paper, TextField, Typography, makeStyles } from "@material-ui/core";
+import { Button, Grid, Paper, TextField, Typography, makeStyles } from "@material-ui/core";
+import { ArrowBack, ArrowForward } from '@material-ui/icons';
 import GoalTracker from "./GoalTracker";
 
 const useStyles = makeStyles({
@@ -40,6 +41,9 @@ const useStyles = makeStyles({
       borderBottomColor: "white",
     },
   },
+  ArrowButton:{
+    color: '#fff'
+  },
 });
 
 export const Log = () => {
@@ -56,6 +60,11 @@ export const Log = () => {
 
   const [selectedDate, setSelectedDate] = useState(dateToISOLikeButLocal(new Date()).substr(0,10));
 
+  const changeDate = (change) => {
+    let newDate = new Date(selectedDate).setDate(new Date(selectedDate).getDate() + change);
+    setSelectedDate(new Date(newDate).toISOString().substr(0,10));
+  }
+
   let categories = [];
 
   goals.forEach((goal) => {
@@ -67,18 +76,20 @@ export const Log = () => {
   return (
     <Grid container justify="center" className={classes.root}>
       <Grid item xs={12} container justify="center">
+        <Button onClick={()=>changeDate(-1)} className={classes.ArrowButton} ><ArrowBack/></Button>
         <TextField
           id="date"
           label="Date"
           type="date"
 
-          defaultValue={selectedDate}
+          value={selectedDate}
           className={classes.TextField}
           onChange={(e)=> setSelectedDate(e.target.value)}
           InputLabelProps={{
             shrink: true,
           }}
         />
+        <Button onClick={()=>changeDate(1)} className={classes.ArrowButton} ><ArrowForward/></Button>
       </Grid>
       {categories.map((category, i) => {
         return (
