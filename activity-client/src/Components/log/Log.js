@@ -63,10 +63,11 @@ export const Log = () => {
   const changeDate = (change) => {
     let newDate = new Date(selectedDate).setDate(new Date(selectedDate).getDate() + change);
     setSelectedDate(new Date(newDate).toISOString().substr(0,10));
+
   }
   
   let allGoalsHistory = goals.map(goal=>{ return {history: goal.history, category: goal.category}});
-  let allGoalsStatsToday = allGoalsHistory.map(goal => { return { stats:goal.history.filter(day => day.date === selectedDate)[0], category: goal.category}})
+  let allGoalsStatsToday = allGoalsHistory.map(goal => { return { stats:goal.history.filter(day => day.date === selectedDate)[0], category: goal.category, defaultTarget: goal.defaultTarget}})
 
   let categories = [];
 
@@ -77,11 +78,18 @@ export const Log = () => {
   });
 
   const getCategoryProgress = (c) => {
-    let categoryHistory = allGoalsStatsToday.filter(goal => goal.category === c && goal.stats);
+    let categoryHistory = allGoalsStatsToday.filter(goal => goal.category === c);
     let achievedTotal = 0;
     let goalTotal = 0;
 
     categoryHistory.forEach(goal => {
+      if(!goal.stats){
+        goal.stats = {
+          date: selectedDate,
+          targetPerDuration: goal.defaultTarget,
+          achieved: 0,
+        }
+      }
       achievedTotal += goal.stats.achieved;
       goalTotal += goal.stats.targetPerDuration;
     })
@@ -107,10 +115,10 @@ export const Log = () => {
         />
         <Button onClick={()=>changeDate(1)} className={classes.ArrowButton} ><ArrowForward/></Button>
       </Grid>
-      {categories.map((category, i) => {
+      {categories.map((category) => {
        let categoryPercent = getCategoryProgress(category);
         return (
-          <Paper variant="outlined" className={classes.Paper} key={`${category}-${i}`}>
+          <Paper variant="outlined" className={classes.Paper} key={category}>
             <Grid
               container
               item
@@ -119,7 +127,8 @@ export const Log = () => {
             >
               <Grid item xs={12} className={classes.categoryBackground} >
                 <Typography variant="h6">{category}</Typography>
-                <LinearProgress variant="determinate" value={categoryPercent} />
+                {/* Temporary fix, need to adjust when getCategoryProgress filters a task without history for the date */}
+                <LinearProgress variant="determinate" value={isNaN(categoryPercent)?0:categoryPercent} />
               </Grid>
               {goals.map((goal, index) => (
                 <GoalTracker
