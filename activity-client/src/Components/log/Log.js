@@ -20,6 +20,7 @@ const useStyles = makeStyles({
     width: '100%',
     height: '100%',
     padding: '15px',
+    borderRadius: '5px',
   },
   TextField: {
     borderBottomColor: '#ccc',

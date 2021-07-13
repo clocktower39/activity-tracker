@@ -7,11 +7,22 @@ import {
   Grid,
   IconButton,
   Typography,
+  makeStyles
 } from "@material-ui/core";
 import { updateActivityProgress } from "../../Redux/actions";
 
-export default function GoalTracker(props) {
+const useStyles = makeStyles({
+  root:{},
+  CircularPercent:{
+    fontSize: '16px'
+  },
+  CircularProgressLabel:{
+    fontSize: '13px',
+  },
+})
 
+export default function GoalTracker(props) {
+  const classes = useStyles();
   let currentDayStats = props.goal.history.filter(day => day.date === props.selectedDate)[0];
 
   if (currentDayStats === undefined) {
@@ -65,7 +76,8 @@ export default function GoalTracker(props) {
               value={
                 circularProgressPercent === 0 ? -0 : circularProgressPercent
               }
-              size={50}
+              size={60}
+              thickness={5}
               style={
                 circularProgressPercent <= 0
                   ? { color: "#ccc" }
@@ -87,9 +99,9 @@ export default function GoalTracker(props) {
               justifyContent="center"
             >
               <Typography
-                variant="caption"
+                variant="h6"
                 component="div"
-                color="textSecondary"
+                className={classes.CircularPercent}
               >
                 {`${Math.round(
                   Number((currentDayStats.achieved / currentDayStats.targetPerDuration) * 100)
@@ -100,7 +112,7 @@ export default function GoalTracker(props) {
         </IconButton>
       </Grid>
       <Grid container item xs={12} justify="center">
-        <Typography variant="body2" style={{ fontSize: "12px" }}>
+        <Typography variant="h6" align="center" className={classes.CircularProgressLabel}>
           {props.goal.task}
         </Typography>
       </Grid>
