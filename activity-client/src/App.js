@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import { Container } from '@material-ui/core';
+import { Container, Typography } from '@material-ui/core';
 import Log from './Components/log/Log';
 import Navbar from './Components/Navbar';
+import Metrics from './Components/Metrics/Metrics';
 import EditLayout from './Components/Edit/EditLayout';
 import { getActivities } from "./Redux/actions";
 import './App.css';
@@ -17,14 +18,14 @@ function App() {
   // eslint-disable-next-line
   },[])
 
-  return loading?<>Loading</>:
+  return loading?<Typography variant="h6" align="center" >Loading</Typography>:
   (
     <Router>
       <Container maxWidth={'md'}>
         <Switch>
           <Route exact path='/' component={Log} />
           <Route exact path='/edit' children={<EditLayout />} />
-          <Route exact path='/metrics' children={<>Metrics</>} />
+          <Route exact path='/metrics' children={<Metrics />} />
         </Switch>
       </Container>
       <Navbar />
