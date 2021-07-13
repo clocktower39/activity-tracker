@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
-import { Button, Grid, Paper, TextField, Typography, makeStyles } from "@material-ui/core";
+import { Button, Grid, LinearProgress, Paper, TextField, Typography, makeStyles } from "@material-ui/core";
 import { ArrowBack, ArrowForward } from '@material-ui/icons';
 import GoalTracker from "./GoalTracker";
 
@@ -64,6 +64,9 @@ export const Log = () => {
     let newDate = new Date(selectedDate).setDate(new Date(selectedDate).getDate() + change);
     setSelectedDate(new Date(newDate).toISOString().substr(0,10));
   }
+  
+  let allGoalsHistory = goals.map(goal=>{ return {history: goal.history, category: goal.category}});
+  let allGoalsStatsToday = allGoalsHistory.map(goal => { return { stats:goal.history.filter(day => day.date === selectedDate)[0], category: goal.category}})
 
   let categories = [];
 
@@ -72,6 +75,19 @@ export const Log = () => {
       categories.push(goal.category);
     }
   });
+
+  const getCategoryProgress = (c) => {
+    let categoryHistory = allGoalsStatsToday.filter(goal => goal.category === c && goal.stats);
+    let achievedTotal = 0;
+    let goalTotal = 0;
+
+    categoryHistory.forEach(goal => {
+      achievedTotal += goal.stats.achieved;
+      goalTotal += goal.stats.targetPerDuration;
+    })
+
+    return ((achievedTotal/goalTotal)*100);
+  }
 
   return (
     <Grid container justify="center" className={classes.root}>
@@ -92,6 +108,7 @@ export const Log = () => {
         <Button onClick={()=>changeDate(1)} className={classes.ArrowButton} ><ArrowForward/></Button>
       </Grid>
       {categories.map((category, i) => {
+       let categoryPercent = getCategoryProgress(category);
         return (
           <Paper variant="outlined" className={classes.Paper} key={`${category}-${i}`}>
             <Grid
@@ -102,6 +119,7 @@ export const Log = () => {
             >
               <Grid item xs={12} className={classes.categoryBackground} >
                 <Typography variant="h6">{category}</Typography>
+                <LinearProgress variant="determinate" value={categoryPercent} />
               </Grid>
               {goals.map((goal, index) => (
                 <GoalTracker
