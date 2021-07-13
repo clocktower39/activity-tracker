@@ -11,9 +11,12 @@ const useStyles = makeStyles({
   Paper: {
     width: "100%",
     margin: "12.5px",
+    backgroundColor: '#b3b3b3',
+    color: '#000000',
   },
   categoryBackground: {
-    backgroundColor: '#f3f3f3',
+    color: '#f3f3f3',
+    backgroundColor: '#282828',
     width: '100%',
     height: '100%',
     padding: '15px',
