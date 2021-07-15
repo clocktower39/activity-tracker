@@ -53,6 +53,8 @@ const useStyles = makeStyles({
 export const Log = () => {
   const classes = useStyles();
   const goals = useSelector((state) => state.goals);
+
+  // format a Date object like ISO
   const dateToISOLikeButLocal = (date) => {
     const offsetMs = date.getTimezoneOffset() * 60 * 1000;
     const msLocal = date.getTime() - offsetMs;
@@ -62,26 +64,33 @@ export const Log = () => {
     return isoLocal;
   }
 
+  // set the log date to today 
   const [selectedDate, setSelectedDate] = useState(dateToISOLikeButLocal(new Date()).substr(0, 10));
 
+  // handles when arrow buttons are clicked
   const changeDate = (change) => {
     let newDate = new Date(selectedDate).setDate(new Date(selectedDate).getDate() + change);
     setSelectedDate(new Date(newDate).toISOString().substr(0, 10));
-
   }
 
-  let allGoalsHistory = goals.map(goal => { return { history: goal.history, category: goal.category,  defaultTarget: goal.defaultTarget} });
-  let allGoalsStatsToday = allGoalsHistory.map(goal => {
-    return { 
-      stats: goal.history.filter(day => day.date === selectedDate)[0]
-      ?goal.history.filter(day => day.date === selectedDate)[0]
-      :{
+  // gathers daily history for calculating progress percentages
+  let allGoalsStatsToday = goals.map(goal => ({ 
+      history: goal.history,
+      category: goal.category,
+      defaultTarget: goal.defaultTarget
+    })).map(goal => {
+      // filteredHistory will return an array with a single object of the selected date
+      const filteredHistory = goal.history.filter(day => day.date === selectedDate)[0];
+      // if filteredHistory is null, it will use the filler history
+      const fillerHistory = {
         date: selectedDate,
         targetPerDuration: goal.defaultTarget,
         achieved: 0,
-      },
+      }
+    return {
+      stats: filteredHistory?filteredHistory:fillerHistory,
       category: goal.category,
-      defaultTarget: goal.defaultTarget 
+      defaultTarget: goal.defaultTarget
     }
   })
 
