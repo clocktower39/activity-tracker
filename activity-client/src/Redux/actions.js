@@ -25,13 +25,15 @@ export function updateActivityProgress(index, achieved, date) {
                         targetPerDuration: goal.defaultTarget,
                         achieved,
                     })
+                const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
                 fetch(`http:${CURRENT_IP}:8000/update`, {
                     method: 'POST', // *GET, POST, PUT, DELETE, etc.
                     mode: 'cors', // no-cors, *cors, same-origin
                     cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
                     credentials: 'same-origin', // include, *same-origin, omit
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        "Authorization": bearer,
                         // 'Content-Type': 'application/x-www-form-urlencoded',
                     },
                     referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
@@ -67,7 +69,12 @@ export function addDateToHistory(index, historyObject) {
 export function getActivities() {
     return async (dispatch, getState) => {
         const newState = { ...getState() };
-        newState.goals = await fetch(`http:${CURRENT_IP}:8000/`).then(res => res.json());
+        const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
+        newState.goals = await fetch(`http:${CURRENT_IP}:8000/`, {
+            headers: {
+                'Authorization': bearer,
+            }
+        }).then(res => res.json());
 
         return dispatch({
             type: UPDATE_ACTIVITY,
@@ -79,6 +86,7 @@ export function getActivities() {
 export function EditActivity(index, newTarget) {
     return async (dispatch, getState) => {
         const newState = { ...getState() };
+        const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
         newState.goals.map((goal, i) => {
             if (i === index) {
                 goal.task = newTarget.task;
@@ -90,7 +98,8 @@ export function EditActivity(index, newTarget) {
                     cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
                     credentials: 'same-origin', // include, *same-origin, omit
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': bearer,
                         // 'Content-Type': 'application/x-www-form-urlencoded',
                     },
                     referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
@@ -111,13 +120,15 @@ export function AddNewActivity(newActivity) {
         const newState = { ...getState() };
         newActivity.interval = 'daily';
         newActivity.history = [];
+        const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
         fetch(`http:${CURRENT_IP}:8000/addGoal`, {
                     method: 'POST', // *GET, POST, PUT, DELETE, etc.
                     mode: 'cors', // no-cors, *cors, same-origin
                     cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
                     credentials: 'same-origin', // include, *same-origin, omit
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': bearer,
                         // 'Content-Type': 'application/x-www-form-urlencoded',
                     },
                     referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
@@ -182,11 +193,28 @@ export function loginUser(user) {
 
 export const loginJWT = (token) => {
     return async (dispatch, getState) => {
-        const decodedAccessToken = jwt(token);
-        return dispatch({
-            type: LOGIN_USER,
-            user: decodedAccessToken,
-        });
+        const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
+
+        const response = await fetch(`http:${CURRENT_IP}:8000/checkAuthToken`, {
+            headers: {
+                "Authorization": bearer,
+            }
+        })
+
+        const text = await response.text().then(item=>item);
+        if(text === "Authorized"){
+            const decodedAccessToken = jwt(token);
+            return dispatch({
+                type: LOGIN_USER,
+                user: decodedAccessToken,
+            });
+        }
+        else {
+            localStorage.removeItem('JWT_AUTH_TOKEN');
+            return dispatch({
+                type: LOGOUT_USER
+            })
+        }
     }
 }
 

@@ -1,8 +1,12 @@
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { Redirect } from 'react-router-dom';
+import { loginJWT } from '../../Redux/actions';
 import { Button, Grid, LinearProgress, Paper, TextField, Typography, makeStyles } from "@material-ui/core";
 import { ArrowBack, ArrowForward } from '@material-ui/icons';
 import GoalTracker from "./GoalTracker";
+import Loading from "../Loading";
+import { getActivities } from "../../Redux/actions";
 
 const useStyles = makeStyles({
   root: {
@@ -51,6 +55,7 @@ const useStyles = makeStyles({
 });
 
 export const Log = () => {
+  const dispatch = useDispatch();
   const classes = useStyles();
   const goals = useSelector((state) => state.goals);
 
@@ -115,7 +120,26 @@ export const Log = () => {
     return ((achievedTotal / goalTotal) * 100);
   }
 
-  return (
+  const [loading, setLoading] = useState(true);
+
+  const handleLoginAttempt = async (e) => {
+    dispatch(loginJWT(localStorage.getItem('JWT_AUTH_TOKEN'))).then(()=>setLoading(!loading));
+  }
+  
+  useEffect(()=>{
+    if(localStorage.getItem('JWT_AUTH_TOKEN')!==null){
+        handleLoginAttempt();
+    }
+    // eslint-disable-next-line
+  },[])
+  
+  useEffect(()=>{
+    dispatch(getActivities()).then(setLoading(false));
+  // eslint-disable-next-line
+  },[])
+  
+
+  return (localStorage.getItem('JWT_AUTH_TOKEN')===null)?<Redirect to={{ pathname: '/login'}} />:(loading)?<Loading />:(
     <Grid container justify="center" className={classes.root}>
       <Grid item xs={12} container justify="center">
         <Button onClick={() => changeDate(-1)} className={classes.ArrowButton} ><ArrowBack /></Button>
