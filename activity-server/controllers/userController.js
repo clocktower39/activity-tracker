@@ -38,7 +38,7 @@ const login_user = (req, res) => {
         //if the password does not match and previous session was not authenticated, do not authenticate
         if (isMatch) {
           const accessToken = jwt.sign(user._doc, ACCESS_TOKEN_SECRET,{
-            expiresIn: '15s' // expires in 15 seconds
+            expiresIn: '30d' // expires in 30 days
           });
           res.send({
             accessToken: accessToken,
@@ -53,7 +53,12 @@ const login_user = (req, res) => {
   });
 };
 
+const checkAuthLoginToken = (req, res) => {
+  res.send('Authorized')
+}
+
 module.exports = {
   signup_user,
   login_user,
+  checkAuthLoginToken,
 };
