@@ -1,4 +1,12 @@
+import jwt from 'jwt-decode';
+
 export const UPDATE_ACTIVITY = 'UPDATE_ACTIVITY';
+export const LOGIN_USER = 'LOGIN_USER';
+export const LOGOUT_USER = 'LOGOUT_USER';
+export const SIGNUP_USER = 'SIGNUP_USER';
+export const ERROR = 'ERROR';
+
+const CURRENT_IP = window.location.href.split(":")[1];
 
 export function updateActivityProgress(index, achieved, date) {
     return async (dispatch, getState) => {
@@ -17,7 +25,7 @@ export function updateActivityProgress(index, achieved, date) {
                         targetPerDuration: goal.defaultTarget,
                         achieved,
                     })
-                fetch('http://192.168.0.205:8000/update', {
+                fetch(`http:${CURRENT_IP}:8000/update`, {
                     method: 'POST', // *GET, POST, PUT, DELETE, etc.
                     mode: 'cors', // no-cors, *cors, same-origin
                     cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
@@ -59,7 +67,7 @@ export function addDateToHistory(index, historyObject) {
 export function getActivities() {
     return async (dispatch, getState) => {
         const newState = { ...getState() };
-        newState.goals = await fetch('http://192.168.0.205:8000/').then(res => res.json());
+        newState.goals = await fetch(`http:${CURRENT_IP}:8000/`).then(res => res.json());
 
         return dispatch({
             type: UPDATE_ACTIVITY,
@@ -76,7 +84,7 @@ export function EditActivity(index, newTarget) {
                 goal.task = newTarget.task;
                 goal.category = newTarget.category;
                 goal.defaultTarget = newTarget.defaultTarget;
-                fetch('http://192.168.0.205:8000/update', {
+                fetch(`http:${CURRENT_IP}:8000/update`, {
                     method: 'POST', // *GET, POST, PUT, DELETE, etc.
                     mode: 'cors', // no-cors, *cors, same-origin
                     cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
@@ -103,7 +111,7 @@ export function AddNewActivity(newActivity) {
         const newState = { ...getState() };
         newActivity.interval = 'daily';
         newActivity.history = [];
-        fetch('http://192.168.0.205:8000/addGoal', {
+        fetch(`http:${CURRENT_IP}:8000/addGoal`, {
                     method: 'POST', // *GET, POST, PUT, DELETE, etc.
                     mode: 'cors', // no-cors, *cors, same-origin
                     cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
@@ -119,6 +127,74 @@ export function AddNewActivity(newActivity) {
         return dispatch({
             type: UPDATE_ACTIVITY,
             newState,
+        })
+    }
+}
+export function signupUser(user) {
+    return async (dispatch, getState) => {
+        const response = await fetch(`http:${CURRENT_IP}:8000/signup`, {
+            method: 'post',
+            dataType: 'json',
+            body: user,
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        })
+        const data = await response.json();
+        if (data.error) {
+            return dispatch({
+                type: ERROR,
+                error: data.error
+            });
+        }
+
+        return dispatch(loginUser(user));
+    }
+}
+
+export function loginUser(user) {
+    return async (dispatch, getState) => {
+        const response = await fetch(`http:${CURRENT_IP}:8000/login`, {
+            method: 'post',
+            dataType: 'json',
+            body: user,
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        })
+        const data = await response.json();
+        if (data.error) {
+            return dispatch({
+                type: ERROR,
+                error: data.error
+            });
+        }
+        const accessToken = data.accessToken;
+        const decodedAccessToken = jwt(accessToken);
+
+        localStorage.setItem('JWT_AUTH_TOKEN', accessToken);
+        return dispatch({
+            type: LOGIN_USER,
+            user: decodedAccessToken,
+        });
+    }
+}
+
+export const loginJWT = (token) => {
+    return async (dispatch, getState) => {
+        const decodedAccessToken = jwt(token);
+        return dispatch({
+            type: LOGIN_USER,
+            user: decodedAccessToken,
+        });
+    }
+}
+
+export function logoutUser() {
+    return async (dispatch, getState) => {
+        localStorage.removeItem('JWT_AUTH_TOKEN');
+        return dispatch({
+            type: LOGOUT_USER
         })
     }
 }
