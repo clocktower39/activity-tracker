@@ -7,6 +7,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 const goalRoutes = require('./routes/goalRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const dbUrl = process.env.DBURL;
 
@@ -20,6 +21,7 @@ app.use(express.static(__dirname));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use('/', goalRoutes);
+app.use('/', userRoutes);
 
 mongoose.set('useFindAndModify', false);
 mongoose.connect(dbUrl, 
