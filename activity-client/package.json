@@ -1,5 +1,6 @@
 {
   "name": "activity-tracker-app",
+  "homepage": "https://mattkearns.dev/activity-tracker/",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

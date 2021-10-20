@@ -13,7 +13,7 @@ import './App.css';
 function App() {
 
   return (
-    <Router>
+    <Router basename="/activity-tracker/">
       <Container maxWidth={'md'}>
         <Switch>
           <Route exact path='/login' component={Login} />
