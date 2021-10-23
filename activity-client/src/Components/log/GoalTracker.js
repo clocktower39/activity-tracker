@@ -7,8 +7,8 @@ import {
   Grid,
   IconButton,
   Typography,
-  makeStyles
-} from "@material-ui/core";
+} from '@mui/material';
+import { makeStyles } from '@mui/styles';
 import { updateActivityProgress } from "../../Redux/actions";
 
 const useStyles = makeStyles({

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch } from 'react-redux';
-import { Button, Grid, TextField, Typography, makeStyles } from "@material-ui/core";
+import { Button, Grid, TextField, Typography } from '@mui/material';
+import { makeStyles } from '@mui/styles';
 import { EditActivity } from "../../Redux/actions";
 
 const useStyles = makeStyles({

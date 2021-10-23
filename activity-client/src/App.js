@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import { Container } from '@material-ui/core';
+import { Container } from '@mui/material';
 import Log from './Components/log/Log';
 import Navbar from './Components/Navbar';
 import Metrics from './Components/Metrics/Metrics';

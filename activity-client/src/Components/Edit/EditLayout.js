@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Grid, IconButton, TextField, Typography, makeStyles } from "@material-ui/core";
+import { Grid, IconButton, TextField, Typography } from "@mui/material";
+import { makeStyles } from '@mui/styles';
 import EditGoal from './EditGoal';
-import { AddCircle } from '@material-ui/icons';
+import { AddCircle } from '@mui/icons-material';
 import { AddNewActivity } from "../../Redux/actions";
 
 const useStyles = makeStyles({

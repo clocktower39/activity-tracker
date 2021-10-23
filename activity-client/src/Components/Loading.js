@@ -1,12 +1,12 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import { CircularProgress, Typography } from '@material-ui/core';
+import { makeStyles } from '@mui/styles';
+import { CircularProgress, Typography } from '@mui/material';
 
 const useStyles = makeStyles((theme) => ({
   root: {
     display: 'flex',
     '& > * + *': {
-      marginLeft: theme.spacing(2),
+      // marginLeft: theme.spacing(2),
     },
     flexDirection: 'column',
     alignItems: 'center',
