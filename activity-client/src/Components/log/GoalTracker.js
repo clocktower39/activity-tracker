@@ -19,6 +19,9 @@ const useStyles = makeStyles({
   CircularProgressLabel:{
     fontSize: '13px',
   },
+  goalContent:{
+    justifyContent: 'center',
+  },
 })
 
 export default function GoalTracker(props) {
@@ -66,7 +69,7 @@ export default function GoalTracker(props) {
 
   return props.goal.category === props.category ? (
     <Grid container item xs={3}>
-      <Grid container item xs={12} justify="center">
+      <Grid container item xs={12} className={classes.goalContent} >
         <IconButton
           {...longPressEvent}
         >
@@ -111,7 +114,7 @@ export default function GoalTracker(props) {
           </Box>
         </IconButton>
       </Grid>
-      <Grid container item xs={12} justify="center">
+      <Grid container item xs={12} className={classes.goalContent} >
         <Typography variant="h6" align="center" className={classes.CircularProgressLabel}>
           {props.goal.task}
         </Typography>

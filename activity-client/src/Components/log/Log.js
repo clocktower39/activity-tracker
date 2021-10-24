@@ -12,6 +12,11 @@ import { getActivities } from "../../Redux/actions";
 const useStyles = makeStyles({
   root: {
     paddingBottom: '56px',
+    justifyContent: 'center',
+  },
+  dateContainer:{
+    marginTop: '25px',
+    justifyContent: 'center',
   },
   Paper: {
     width: "100%",
@@ -26,6 +31,9 @@ const useStyles = makeStyles({
     height: '100%',
     padding: '15px',
     borderRadius: '5px',
+  },
+  goalContainer:{
+    justifyContent: 'center',
   },
   TextField: {
     borderBottomColor: '#ccc',
@@ -141,14 +149,14 @@ export const Log = () => {
   
 
   return (localStorage.getItem('JWT_AUTH_TOKEN')===null)?<Redirect to={{ pathname: '/login'}} />:(loading)?<Loading />:(
-    <Grid container justify="center" className={classes.root}>
-      <Grid item xs={12} container justify="center">
+    <Grid container className={classes.root}>
+      <Grid item xs={12} container className={classes.dateContainer}>
         <Button onClick={() => changeDate(-1)} className={classes.ArrowButton} ><ArrowBack /></Button>
         <TextField
           id="date"
           label="Date"
           type="date"
-
+          variant="standard"
           value={selectedDate}
           className={classes.TextField}
           onChange={(e) => setSelectedDate(e.target.value)}
@@ -166,7 +174,7 @@ export const Log = () => {
               container
               item
               xs={12}
-              justify={"center"}
+              className={classes.goalContainer}
             >
               <Grid item xs={12} className={classes.categoryBackground} >
                 <Typography variant="h6">{category}</Typography>
