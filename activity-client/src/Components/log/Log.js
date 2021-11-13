@@ -1,13 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { Redirect } from 'react-router-dom';
-import { loginJWT } from '../../Redux/actions';
 import { Button, Grid, LinearProgress, Paper, TextField, Typography } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import { ArrowBack, ArrowForward } from '@mui/icons-material';
 import GoalTracker from "./GoalTracker";
-import Loading from "../Loading";
-import { getActivities } from "../../Redux/actions";
 
 const useStyles = makeStyles({
   root: {
@@ -64,9 +61,9 @@ const useStyles = makeStyles({
 });
 
 export const Log = () => {
-  const dispatch = useDispatch();
   const classes = useStyles();
   const goals = useSelector((state) => state.goals);
+  const user = useSelector((state) => state.user)
 
   // format a Date object like ISO
   const dateToISOLikeButLocal = (date) => {
@@ -129,26 +126,7 @@ export const Log = () => {
     return ((achievedTotal / goalTotal) * 100);
   }
 
-  const [loading, setLoading] = useState(true);
-
-  const handleLoginAttempt = async (e) => {
-    dispatch(loginJWT(localStorage.getItem('JWT_AUTH_TOKEN'))).then(()=>setLoading(!loading));
-  }
-  
-  useEffect(()=>{
-    if(localStorage.getItem('JWT_AUTH_TOKEN')!==null){
-        handleLoginAttempt();
-    }
-    // eslint-disable-next-line
-  },[])
-  
-  useEffect(()=>{
-    dispatch(getActivities()).then(setLoading(false));
-  // eslint-disable-next-line
-  },[])
-  
-
-  return (localStorage.getItem('JWT_AUTH_TOKEN')===null)?<Redirect to={{ pathname: '/login'}} />:(loading)?<Loading />:(
+  return (!user)?<Redirect to={{ pathname: '/login'}} />:(
     <Grid container className={classes.root}>
       <Grid item xs={12} container className={classes.dateContainer}>
         <Button onClick={() => changeDate(-1)} className={classes.ArrowButton} ><ArrowBack /></Button>

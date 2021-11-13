@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { Container } from '@mui/material';
+import { getActivities, loginJWT } from "./Redux/actions";
 import Log from './Components/log/Log';
 import Navbar from './Components/Navbar';
 import Metrics from './Components/Metrics/Metrics';
@@ -11,6 +13,23 @@ import SignUp from './Components/SignUp';
 import './App.css';
 
 function App() {
+  const dispatch = useDispatch();
+
+  const handleLoginAttempt = async (e) => {
+    dispatch(loginJWT(localStorage.getItem('JWT_AUTH_TOKEN')));
+  }
+  
+  useEffect(()=>{
+    if(localStorage.getItem('JWT_AUTH_TOKEN')!==null){
+        handleLoginAttempt();
+    }
+    // eslint-disable-next-line
+  },[])
+  useEffect(()=>{
+    dispatch(getActivities());
+  // eslint-disable-next-line
+  },[])
+  
 
   return (
     <Router basename="/activity-tracker/">
