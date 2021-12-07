@@ -6,7 +6,12 @@ export const LOGOUT_USER = 'LOGOUT_USER';
 export const SIGNUP_USER = 'SIGNUP_USER';
 export const ERROR = 'ERROR';
 
-// const CURRENT_IP = window.location.href.split(":")[1];
+// dev server
+const currentIP = window.location.href.split(":")[1];
+const serverURL = `http:${currentIP}:8000`;
+
+// live server
+// const serverURL = "https://myactivitytracker.herokuapp.com";
 
 export function updateActivityProgress(index, achieved, date) {
     return async (dispatch, getState) => {
@@ -26,7 +31,7 @@ export function updateActivityProgress(index, achieved, date) {
                         achieved,
                     })
                 const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
-                fetch(`https://myactivitytracker.herokuapp.com/update`, {
+                fetch(`${serverURL}/update`, {
                     method: 'POST', // *GET, POST, PUT, DELETE, etc.
                     mode: 'cors', // no-cors, *cors, same-origin
                     cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
@@ -70,7 +75,7 @@ export function getActivities() {
     return async (dispatch, getState) => {
         const newState = { ...getState() };
         const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
-        newState.goals = await fetch(`https://myactivitytracker.herokuapp.com/`, {
+        newState.goals = await fetch(`${serverURL}/`, {
             headers: {
                 'Authorization': bearer,
             }
@@ -92,7 +97,7 @@ export function EditActivity(index, newTarget) {
                 goal.task = newTarget.task;
                 goal.category = newTarget.category;
                 goal.defaultTarget = newTarget.defaultTarget;
-                fetch(`https://myactivitytracker.herokuapp.com/update`, {
+                fetch(`${serverURL}/update`, {
                     method: 'POST', // *GET, POST, PUT, DELETE, etc.
                     mode: 'cors', // no-cors, *cors, same-origin
                     cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
@@ -121,7 +126,7 @@ export function AddNewActivity(newActivity) {
         newActivity.interval = 'daily';
         newActivity.history = [];
         const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
-        fetch(`https://myactivitytracker.herokuapp.com/addGoal`, {
+        fetch(`${serverURL}/addGoal`, {
                     method: 'POST', // *GET, POST, PUT, DELETE, etc.
                     mode: 'cors', // no-cors, *cors, same-origin
                     cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
@@ -143,7 +148,7 @@ export function AddNewActivity(newActivity) {
 }
 export function signupUser(user) {
     return async (dispatch, getState) => {
-        const response = await fetch(`https://myactivitytracker.herokuapp.com/signup`, {
+        const response = await fetch(`${serverURL}/signup`, {
             method: 'post',
             dataType: 'json',
             body: user,
@@ -165,7 +170,7 @@ export function signupUser(user) {
 
 export function loginUser(user) {
     return async (dispatch, getState) => {
-        const response = await fetch(`https://myactivitytracker.herokuapp.com/login`, {
+        const response = await fetch(`${serverURL}/login`, {
             method: 'post',
             dataType: 'json',
             body: user,
@@ -195,7 +200,7 @@ export const loginJWT = (token) => {
     return async (dispatch, getState) => {
         const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
 
-        const response = await fetch(`https://myactivitytracker.herokuapp.com/checkAuthToken`, {
+        const response = await fetch(`${serverURL}/checkAuthToken`, {
             headers: {
                 "Authorization": bearer,
             }

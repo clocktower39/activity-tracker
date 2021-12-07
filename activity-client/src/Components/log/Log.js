@@ -1,10 +1,11 @@
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { Redirect } from 'react-router-dom';
 import { Button, Grid, LinearProgress, Paper, TextField, Typography } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import { ArrowBack, ArrowForward } from '@mui/icons-material';
 import GoalTracker from "./GoalTracker";
+import { getActivities } from "../../Redux/actions";
 
 const useStyles = makeStyles({
   root: {
@@ -63,7 +64,8 @@ const useStyles = makeStyles({
 export const Log = () => {
   const classes = useStyles();
   const goals = useSelector((state) => state.goals);
-  const user = useSelector((state) => state.user)
+  const user = useSelector((state) => state.user);
+  const dispatch = useDispatch();
 
   // format a Date object like ISO
   const dateToISOLikeButLocal = (date) => {
@@ -125,6 +127,11 @@ export const Log = () => {
 
     return ((achievedTotal / goalTotal) * 100);
   }
+
+  useEffect(()=>{
+    dispatch(getActivities());
+  // eslint-disable-next-line
+  },[user])
 
   return (!user)?<Redirect to={{ pathname: '/login'}} />:(
     <Grid container className={classes.root}>
