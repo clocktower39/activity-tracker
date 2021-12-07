@@ -6,6 +6,7 @@ const goalSchema = new mongoose.Schema({
     defaultTarget: Number,
     category: String,
     history: Array,
+    accountId: String,
 })
 
 const Goal = mongoose.model('Goal', goalSchema);
