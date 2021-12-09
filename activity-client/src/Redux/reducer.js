@@ -14,6 +14,7 @@ export let reducer = (state = { goals, user }, action) => {
     case LOGOUT_USER:
         return {
             ...state,
+            goals: [],
             user: {
             },
         }

@@ -10,6 +10,7 @@ import EditLayout from "./Components/Edit/EditLayout";
 import AuthRoute from "./Components/AuthRoute";
 import Login from "./Components/Login";
 import SignUp from "./Components/SignUp";
+import Settings from "./Components/Settings";
 import { theme } from './theme';
 import "./App.css";
 
@@ -41,6 +42,7 @@ function App() {
             <AuthRoute exact path="/" component={Log} />
             <AuthRoute exact path="/edit" component={EditLayout} />
             <AuthRoute exact path="/metrics" component={Metrics} />
+            <AuthRoute exact path="/settings" component={Settings} />
           </Switch>
         </Container>
         <Navbar />
