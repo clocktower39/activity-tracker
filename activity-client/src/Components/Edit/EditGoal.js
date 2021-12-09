@@ -1,34 +1,37 @@
 import React, { useState } from "react";
 import { useDispatch } from 'react-redux';
-import { Button, Grid, TextField, Typography } from '@mui/material';
+import { Button, Divider, Grid, TextField, Typography } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import { EditActivity } from "../../Redux/actions";
 
 const useStyles = makeStyles({
+    root: {
+      paddingTop: '15px',
+    },
     Button:{
-        color: '#ffffff',
+        color: '#000',
     },
     TextField: {
-      borderBottomColor: '#ccc',
+      borderBottomColor: '#000',
       "& input": {
-        color: "#ccc",
+        color: "#000",
       },
       "& label": {
-        color: "#ccc",
+        color: "#000",
       },
       "& label.Mui-focused": {
-        color: "#ccc",
+        color: "#000",
       },
       "& .MuiOutlinedInput-root": {
         "&.Mui-focused fieldset": {
-          borderColor: "#ccc",
+          borderColor: "#000",
         },
       },
       "& .MuiInput-underline:before": {
-        borderBottomColor: "white",
+        borderBottomColor: "#000",
       },
       "& .MuiInput-underline:after": {
-        borderBottomColor: "white",
+        borderBottomColor: "#000",
       },
     },
 })
@@ -54,18 +57,24 @@ export default function EditGoal(props) {
     }
 
     return editMode?(
+      <>
         <Grid container item xs={12} className={classes.root}>
-            <Grid item xs={3} ><TextField className={classes.TextField} value={task} onChange={(e)=>handleChange(e, setTask)} /></Grid>
-            <Grid item xs={3} ><TextField className={classes.TextField} value={category} onChange={(e)=>handleChange(e, setCategory)} /></Grid>
-            <Grid item xs={3} ><TextField className={classes.TextField} value={defaultTarget} onChange={(e)=>handleChange(e, setDefaultTarget)} /></Grid>
-            <Grid item xs={3} ><Button className={classes.Button} onClick={toggleEditMode}>Save</Button></Grid>
+            <Grid item xs={4} ><TextField className={classes.TextField} value={task} onChange={(e)=>handleChange(e, setTask)} /></Grid>
+            <Grid item xs={4} ><TextField className={classes.TextField} value={category} onChange={(e)=>handleChange(e, setCategory)} /></Grid>
+            <Grid item xs={2} ><TextField className={classes.TextField} value={defaultTarget} onChange={(e)=>handleChange(e, setDefaultTarget)} /></Grid>
+            <Grid item xs={2} ><Button className={classes.Button} onClick={toggleEditMode}>Save</Button></Grid>
         </Grid>
+        <Grid item xs={12} style={{padding: "7.5px"}}><Divider /></Grid>
+      </>
     ):(
+      <>
         <Grid container item xs={12} className={classes.root}>
-            <Grid item xs={3} ><Typography variant="body1">{props.goal.task}</Typography></Grid>
-            <Grid item xs={3} ><Typography variant="body1">{props.goal.category}</Typography></Grid>
-            <Grid item xs={3} ><Typography variant="body1">{props.goal.defaultTarget}</Typography></Grid>
-            <Grid item xs={3} ><Button className={classes.Button} onClick={toggleEditMode}>Edit</Button></Grid>
+            <Grid item xs={4} ><Typography variant="body1">{props.goal.task}</Typography></Grid>
+            <Grid item xs={4} ><Typography variant="body1">{props.goal.category}</Typography></Grid>
+            <Grid item xs={2} ><Typography variant="body1">{props.goal.defaultTarget}</Typography></Grid>
+            <Grid item xs={2} ><Button className={classes.Button} onClick={toggleEditMode}>Edit</Button></Grid>
         </Grid>
+        <Grid item xs={12} style={{padding: "7.5px"}}><Divider /></Grid>
+      </>
     )
 }
