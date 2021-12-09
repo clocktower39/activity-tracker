@@ -7,11 +7,11 @@ export const SIGNUP_USER = 'SIGNUP_USER';
 export const ERROR = 'ERROR';
 
 // dev server
-const currentIP = window.location.href.split(":")[1];
-const serverURL = `http:${currentIP}:8000`;
+// const currentIP = window.location.href.split(":")[1];
+// const serverURL = `http:${currentIP}:8000`;
 
 // live server
-// const serverURL = "https://myactivitytracker.herokuapp.com";
+const serverURL = "https://myactivitytracker.herokuapp.com";
 
 export function updateActivityProgress(index, achieved, date) {
     return async (dispatch, getState) => {
