@@ -10,9 +10,8 @@ const useStyles = makeStyles({
   root: {
     color: "#000",
     height: "100%",
-    margin: '33px 0 66px 0',
     paddingTop: "25px",
-    paddingBottom: "25px",
+    paddingBottom: "75px",
   },
   TableHead: {
     paddingBottom: "12.5px",

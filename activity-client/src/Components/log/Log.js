@@ -1,40 +1,40 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Redirect } from 'react-router-dom';
-import { Button, Grid, LinearProgress, Paper, TextField, Typography } from '@mui/material';
-import { makeStyles } from '@mui/styles';
-import { ArrowBack, ArrowForward } from '@mui/icons-material';
+import { Redirect } from "react-router-dom";
+import { Button, Container, Grid, LinearProgress, Paper, TextField, Typography } from "@mui/material";
+import { makeStyles } from "@mui/styles";
+import { ArrowBack, ArrowForward } from "@mui/icons-material";
 import GoalTracker from "./GoalTracker";
 import { getActivities } from "../../Redux/actions";
 
 const useStyles = makeStyles({
   root: {
-    paddingBottom: '56px',
-    justifyContent: 'center',
+    paddingBottom: "56px",
+    justifyContent: "center",
   },
-  dateContainer:{
-    marginTop: '25px',
-    justifyContent: 'center',
+  dateContainer: {
+    marginTop: "25px",
+    justifyContent: "center",
   },
   Paper: {
     width: "100%",
     margin: "12.5px",
-    backgroundColor: '#b3b3b3',
-    color: '#000000',
+    backgroundColor: "#b3b3b3",
+    color: "#000000",
   },
   categoryBackground: {
-    color: '#f3f3f3',
-    backgroundColor: '#282828',
-    width: '100%',
-    height: '100%',
-    padding: '15px',
-    borderRadius: '5px',
+    color: "#f3f3f3",
+    backgroundColor: "#282828",
+    width: "100%",
+    height: "100%",
+    padding: "15px",
+    borderRadius: "5px",
   },
-  goalContainer:{
-    justifyContent: 'center',
+  goalContainer: {
+    justifyContent: "center",
   },
   TextField: {
-    borderBottomColor: '#ccc',
+    borderBottomColor: "#ccc",
     "& input": {
       color: "#ccc",
     },
@@ -57,7 +57,7 @@ const useStyles = makeStyles({
     },
   },
   ArrowButton: {
-    color: '#fff'
+    color: "#fff",
   },
 });
 
@@ -75,37 +75,39 @@ export const Log = () => {
     const iso = dateLocal.toISOString();
     const isoLocal = iso.slice(0, 19);
     return isoLocal;
-  }
+  };
 
-  // set the log date to today 
+  // set the log date to today
   const [selectedDate, setSelectedDate] = useState(dateToISOLikeButLocal(new Date()).substr(0, 10));
 
   // handles when arrow buttons are clicked
   const changeDate = (change) => {
     let newDate = new Date(selectedDate).setDate(new Date(selectedDate).getDate() + change);
     setSelectedDate(new Date(newDate).toISOString().substr(0, 10));
-  }
+  };
 
   // gathers daily history for calculating progress percentages
-  let allGoalsStatsToday = goals.map(goal => ({ 
+  let allGoalsStatsToday = goals
+    .map((goal) => ({
       history: goal.history,
       category: goal.category,
-      defaultTarget: goal.defaultTarget
-    })).map(goal => {
+      defaultTarget: goal.defaultTarget,
+    }))
+    .map((goal) => {
       // filteredHistory will return an array with a single object of the selected date
-      const filteredHistory = goal.history.filter(day => day.date === selectedDate)[0];
+      const filteredHistory = goal.history.filter((day) => day.date === selectedDate)[0];
       // if filteredHistory is null, it will use the filler history
       const fillerHistory = {
         date: selectedDate,
         targetPerDuration: goal.defaultTarget,
         achieved: 0,
-      }
-    return {
-      stats: filteredHistory?filteredHistory:fillerHistory,
-      category: goal.category,
-      defaultTarget: goal.defaultTarget
-    }
-  })
+      };
+      return {
+        stats: filteredHistory ? filteredHistory : fillerHistory,
+        category: goal.category,
+        defaultTarget: goal.defaultTarget,
+      };
+    });
 
   let categories = [];
 
@@ -116,70 +118,76 @@ export const Log = () => {
   });
 
   const getCategoryProgress = (c) => {
-    let categoryHistory = allGoalsStatsToday.filter(goal => goal.category === c);
+    let categoryHistory = allGoalsStatsToday.filter((goal) => goal.category === c);
     let achievedTotal = 0;
     let goalTotal = 0;
 
-    categoryHistory.forEach(goal => {
+    categoryHistory.forEach((goal) => {
       achievedTotal += goal.stats.achieved;
       goalTotal += goal.stats.targetPerDuration;
-    })
+    });
 
-    return ((achievedTotal / goalTotal) * 100);
-  }
+    return (achievedTotal / goalTotal) * 100;
+  };
 
-  useEffect(()=>{
+  useEffect(() => {
     dispatch(getActivities());
-  // eslint-disable-next-line
-  },[user])
+    // eslint-disable-next-line
+  }, [user]);
 
-  return (!user)?<Redirect to={{ pathname: '/login'}} />:(
-    <Grid container className={classes.root}>
-      <Grid item xs={12} container className={classes.dateContainer}>
-        <Button onClick={() => changeDate(-1)} className={classes.ArrowButton} ><ArrowBack /></Button>
-        <TextField
-          id="date"
-          label="Date"
-          type="date"
-          variant="standard"
-          value={selectedDate}
-          className={classes.TextField}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-        <Button onClick={() => changeDate(1)} className={classes.ArrowButton} ><ArrowForward /></Button>
-      </Grid>
-      {categories.map((category) => {
-        let categoryPercent = getCategoryProgress(category);
-        return (
-          <Paper variant="outlined" className={classes.Paper} key={category}>
-            <Grid
-              container
-              item
-              xs={12}
-              className={classes.goalContainer}
-            >
-              <Grid item xs={12} className={classes.categoryBackground} >
-                <Typography variant="h6">{category}</Typography>
-                {/* Temporary fix, need to adjust when getCategoryProgress filters a task without history for the date */}
-                <LinearProgress variant="determinate" value={isNaN(categoryPercent) ? 0 : categoryPercent} />
+  return !user ? (
+    <Redirect to={{ pathname: "/login" }} />
+  ) : (
+    <Container maxWidth="md">
+      <Grid container className={classes.root}>
+        <Grid item xs={12} container className={classes.dateContainer}>
+          <Button onClick={() => changeDate(-1)} className={classes.ArrowButton}>
+            <ArrowBack />
+          </Button>
+          <TextField
+            id="date"
+            label="Date"
+            type="date"
+            variant="standard"
+            value={selectedDate}
+            className={classes.TextField}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+          <Button onClick={() => changeDate(1)} className={classes.ArrowButton}>
+            <ArrowForward />
+          </Button>
+        </Grid>
+        {categories.map((category) => {
+          let categoryPercent = getCategoryProgress(category);
+          return (
+            <Paper variant="outlined" className={classes.Paper} key={category}>
+              <Grid container item xs={12} className={classes.goalContainer}>
+                <Grid item xs={12} className={classes.categoryBackground}>
+                  <Typography variant="h6">{category}</Typography>
+                  {/* Temporary fix, need to adjust when getCategoryProgress filters a task without history for the date */}
+                  <LinearProgress
+                    variant="determinate"
+                    value={isNaN(categoryPercent) ? 0 : categoryPercent}
+                  />
+                </Grid>
+                {goals.map((goal, index) => (
+                  <GoalTracker
+                    key={`${goal.task}-${index}`}
+                    goal={goal}
+                    index={index}
+                    category={category}
+                    selectedDate={selectedDate}
+                  />
+                ))}
               </Grid>
-              {goals.map((goal, index) => (
-                <GoalTracker
-                  key={`${goal.task}-${index}`}
-                  goal={goal}
-                  index={index}
-                  category={category}
-                  selectedDate={selectedDate}
-                />
-              ))}
-            </Grid>
-          </Paper>
-        );
-      })}
-    </Grid>
+            </Paper>
+          );
+        })}
+      </Grid>
+    </Container>
   );
 };
 

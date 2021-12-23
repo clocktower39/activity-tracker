@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { Container, ThemeProvider } from "@mui/material";
+import { ThemeProvider } from "@mui/material";
 import { getActivities, loginJWT } from "./Redux/actions";
 import Log from "./Components/log/Log";
 import Navbar from "./Components/Navbar";
@@ -11,7 +11,7 @@ import AuthRoute from "./Components/AuthRoute";
 import Login from "./Components/Login";
 import SignUp from "./Components/SignUp";
 import Settings from "./Components/Settings";
-import { theme } from './theme';
+import { theme } from "./theme";
 import "./App.css";
 
 function App() {
@@ -35,16 +35,14 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <Router basename="/activity-tracker/">
-        <Container maxWidth={"md"}>
-          <Switch>
-            <Route exact path="/login" component={Login} />
-            <Route exact path="/signup" component={SignUp} />
-            <AuthRoute exact path="/" component={Log} />
-            <AuthRoute exact path="/edit" component={EditLayout} />
-            <AuthRoute exact path="/metrics" component={Metrics} />
-            <AuthRoute exact path="/settings" component={Settings} />
-          </Switch>
-        </Container>
+        <Switch>
+          <Route exact path="/login" component={Login} />
+          <Route exact path="/signup" component={SignUp} />
+          <AuthRoute exact path="/" component={Log} />
+          <AuthRoute exact path="/edit" component={EditLayout} />
+          <AuthRoute exact path="/metrics" component={Metrics} />
+          <AuthRoute exact path="/settings" component={Settings} />
+        </Switch>
         <Navbar />
       </Router>
     </ThemeProvider>
