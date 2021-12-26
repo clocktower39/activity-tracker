@@ -116,17 +116,17 @@ export default function GoalTracker(props) {
               alignItems="center"
               justifyContent="center"
             >
-              <Typography variant="h6" component="div" className={classes.CircularPercent}>
-                {`${Math.round(
+              <Typography variant="overline" component="div" className={classes.CircularPercent}>
+                {props.toggleAchievedView?(`${Math.round(
                   Number((currentDayStats.achieved / currentDayStats.targetPerDuration) * 100)
-                )}%`}
+                )}%`):currentDayStats.achieved}
               </Typography>
             </Box>
           </Box>
         </IconButton>
       </Grid>
       <Grid container item xs={12} className={classes.goalContent}>
-        <Typography variant="h6" align="center" className={classes.CircularProgressLabel}>
+        <Typography variant="body2" align="center" className={classes.CircularProgressLabel}>
           {props.goal.task}
         </Typography>
       </Grid>

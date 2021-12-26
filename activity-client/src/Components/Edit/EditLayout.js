@@ -68,7 +68,7 @@ export default function EditLayout() {
   };
 
   return (
-    <Container component={Paper} className={classes.root}>
+    <Container component={Paper} className={classes.root} maxWidth="md">
       <Grid container>
         <Grid container item xs={12} className={classes.TableHead}>
           <Grid item xs={4}>

@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Redirect } from "react-router-dom";
-import { Button, Container, Grid, LinearProgress, Paper, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  Container,
+  Grid,
+  LinearProgress,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
 import GoalTracker from "./GoalTracker";
@@ -9,6 +17,7 @@ import { getActivities } from "../../Redux/actions";
 
 const useStyles = makeStyles({
   root: {
+    paddingTop: "25px",
     paddingBottom: "56px",
     justifyContent: "center",
   },
@@ -32,6 +41,7 @@ const useStyles = makeStyles({
   },
   goalContainer: {
     justifyContent: "center",
+    backgroundColor: "#b3b3b3",
   },
   TextField: {
     borderBottomColor: "#ccc",
@@ -66,6 +76,7 @@ export const Log = () => {
   const goals = useSelector((state) => state.goals);
   const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
+  const [toggleAchievedView, setToggleAchievedView] = useState(true);
 
   // format a Date object like ISO
   const dateToISOLikeButLocal = (date) => {
@@ -140,9 +151,12 @@ export const Log = () => {
   ) : (
     <Container maxWidth="md">
       <Grid container className={classes.root}>
+        <Grid container item xs={12} sx={{justifyContent: 'flex-end',}} >
+          <Button variant="contained" onClick={()=>setToggleAchievedView((prev => !prev))}>{toggleAchievedView?'Amount':'Percentage'}</Button>
+        </Grid>
         <Grid item xs={12} container className={classes.dateContainer}>
           <Button onClick={() => changeDate(-1)} className={classes.ArrowButton}>
-            <ArrowBack />
+            <ArrowBack sx={{ color: "#F9F9F9" }} />
           </Button>
           <TextField
             id="date"
@@ -156,7 +170,11 @@ export const Log = () => {
               shrink: true,
             }}
           />
-          <Button onClick={() => changeDate(1)} className={classes.ArrowButton}>
+          <Button
+            onClick={() => changeDate(1)}
+            className={classes.ArrowButton}
+            sx={{ color: "#F9F9F9" }}
+          >
             <ArrowForward />
           </Button>
         </Grid>
@@ -167,7 +185,6 @@ export const Log = () => {
               <Grid container item xs={12} className={classes.goalContainer}>
                 <Grid item xs={12} className={classes.categoryBackground}>
                   <Typography variant="h6">{category}</Typography>
-                  {/* Temporary fix, need to adjust when getCategoryProgress filters a task without history for the date */}
                   <LinearProgress
                     variant="determinate"
                     value={isNaN(categoryPercent) ? 0 : categoryPercent}
@@ -180,6 +197,7 @@ export const Log = () => {
                     index={index}
                     category={category}
                     selectedDate={selectedDate}
+                    toggleAchievedView={toggleAchievedView}
                   />
                 ))}
               </Grid>

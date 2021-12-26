@@ -67,6 +67,34 @@ export default function Metrics() {
           value={selectedTaskIndex}
           onChange={(e) => setSelectedTaskIndex(Number(e.target.value))}
           style={{ margin: "25px 0px" }}
+          sx={{
+            "& label": {
+              color: "#ccc",
+            },
+            "& label.Mui-focused": {
+              color: "#ccc",
+            },
+            "& .MuiOutlinedInput-root": {
+              "&.Mui-focused fieldset": {
+                borderColor: "#ccc",
+              },
+            },
+            "& .MuiNativeSelect-select": {
+              color: 'white',
+            },
+            "& .MuiNativeSelect-select option": {
+              color: 'black',
+            },
+            "& .MuiSvgIcon-root": {
+              color: 'white',
+            },
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: 'white',
+            },
+            "& .MuiOutlinedInput-notchedOutline:hover": {
+              borderColor: 'white',
+            }
+          }}
         >
           {goals.map((goal, index) => (
             <option key={`option-${index}`} value={index}>
@@ -75,8 +103,8 @@ export default function Metrics() {
           ))}
         </TextField>
       </Container>
-      <div style={{display: 'flex', justifyContent: 'center',}}>
-      {renderLineChart(goals[selectedTaskIndex], sizes.width, sizes.height)}
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        {renderLineChart(goals[selectedTaskIndex], sizes.width, sizes.height)}
       </div>
     </>
   );
