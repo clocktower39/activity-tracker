@@ -6,7 +6,7 @@ import { EditActivity } from "../../Redux/actions";
 
 const useStyles = makeStyles({
     root: {
-      paddingTop: '15px',
+      padding: '15px 15px 0px 15px',
     },
     Button:{
         color: '#000',

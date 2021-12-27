@@ -4,13 +4,6 @@ import { BarChart, Bar, XAxis, YAxis } from "recharts";
 import { useSelector } from "react-redux";
 
 const renderLineChart = (goal, width, height) => {
-  let dates = [];
-  goal.history.forEach((day) => {
-    if (!dates.includes(day.date)) {
-      dates.push(day.date);
-    }
-  });
-
   return (
     <BarChart width={width * 0.8} height={height * 0.5} data={goal.history}>
       <Bar dataKey="achieved" fill="#8884d8" />
@@ -21,8 +14,6 @@ const renderLineChart = (goal, width, height) => {
 };
 
 const useWindowSize = () => {
-  // Initialize state with undefined width/height so server and client renders match
-  // Learn more here: https://joshwcomeau.com/react/the-perils-of-rehydration/
   const [windowSize, setWindowSize] = useState({
     width: undefined,
     height: undefined,

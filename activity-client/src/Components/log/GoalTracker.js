@@ -83,7 +83,6 @@ export default function GoalTracker(props) {
             />
             <CircularProgress
               variant="determinate"
-              disableShrink
               value={circularProgressPercent === 0 ? -0 : circularProgressPercent}
               sx={{
                 color: (theme) => (theme.palette.mode === "light" ? "#1a90ff" : "#308fe8"),

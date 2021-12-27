@@ -10,11 +10,11 @@ const useStyles = makeStyles({
   root: {
     color: "#000",
     height: "100%",
-    paddingTop: "25px",
+    marginTop: "25px",
     paddingBottom: "75px",
   },
   TableHead: {
-    paddingBottom: "12.5px",
+    padding: "12.5px",
   },
   TextField: {
     borderBottomColor: "#000",
@@ -68,27 +68,27 @@ export default function EditLayout() {
   };
 
   return (
-    <Container component={Paper} className={classes.root} maxWidth="md">
-      <Grid container>
+    <Container maxWidth="md">
+      <Grid container component={Paper} className={classes.root}>
         <Grid container item xs={12} className={classes.TableHead}>
-          <Grid item xs={4}>
+          <Grid item xs={4} container>
             <Typography variant="h5">Task</Typography>
           </Grid>
-          <Grid item xs={4}>
+          <Grid item xs={4} container>
             <Typography variant="h5">Category</Typography>
           </Grid>
-          <Grid item xs={2}>
+          <Grid item xs={2} container>
             <Typography variant="h5">Target</Typography>
           </Grid>
-          <Grid item xs={2}>
+          <Grid item xs={2} container>
             <Typography variant="h5"></Typography>
           </Grid>
         </Grid>
         {goals.map((goal, index) => (
-          <EditGoal goal={goal} index={index} />
+          <EditGoal goal={goal} index={index} key={`EditLayout-${index}`}/>
         ))}
 
-        <Grid container item xs={12}>
+        <Grid container item xs={12} style={{padding: '15px 15px 0px 15px',}}>
           <Grid item xs={4}>
             <TextField
               className={classes.TextField}

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { ThemeProvider } from "@mui/material";
@@ -11,11 +11,13 @@ import AuthRoute from "./Components/AuthRoute";
 import Login from "./Components/Login";
 import SignUp from "./Components/SignUp";
 import Settings from "./Components/Settings";
+import Loading from "./Components/Loading";
 import { theme } from "./theme";
 import "./App.css";
 
 function App() {
   const dispatch = useDispatch();
+  const [loading, setLoading] = useState(true);
 
   const handleLoginAttempt = async (e) => {
     dispatch(loginJWT(localStorage.getItem("JWT_AUTH_TOKEN")));
@@ -23,16 +25,15 @@ function App() {
 
   useEffect(() => {
     if (localStorage.getItem("JWT_AUTH_TOKEN") !== null) {
-      handleLoginAttempt();
+      handleLoginAttempt().then(()=>dispatch(getActivities()).then(()=>setLoading(false)));
+    }
+    else{
+      setLoading(false);
     }
     // eslint-disable-next-line
   }, []);
-  useEffect(() => {
-    dispatch(getActivities());
-    // eslint-disable-next-line
-  }, []);
 
-  return (
+  return loading?<Loading/>:(
     <ThemeProvider theme={theme}>
       <Router basename="/activity-tracker/">
         <Switch>

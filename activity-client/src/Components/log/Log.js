@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { Redirect } from "react-router-dom";
 import {
   Button,
@@ -13,7 +13,6 @@ import {
 import { makeStyles } from "@mui/styles";
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
 import GoalTracker from "./GoalTracker";
-import { getActivities } from "../../Redux/actions";
 
 const useStyles = makeStyles({
   root: {
@@ -75,7 +74,6 @@ export const Log = () => {
   const classes = useStyles();
   const goals = useSelector((state) => state.goals);
   const user = useSelector((state) => state.user);
-  const dispatch = useDispatch();
   const [toggleAchievedView, setToggleAchievedView] = useState(true);
 
   // format a Date object like ISO
@@ -140,11 +138,6 @@ export const Log = () => {
 
     return (achievedTotal / goalTotal) * 100;
   };
-
-  useEffect(() => {
-    dispatch(getActivities());
-    // eslint-disable-next-line
-  }, [user]);
 
   return !user ? (
     <Redirect to={{ pathname: "/login" }} />
