@@ -145,7 +145,7 @@ export const Log = () => {
     <Container maxWidth="md">
       <Grid container className={classes.root}>
         <Grid container item xs={12} sx={{justifyContent: 'flex-end',}} >
-          <Button variant="contained" onClick={()=>setToggleAchievedView((prev => !prev))}>{toggleAchievedView?'Amount':'Percentage'}</Button>
+          <Button variant="contained" onClick={()=>setToggleAchievedView((prev => !prev))}>{toggleAchievedView?'#':'%'}</Button>
         </Grid>
         <Grid item xs={12} container className={classes.dateContainer}>
           <Button onClick={() => changeDate(-1)} className={classes.ArrowButton}>
