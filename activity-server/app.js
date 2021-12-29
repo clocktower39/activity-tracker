@@ -4,7 +4,6 @@ const app = express();
 const http = require('http').Server(app);
 const mongoose = require('mongoose');
 const cors = require('cors');
-const bcrypt = require('bcrypt');
 require('dotenv').config();
 const goalRoutes = require('./routes/goalRoutes');
 const userRoutes = require('./routes/userRoutes');
