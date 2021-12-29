@@ -8,36 +8,13 @@ import { AddNewActivity } from "../../Redux/actions";
 
 const useStyles = makeStyles({
   root: {
-    color: "#000",
     height: "100%",
     marginTop: "25px",
     paddingBottom: "75px",
   },
   TableHead: {
+    color: 'black',
     padding: "12.5px",
-  },
-  TextField: {
-    borderBottomColor: "#000",
-    "& input": {
-      color: "#000",
-    },
-    "& label": {
-      color: "#000",
-    },
-    "& label.Mui-focused": {
-      color: "#000",
-    },
-    "& .MuiOutlinedInput-root": {
-      "&.Mui-focused fieldset": {
-        borderColor: "#000",
-      },
-    },
-    "& .MuiInput-underline:before": {
-      borderBottomColor: "#000",
-    },
-    "& .MuiInput-underline:after": {
-      borderBottomColor: "#000",
-    },
   },
 });
 
@@ -69,7 +46,7 @@ export default function EditLayout() {
 
   return (
     <Container maxWidth="md">
-      <Grid container component={Paper} className={classes.root}>
+      <Grid container component={Paper} className={classes.root} sx={{ color: 'white', backgroundColor: '#b3b3b3',}} >
         <Grid container item xs={12} className={classes.TableHead}>
           <Grid item xs={4} container>
             <Typography variant="h5">Task</Typography>

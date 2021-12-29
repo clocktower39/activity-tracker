@@ -16,7 +16,7 @@ export default function Settings() {
 
   return (
     <Container maxWidth="md">
-      <Paper style={{padding: '12.5px 0'}}>
+      <Paper sx={{ marginTop: "25px", padding: '12.5px 0', height: '85vh', color: 'white', backgroundColor: '#b3b3b3',}}>
         <Grid container >
           <Grid container item xs={12} style={{ justifyContent: 'center' }}>
             <Grid container item xs={5}>
@@ -26,7 +26,7 @@ export default function Settings() {
               <Button variant="contained" onClick={() => dispatch(logoutUser())}>Logout</Button>
             </Grid>
           </Grid>
-          <Grid container spacing={1}>
+          <Grid container spacing={2}>
             <Grid container item xs={12} style={{ justifyContent: 'center' }}>
               <TextField value={email} onChange={(e) => handleChange(e, setEmail)} label="E-mail" />
             </Grid>

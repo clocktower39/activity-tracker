@@ -42,29 +42,6 @@ const useStyles = makeStyles({
     justifyContent: "center",
     backgroundColor: "#b3b3b3",
   },
-  TextField: {
-    borderBottomColor: "#ccc",
-    "& input": {
-      color: "#ccc",
-    },
-    "& label": {
-      color: "#ccc",
-    },
-    "& label.Mui-focused": {
-      color: "#ccc",
-    },
-    "& .MuiOutlinedInput-root": {
-      "&.Mui-focused fieldset": {
-        borderColor: "#ccc",
-      },
-    },
-    "& .MuiInput-underline:before": {
-      borderBottomColor: "white",
-    },
-    "& .MuiInput-underline:after": {
-      borderBottomColor: "white",
-    },
-  },
   ArrowButton: {
     color: "#fff",
   },
