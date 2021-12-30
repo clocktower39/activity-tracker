@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Container, Grid, IconButton, Paper, TextField, Typography } from "@mui/material";
+import { Container, Grid, IconButton, Paper, TextField } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import EditGoal from "./EditGoal";
 import { AddCircle } from "@mui/icons-material";
@@ -12,16 +12,13 @@ const useStyles = makeStyles({
     marginTop: "25px",
     paddingBottom: "75px",
   },
-  TableHead: {
-    color: 'black',
-    padding: "12.5px",
-  },
 });
 
 export default function EditLayout() {
   const classes = useStyles();
   const dispatch = useDispatch();
   const goals = useSelector((state) => state.goals);
+  const [search, setSearch] = useState("");
   const [newTask, setNewTask] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const [newTarget, setNewTarget] = useState("");
@@ -29,6 +26,10 @@ export default function EditLayout() {
   const handleNewEntryFields = (e, setter) => {
     setter(e.target.value);
   };
+
+  const handleSearch = (e) => {
+    setSearch(e.target.value)
+  }
 
   const handleAddClick = () => {
     dispatch(
@@ -46,24 +47,13 @@ export default function EditLayout() {
 
   return (
     <Container maxWidth="md">
-      <Grid container component={Paper} className={classes.root} sx={{ color: 'white', backgroundColor: '#b3b3b3',}} >
-        <Grid container item xs={12} className={classes.TableHead}>
-          <Grid item xs={4} container>
-            <Typography variant="h5">Task</Typography>
-          </Grid>
-          <Grid item xs={4} container>
-            <Typography variant="h5">Category</Typography>
-          </Grid>
-          <Grid item xs={2} container>
-            <Typography variant="h5">Target</Typography>
-          </Grid>
-          <Grid item xs={2} container>
-            <Typography variant="h5"></Typography>
+      <Grid container component={Paper} className={classes.root} sx={{ color: 'white', backgroundColor: '#303030',}} >
+        <Grid container item xs={12} sx={{ padding: "12.5px", justifyContent: 'center',}}>
+          <Grid item xs={12} sm={6} container>
+            <TextField label="Search" value={search} fullWidth onChange={handleSearch} />
           </Grid>
         </Grid>
-        {goals.map((goal, index) => (
-          <EditGoal goal={goal} index={index} key={`EditLayout-${index}`}/>
-        ))}
+        {goals.map((goal, index) => new RegExp(search, 'i').test(goal.task)?<EditGoal goal={goal} index={index} key={`EditLayout-${index}`}/>:null)}
 
         <Grid container item xs={12} style={{padding: '15px 15px 0px 15px',}}>
           <Grid item xs={4}>
@@ -92,7 +82,7 @@ export default function EditLayout() {
           </Grid>
           <Grid item xs={1}>
             <IconButton onClick={handleAddClick}>
-              <AddCircle style={{ color: "#000" }} />
+              <AddCircle />
             </IconButton>
           </Grid>
         </Grid>

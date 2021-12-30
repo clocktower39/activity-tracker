@@ -2,8 +2,19 @@ import { createTheme } from '@mui/material';
 
 export const theme = createTheme({
     typography: {
+        h4: {
+            fontFamily: "Roboto",
+            color: "#f3f3f3",
+        },
         h6: {
-            fontFamily: "Roboto"
+            fontFamily: "Roboto",
+            color: "#f3f3f3",
+        },
+        body2:{
+            color: "#f3f3f3",
+        },
+        overline: {
+            color: "#f3f3f3",
         }
     },
     components: {

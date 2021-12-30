@@ -27,12 +27,11 @@ const useStyles = makeStyles({
   Paper: {
     width: "100%",
     margin: "12.5px",
-    backgroundColor: "#b3b3b3",
+    backgroundColor: "#303030",
     color: "#000000",
   },
   categoryBackground: {
-    color: "#f3f3f3",
-    backgroundColor: "#282828",
+    backgroundColor: "#1B1B1B",
     width: "100%",
     height: "100%",
     padding: "15px",
@@ -40,7 +39,8 @@ const useStyles = makeStyles({
   },
   goalContainer: {
     justifyContent: "center",
-    backgroundColor: "#b3b3b3",
+    backgroundColor: "#303030",
+    borderRadius: '4px',
   },
   ArrowButton: {
     color: "#fff",
@@ -151,7 +151,7 @@ export const Log = () => {
         {categories.map((category) => {
           let categoryPercent = getCategoryProgress(category);
           return (
-            <Paper variant="outlined" className={classes.Paper} key={category}>
+            <Paper variant="outlined" className={classes.Paper} key={category} >
               <Grid container item xs={12} className={classes.goalContainer}>
                 <Grid item xs={12} className={classes.categoryBackground}>
                   <Typography variant="h6">{category}</Typography>
