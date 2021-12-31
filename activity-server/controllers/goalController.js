@@ -1,8 +1,57 @@
 const Goal = require('../models/goal');
 
 const get_goals = (req, res) => {
+
+    // add or subtract days from date
+    const addDays = (date, days) => {
+        var result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result;
+    }
+
+    // format a Date object like ISO
+    const dateToISOLikeButLocal = (date) => {
+      const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+      const msLocal = date.getTime() - offsetMs;
+      const dateLocal = new Date(msLocal);
+      const iso = dateLocal.toISOString();
+      const isoLocal = iso.slice(0, 19);
+      return isoLocal;
+    };
+
     Goal.find({ accountId: res.locals.user._id }, (err, goals) => {
-        res.json(goals)
+        if (err) {
+            sendStatus(500);
+        }
+        else {
+            goals.map(goal => {
+                // create an existing date list
+                let dateList = [];
+                goal.history.forEach(day => {
+                    if (!dateList.includes(day.date)) {
+                        dateList.push(day.date);
+                    }
+                })
+
+                // sort the list and establish the first and last date
+                dateList.sort((a,b)=> new Date(a) < new Date(b));
+                let firstDate = dateList[0];
+                let lastDate = dateList[dateList.length - 1];
+
+                // Loop through first to last date, 1 day at a time, add new day object to any missing date
+                for(let i = 0; addDays(new Date(firstDate), i) <= new Date(lastDate); i++){
+                    if(goal.history.every(day => day.date !== dateToISOLikeButLocal(addDays(new Date(firstDate), i)).substr(0,10))){
+                        goal.history.push({
+                            date: dateToISOLikeButLocal(addDays(new Date(firstDate), i)).substr(0,10),
+                            targetPerDuration: goal.defaultTarget,
+                            achieved: 0,
+                        })
+                    }
+                }
+                return goal;
+            })
+            res.json(goals)
+        }
     })
 }
 
