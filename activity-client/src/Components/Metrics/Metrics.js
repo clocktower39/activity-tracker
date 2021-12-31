@@ -3,10 +3,9 @@ import { Container, Grid, TextField } from "@mui/material";
 import { BarChart, Bar, XAxis, YAxis } from "recharts";
 import { useSelector } from "react-redux";
 
-const renderChart = (goal, width, height) => {
-  const history = goal.history.map(day => {
-    return day;
-  })
+const renderChart = (goal, width, height, startDate, endDate) => {
+  const history = goal.history.sort((a,b) => new Date(a.date) > new Date(b.date)).filter(day => new Date(day.date) >= new Date(startDate) && new Date(day.date) <= new Date(endDate))
+
   return (
     <div style={{ display: "flex", justifyContent: "center" }}>
       <BarChart width={width * 0.8} height={height * 0.5} data={history}>
@@ -18,6 +17,11 @@ const renderChart = (goal, width, height) => {
   );
 };
 
+const adjustDays = (date, days) => {
+  var result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
 
 // format a Date object like ISO in local timezone
 const dateToISOLikeButLocal = (date) => {
@@ -61,7 +65,7 @@ const useWindowSize = () => {
 export default function Metrics() {
   const goals = useSelector((state) => state.goals);
   const [selectedTaskIndex, setSelectedTaskIndex] = useState(0);
-  const [startDate, setStartDate] = useState(dateToISOLikeButLocal(new Date()).substr(0, 10));
+  const [startDate, setStartDate] = useState(dateToISOLikeButLocal(adjustDays(new Date(), -7)).substr(0, 10));
   const [endDate, setEndDate] = useState(dateToISOLikeButLocal(new Date()).substr(0, 10));
   const sizes = useWindowSize();
 
@@ -69,57 +73,57 @@ export default function Metrics() {
     setter(new Date(e.target.value).toISOString().substr(0, 10))
   }
 
-  return (
-    <>
-      <Container maxWidth="md" sx={{ paddingBottom: '25px' }}>
-        <Grid container>
-          <Grid item container xs={12} >
-            <TextField
-              label="Type"
-              select
-              SelectProps={{ native: true }}
-              fullWidth
-              value={selectedTaskIndex}
-              onChange={(e) => setSelectedTaskIndex(Number(e.target.value))}
-              style={{ margin: "25px 0px" }}
-            >
-              {goals.map((goal, index) => (
-                <option key={`option-${index}`} value={index}>
-                  {goal.task}
-                </option>
-              ))}
-            </TextField>
-          </Grid>
+return (
+  <>
+    <Container maxWidth="md" sx={{ paddingBottom: '25px' }}>
+      <Grid container>
+        <Grid item container xs={12} >
+          <TextField
+            label="Type"
+            select
+            SelectProps={{ native: true }}
+            fullWidth
+            value={selectedTaskIndex}
+            onChange={(e) => setSelectedTaskIndex(Number(e.target.value))}
+            style={{ margin: "25px 0px" }}
+          >
+            {goals.map((goal, index) => (
+              <option key={`option-${index}`} value={index}>
+                {goal.task}
+              </option>
+            ))}
+          </TextField>
+        </Grid>
 
-          <Grid item container xs={12} >
-            <Grid item container xs={6} sx={{ justifyContent: 'center' }}>
-              <TextField
-                label="Start Date"
-                value={startDate}
-                type="date"
-                variant="standard"
-                onChange={(e)=>handleDateChange(e, setStartDate)}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-            <Grid item container xs={6} sx={{ justifyContent: 'center' }}>
-              <TextField
-                label="End Date"
-                value={endDate}
-                type="date"
-                variant="standard"
-                onChange={(e)=>handleDateChange(e, setEndDate)}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
+        <Grid item container xs={12} >
+          <Grid item container xs={6} sx={{ justifyContent: 'center' }}>
+            <TextField
+              label="Start Date"
+              value={startDate}
+              type="date"
+              variant="standard"
+              onChange={(e) => handleDateChange(e, setStartDate)}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </Grid>
+          <Grid item container xs={6} sx={{ justifyContent: 'center' }}>
+            <TextField
+              label="End Date"
+              value={endDate}
+              type="date"
+              variant="standard"
+              onChange={(e) => handleDateChange(e, setEndDate)}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
           </Grid>
         </Grid>
-      </Container>
-      {renderChart(goals[selectedTaskIndex], sizes.width, sizes.height)}
-    </>
-  );
+      </Grid>
+    </Container>
+    {renderChart(goals[selectedTaskIndex], sizes.width, sizes.height, startDate, endDate)}
+  </>
+);
 }
