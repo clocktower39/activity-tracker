@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Container, Grid, TextField } from "@mui/material";
 import { BarChart, Bar, XAxis, YAxis } from "recharts";
 import { useSelector } from "react-redux";
+import { useWindowSize } from '../../Hooks/useWindowSize';
 
 const renderChart = (goal, width, height, startDate, endDate) => {
   const history = goal.history.sort((a,b) => new Date(a.date) > new Date(b.date)).filter(day => new Date(day.date) >= new Date(startDate) && new Date(day.date) <= new Date(endDate))
@@ -31,35 +32,6 @@ const dateToISOLikeButLocal = (date) => {
   const iso = dateLocal.toISOString();
   const isoLocal = iso.slice(0, 19);
   return isoLocal;
-};
-
-const useWindowSize = () => {
-  const [windowSize, setWindowSize] = useState({
-    width: undefined,
-    height: undefined,
-  });
-
-  useEffect(() => {
-    // Handler to call on window resize
-    function handleResize() {
-      // Set window width/height to state
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    }
-
-    // Add event listener
-    window.addEventListener("resize", handleResize);
-
-    // Call handler right away so state gets updated with initial window size
-    handleResize();
-
-    // Remove event listener on cleanup
-    return () => window.removeEventListener("resize", handleResize);
-  }, []); // Empty array ensures that effect is only run on mount
-
-  return windowSize;
 };
 
 export default function Metrics() {
