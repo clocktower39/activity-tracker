@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Container, Grid, IconButton, Paper, TextField } from "@mui/material";
+import { Container, Divider, Grid, Button, Paper, TextField } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import EditGoal from "./EditGoal";
-import { AddCircle } from "@mui/icons-material";
 import { AddNewActivity } from "../../Redux/actions";
 
 const useStyles = makeStyles({
@@ -28,8 +27,8 @@ export default function EditLayout() {
   };
 
   const handleSearch = (e) => {
-    setSearch(e.target.value)
-  }
+    setSearch(e.target.value);
+  };
 
   const handleAddClick = () => {
     dispatch(
@@ -47,43 +46,66 @@ export default function EditLayout() {
 
   return (
     <Container maxWidth="md">
-      <Grid container component={Paper} className={classes.root} sx={{ color: 'white', backgroundColor: '#303030',}} >
-        <Grid container item xs={12} sx={{ padding: "12.5px", justifyContent: 'center',}}>
+      <Grid
+        container
+        component={Paper}
+        className={classes.root}
+        sx={{ color: "white", backgroundColor: "#303030" }}
+      >
+        <Grid container item xs={12} sx={{ padding: "12.5px", justifyContent: "center" }}>
           <Grid item xs={12} sm={6} container>
             <TextField label="Search" value={search} fullWidth onChange={handleSearch} />
           </Grid>
         </Grid>
-        {goals.map((goal, index) => new RegExp(search, 'i').test(goal.task)?<EditGoal goal={goal} index={index} key={`EditLayout-${index}`}/>:null)}
+        {goals.map((goal, index) =>
+          new RegExp(search, "i").test(goal.task) ? (
+            <EditGoal goal={goal} index={index} key={`EditLayout-${index}`} />
+          ) : null
+        )}
 
-        <Grid container item xs={12} style={{padding: '15px 15px 0px 15px',}}>
-          <Grid item xs={4}>
-            <TextField
-              className={classes.TextField}
-              label="Task"
-              value={newTask}
-              onChange={(e) => handleNewEntryFields(e, setNewTask)}
-            />
-          </Grid>
-          <Grid item xs={4}>
-            <TextField
-              className={classes.TextField}
-              label="Category"
-              value={newCategory}
-              onChange={(e) => handleNewEntryFields(e, setNewCategory)}
-            />
-          </Grid>
-          <Grid item xs={3}>
-            <TextField
-              className={classes.TextField}
-              label="Target"
-              value={newTarget}
-              onChange={(e) => handleNewEntryFields(e, setNewTarget)}
-            />
-          </Grid>
-          <Grid item xs={1}>
-            <IconButton onClick={handleAddClick}>
-              <AddCircle />
-            </IconButton>
+        <Grid container item xs={6} sm={4} sx={{ padding: "15px 0px", justifyContent: "center" }}>
+          <Grid
+            container
+            item
+            xs={10}
+            spacing={1}
+            sx={{ border: "1px solid", borderRadius: "5px", justifyContent: "center" }}
+          >
+            <Grid item xs={12} container sx={{ justifyContent: "center", alignContent: "center" }}>
+              <TextField
+                label="Task"
+                value={newTask}
+                onChange={(e) => handleNewEntryFields(e, setNewTask)}
+              />
+            </Grid>
+            <Grid item xs={12} container sx={{ justifyContent: "center", alignContent: "center" }}>
+              <Divider sx={{ borderColor: "rgba(255, 255, 255, .2)", width: "60%" }} />
+            </Grid>
+            <Grid item xs={12} container sx={{ justifyContent: "center", alignContent: "center" }}>
+              <TextField
+                label="Category"
+                value={newCategory}
+                onChange={(e) => handleNewEntryFields(e, setNewCategory)}
+              />
+            </Grid>
+            <Grid item xs={12} container sx={{ justifyContent: "center", alignContent: "center" }}>
+              <Divider sx={{ borderColor: "rgba(255, 255, 255, .2)", width: "45%" }} />
+            </Grid>
+            <Grid item xs={12} container sx={{ justifyContent: "center", alignContent: "center" }}>
+              <TextField
+                label="Target"
+                value={newTarget}
+                onChange={(e) => handleNewEntryFields(e, setNewTarget)}
+              />
+            </Grid>
+            <Grid item xs={12} container sx={{ justifyContent: "center", alignContent: "center" }}>
+              <Divider sx={{ borderColor: "rgba(255, 255, 255, .2)", width: "30%" }} />
+            </Grid>
+            <Grid item xs={12} container sx={{ justifyContent: "center", alignContent: "center" }}>
+              <Button onClick={handleAddClick}>
+                Add
+              </Button>
+            </Grid>
           </Grid>
         </Grid>
       </Grid>

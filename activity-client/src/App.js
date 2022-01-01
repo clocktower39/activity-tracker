@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { ThemeProvider } from "@mui/material";
 import { getActivities, loginJWT } from "./Redux/actions";
-import Log from "./Components/log/Log";
+import Log from "./Components/Log/Log";
 import Navbar from "./Components/Navbar";
 import Metrics from "./Components/Metrics/Metrics";
 import EditLayout from "./Components/Edit/EditLayout";
