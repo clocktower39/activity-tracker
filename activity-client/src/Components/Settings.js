@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../Redux/actions";
-import { Button, Container, Grid, Paper, TextField, Typography } from "@mui/material";
+import { Button, Container, Grid, Menu, MenuItem, Paper, TextField, Typography } from "@mui/material";
+import { Settings as SettingsIcon } from '@mui/icons-material';
+import ChangePassword from './ChangePassword';
 
 export default function Settings() {
   const dispatch = useDispatch();
@@ -9,6 +11,22 @@ export default function Settings() {
   const [email, setEmail] = useState(user.email);
   const [firstName, setFirstName] = useState(user.firstName);
   const [lastName, setLastName] = useState(user.lastName);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const [passwordModal, setPasswordModal] = useState(false);
+  const handlePasswordOpen = () => setPasswordModal(true);
+  const handlePasswordClose = () => setPasswordModal(false);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+  
+  const handleLogout = () => dispatch(logoutUser());
 
   const handleChange = (e, setter) => {
     setter(e.target.value);
@@ -23,7 +41,7 @@ export default function Settings() {
               <Typography variant="h4" >Settings</Typography>
             </Grid>
             <Grid container item xs={5} style={{ justifyContent: 'flex-end' }}>
-              <Button variant="contained" onClick={() => dispatch(logoutUser())}>Logout</Button>
+              <Button variant="contained" onClick={handleClick}><SettingsIcon/></Button>
             </Grid>
           </Grid>
           <Grid container spacing={2}>
@@ -46,6 +64,13 @@ export default function Settings() {
             </Grid>
           </Grid>
         </Grid>
+        <Menu open={open} onClose={handleClose} anchorEl={anchorEl}>
+          <MenuItem onClick={handlePasswordOpen}>Change password</MenuItem>
+          <MenuItem onClick={handleLogout}>Logout</MenuItem>
+        </Menu>
+        {passwordModal && open && (
+          <ChangePassword open={open} handlePasswordClose={handlePasswordClose} />
+        )}
       </Paper>
     </Container>
   );
