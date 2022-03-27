@@ -35,10 +35,9 @@ const login_user = (req, res) => {
             authenticated: false,
           });
         }
-        //if the password does not match and previous session was not authenticated, do not authenticate
         if (isMatch) {
-          const accessToken = jwt.sign(user._doc, ACCESS_TOKEN_SECRET,{
-            expiresIn: '30d' // expires in 30 days
+          const accessToken = jwt.sign(user._doc, ACCESS_TOKEN_SECRET, {
+            expiresIn: "30d", // expires in 30 days
           });
           res.send({
             accessToken: accessToken,
@@ -53,12 +52,49 @@ const login_user = (req, res) => {
   });
 };
 
+const change_password = (req, res) => {
+  User.findOne({ email: res.locals.user.email }, function (err, user) {
+    if (err) throw err;
+    if (!user) {
+      res.send({
+        error: { status: "User not found" },
+      });
+    } else if(user.email === "DEMO@FAKEACCOUNT.COM") {
+      res.send({
+        error: {username: "GUEST password can not be changed."}
+      })
+    } else {
+      user.comparePassword(req.body.currentPassword, function (err, isMatch) {
+        if (err) {
+          res.send({
+            error: { status: 'Incorrect Current Password'},
+          });
+        }
+        if (isMatch) {
+          user.password = req.body.newPassword;
+          user.save().then(savedUser => {
+            const accessToken = jwt.sign(savedUser._doc, ACCESS_TOKEN_SECRET, {
+              expiresIn: "30d", // expires in 30 days
+            });
+            res.send({accessToken});
+          })
+        } else {
+          res.send({
+            error: { status: "Password change failed." },
+          });
+        }
+      });
+    }
+  });
+};
+
 const checkAuthLoginToken = (req, res) => {
-  res.send('Authorized')
-}
+  res.send("Authorized");
+};
 
 module.exports = {
   signup_user,
   login_user,
   checkAuthLoginToken,
+  change_password,
 };
