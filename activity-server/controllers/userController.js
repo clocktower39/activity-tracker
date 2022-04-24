@@ -2,27 +2,23 @@ const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
-const signup_user = (req, res) => {
+const signup_user = (req, res, next) => {
   let user = new User(req.body);
   let saveUser = () => {
     user.save((err) => {
-      if (err) {
-        console.log(err);
-        res.send({ error: { err } });
-      } else {
-        res.send({
-          status: "success",
-          user,
-        });
-      }
+      if (err) return next(err);
+      res.send({
+        status: "success",
+        user,
+      });
     });
   };
   saveUser();
 };
 
-const login_user = (req, res) => {
+const login_user = (req, res, next) => {
   User.findOne({ email: req.body.email }, function (err, user) {
-    if (err) throw err;
+    if (err) return next(err);
     if (!user) {
       res.send({
         authenticated: false,
@@ -52,22 +48,22 @@ const login_user = (req, res) => {
   });
 };
 
-const change_password = (req, res) => {
+const change_password = (req, res, next) => {
   User.findOne({ email: res.locals.user.email }, function (err, user) {
-    if (err) throw err;
+    if (err) return next(err);
     if (!user) {
       res.send({
         error: { status: "User not found" },
       });
-    } else if(user.email === "DEMO@FAKEACCOUNT.COM") {
+    } else if (user.email === "DEMO@FAKEACCOUNT.COM") {
       res.send({
-        error: {username: "GUEST password can not be changed."}
+        error: { username: "GUEST password can not be changed." }
       })
     } else {
       user.comparePassword(req.body.currentPassword, function (err, isMatch) {
         if (err) {
           res.send({
-            error: { status: 'Incorrect Current Password'},
+            error: { status: 'Incorrect Current Password' },
           });
         }
         if (isMatch) {
@@ -76,7 +72,7 @@ const change_password = (req, res) => {
             const accessToken = jwt.sign(savedUser._doc, ACCESS_TOKEN_SECRET, {
               expiresIn: "30d", // expires in 30 days
             });
-            res.send({accessToken});
+            res.send({ accessToken });
           })
         } else {
           res.send({
