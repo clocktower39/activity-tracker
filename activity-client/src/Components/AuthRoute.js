@@ -5,9 +5,10 @@ import { loginJWT } from '../Redux/actions';
 import Loading from './Loading';
 
 export const AuthRoute = (props) => {
+    const { socket, component } = props;
 
     const dispatch = useDispatch();
-    const Component = props.component;
+    const Component = component;
     const user = useSelector(state => state.user);
     const [loading, setLoading] = useState(true);
 
@@ -26,7 +27,7 @@ export const AuthRoute = (props) => {
         // eslint-disable-next-line
     },[])
 
-    return loading?<Loading />:user.email?<Component socket={props.socket} />:<Redirect to={{ pathname: '/login'}} />;
+    return loading?<Loading />:user.email?<Component socket={socket} />:<Redirect to={{ pathname: '/login'}} />;
 }
 
 export default AuthRoute
