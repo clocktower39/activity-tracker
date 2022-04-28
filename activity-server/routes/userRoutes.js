@@ -6,8 +6,8 @@ const router = express.Router();
 
 const loginValidate = {
     body: Joi.object({
-        username: Joi.string()
-            .required(),
+        email: Joi.string()
+            .required().email(),
         password: Joi.string()
             .required(),
     }),
