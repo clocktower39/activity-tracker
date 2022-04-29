@@ -28,7 +28,7 @@ const useStyles = makeStyles({
 
 export default function GoalTracker(props) {
   const { category, goal, selectedDate, index, toggleAchievedView } = props;
-  const [openEdit, setOpenEdit] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
 
   const classes = useStyles();
   let currentDayStats = goal.history.filter((day) => day.date === selectedDate)[0];
@@ -54,7 +54,7 @@ export default function GoalTracker(props) {
   };
 
   const onLongPress = () => {
-    setOpenEdit(true)
+    setOpenDialog(true)
   };
 
   const addAchieved = () => {
@@ -128,7 +128,7 @@ export default function GoalTracker(props) {
           </Typography>
         </Grid>
       </Grid>
-      <EditGoal open={openEdit} setOpen={setOpenEdit} goal={goal} stats={currentDayStats} addAchieved={addAchieved} removeAchieved={removeAchieved} progressPercent={progressPercent} />
+      <EditGoal openDialog={openDialog} setOpenDialog={setOpenDialog} goal={goal} stats={currentDayStats} addAchieved={addAchieved} removeAchieved={removeAchieved} progressPercent={progressPercent} />
     </>
   );
 }
