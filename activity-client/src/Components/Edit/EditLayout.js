@@ -1,20 +1,20 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Container, Divider, Grid, Button, Paper, TextField } from "@mui/material";
-import { makeStyles } from "@mui/styles";
 import EditGoal from "./EditGoal";
 import { AddNewActivity } from "../../Redux/actions";
 
-const useStyles = makeStyles({
+const classes = {
   root: {
     height: "100%",
     marginTop: "25px",
     paddingBottom: "75px",
+    color: "white",
+    backgroundColor: "#303030",
   },
-});
+};
 
 export default function EditLayout() {
-  const classes = useStyles();
   const dispatch = useDispatch();
   const goals = useSelector((state) => state.goals);
   const [search, setSearch] = useState("");
@@ -50,7 +50,7 @@ export default function EditLayout() {
         container
         component={Paper}
         className={classes.root}
-        sx={{ color: "white", backgroundColor: "#303030" }}
+        sx={{  }}
       >
         <Grid container item xs={12} sx={{ padding: "12.5px", justifyContent: "center" }}>
           <Grid item xs={12} sm={6} container>

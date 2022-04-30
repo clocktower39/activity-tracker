@@ -9,11 +9,10 @@ import {
   Typography,
   circularProgressClasses,
 } from "@mui/material";
-import { makeStyles } from "@mui/styles";
 import { updateActivityProgress } from "../../Redux/actions";
 import EditGoal from './EditGoalStats';
 
-const useStyles = makeStyles({
+const classes = {
   root: {},
   CircularPercent: {
     fontSize: "16px",
@@ -24,13 +23,12 @@ const useStyles = makeStyles({
   goalContent: {
     justifyContent: "center",
   },
-});
+};
 
 export default function GoalTracker(props) {
   const { category, goal, selectedDate, index, toggleAchievedView, categories } = props;
   const [openDialog, setOpenDialog] = useState(false);
 
-  const classes = useStyles();
   let currentDayStats = goal.history.filter((day) => day.date === selectedDate)[0];
 
   if (currentDayStats === undefined) {
@@ -76,7 +74,7 @@ export default function GoalTracker(props) {
   return goal.category === category && (
     <>
       <Grid container item xs={3}>
-        <Grid container item xs={12} className={classes.goalContent}>
+        <Grid container item xs={12} sx={classes.goalContent}>
           <IconButton {...longPressEvent}>
             <Box position="relative" display="inline-flex" alignItems={"center"}>
               <CircularProgress
@@ -113,7 +111,7 @@ export default function GoalTracker(props) {
                 alignItems="center"
                 justifyContent="center"
               >
-                <Typography variant="overline" component="div" className={classes.CircularPercent}>
+                <Typography variant="overline" component="div" sx={classes.CircularPercent}>
                   {toggleAchievedView ? (`${Math.round(
                     Number((currentDayStats.achieved / currentDayStats.targetPerDuration) * 100)
                   )}%`) : currentDayStats.achieved}
@@ -122,8 +120,8 @@ export default function GoalTracker(props) {
             </Box>
           </IconButton>
         </Grid>
-        <Grid container item xs={12} className={classes.goalContent}>
-          <Typography variant="body2" align="center" className={classes.CircularProgressLabel}>
+        <Grid container item xs={12} sx={classes.goalContent}>
+          <Typography variant="body2" align="center" sx={classes.CircularProgressLabel}>
             {goal.task}
           </Typography>
         </Grid>

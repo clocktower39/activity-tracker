@@ -10,11 +10,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { makeStyles } from "@mui/styles";
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
 import GoalTracker from "./GoalTracker";
 
-const useStyles = makeStyles({
+const classes = {
   root: {
     paddingTop: "25px",
     paddingBottom: "56px",
@@ -45,10 +44,9 @@ const useStyles = makeStyles({
   ArrowButton: {
     color: "#fff",
   },
-});
+};
 
 export const Log = () => {
-  const classes = useStyles();
   const goals = useSelector((state) => state.goals);
   const user = useSelector((state) => state.user);
   const [toggleAchievedView, setToggleAchievedView] = useState(true);
@@ -120,12 +118,12 @@ export const Log = () => {
     <Redirect to={{ pathname: "/login" }} />
   ) : (
     <Container maxWidth="md">
-      <Grid container className={classes.root}>
+      <Grid container sx={classes.root}>
         <Grid container item xs={12} sx={{justifyContent: 'flex-end',}} >
           <Button variant="contained" onClick={()=>setToggleAchievedView((prev => !prev))}>{toggleAchievedView?'#':'%'}</Button>
         </Grid>
-        <Grid item xs={12} container className={classes.dateContainer}>
-          <Button onClick={() => changeDate(-1)} className={classes.ArrowButton}>
+        <Grid item xs={12} container sx={classes.dateContainer}>
+          <Button onClick={() => changeDate(-1)} sx={classes.ArrowButton}>
             <ArrowBack sx={{ color: "#F9F9F9" }} />
           </Button>
           <TextField
@@ -134,7 +132,7 @@ export const Log = () => {
             type="date"
             variant="standard"
             value={selectedDate}
-            className={classes.TextField}
+            sx={classes.TextField}
             onChange={(e) => setSelectedDate(e.target.value)}
             InputLabelProps={{
               shrink: true,
@@ -142,18 +140,17 @@ export const Log = () => {
           />
           <Button
             onClick={() => changeDate(1)}
-            className={classes.ArrowButton}
-            sx={{ color: "#F9F9F9" }}
+            sx={classes.ArrowButton}
           >
-            <ArrowForward />
+            <ArrowForward sx={{ color: "#F9F9F9" }} />
           </Button>
         </Grid>
         {categories.map((category) => {
           let categoryPercent = getCategoryProgress(category);
           return (
-            <Paper variant="outlined" className={classes.Paper} key={category} >
-              <Grid container item xs={12} className={classes.goalContainer}>
-                <Grid item xs={12} className={classes.categoryBackground}>
+            <Paper variant="outlined" sx={classes.Paper} key={category} >
+              <Grid container item xs={12} sx={classes.goalContainer}>
+                <Grid item xs={12} sx={classes.categoryBackground}>
                   <Typography variant="h6">{category}</Typography>
                   <LinearProgress
                     variant="determinate"
