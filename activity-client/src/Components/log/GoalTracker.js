@@ -27,7 +27,7 @@ const useStyles = makeStyles({
 });
 
 export default function GoalTracker(props) {
-  const { category, goal, selectedDate, index, toggleAchievedView } = props;
+  const { category, goal, selectedDate, index, toggleAchievedView, categories } = props;
   const [openDialog, setOpenDialog] = useState(false);
 
   const classes = useStyles();
@@ -128,7 +128,7 @@ export default function GoalTracker(props) {
           </Typography>
         </Grid>
       </Grid>
-      <EditGoal openDialog={openDialog} setOpenDialog={setOpenDialog} goal={goal} stats={currentDayStats} addAchieved={addAchieved} removeAchieved={removeAchieved} progressPercent={progressPercent} />
+      <EditGoal openDialog={openDialog} setOpenDialog={setOpenDialog} goal={goal} stats={currentDayStats} addAchieved={addAchieved} removeAchieved={removeAchieved} progressPercent={progressPercent} categories={categories} />
     </>
   );
 }

@@ -42,7 +42,7 @@ export function updateActivityProgress(index, achieved, date) {
                         // 'Content-Type': 'application/x-www-form-urlencoded',
                     },
                     referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-                    body: JSON.stringify(goal) // body data type must match "Content-Type" header
+                    body: JSON.stringify({goalId: goal._id, goal}) // body data type must match "Content-Type" header
                 })
             }
             return goal;
@@ -88,12 +88,12 @@ export function getActivities() {
     }
 }
 
-export function EditActivity(index, newTarget) {
+export function EditActivity(goalId, newTarget) {
     return async (dispatch, getState) => {
         const newState = { ...getState() };
         const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
         newState.goals.map((goal, i) => {
-            if (i === index) {
+            if (goal._id === goalId) {
                 goal.task = newTarget.task;
                 goal.category = newTarget.category;
                 goal.defaultTarget = newTarget.defaultTarget;
@@ -105,10 +105,9 @@ export function EditActivity(index, newTarget) {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': bearer,
-                        // 'Content-Type': 'application/x-www-form-urlencoded',
                     },
                     referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-                    body: JSON.stringify(goal) // body data type must match "Content-Type" header
+                    body: JSON.stringify({ goalId , goal })
                 })
             }
             return goal;

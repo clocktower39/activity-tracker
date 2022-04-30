@@ -168,6 +168,7 @@ export const Log = () => {
                     category={category}
                     selectedDate={selectedDate}
                     toggleAchievedView={toggleAchievedView}
+                    categories={categories}
                   />
                 ))}
               </Grid>

@@ -9,7 +9,7 @@ const classes = {
     jCaICenter: { justifyContent: 'center', alignItems: 'center', },
 }
 
-export default function EditGoalStats({ goal, stats, openDialog, setOpenDialog, addAchieved, removeAchieved, progressPercent }) {
+export default function EditGoalStats({ goal, stats, openDialog, setOpenDialog, addAchieved, removeAchieved, progressPercent, categories }) {
     const [openDrawer, setOpenDrawer] = useState(false);
 
     const onDialogClose = (e) => setOpenDialog(false);
@@ -37,7 +37,7 @@ export default function EditGoalStats({ goal, stats, openDialog, setOpenDialog, 
                     </Grid>
                 </DialogContent>
 
-                <EditGoal goal={goal} openDrawer={openDrawer} setOpenDrawer={setOpenDrawer} />
+                <EditGoal goal={goal} openDrawer={openDrawer} setOpenDrawer={setOpenDrawer} categories={categories} />
 
             </Dialog>
         </>

@@ -5,7 +5,7 @@ import { EditActivity } from "../../Redux/actions";
 
 
 export default function EditGoal(props) {
-  const { goal, index } = props;
+  const { goal } = props;
   const dispatch = useDispatch();
   const [editMode, setEditMode] = useState(false);
   const [task, setTask] = useState(goal.task);
@@ -17,7 +17,7 @@ export default function EditGoal(props) {
   }
 
   const toggleEditMode = () => {
-    editMode ? dispatch(EditActivity(index, {
+    editMode ? dispatch(EditActivity(goal.task, {
       task,
       category,
       defaultTarget
