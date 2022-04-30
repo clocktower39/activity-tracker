@@ -52,17 +52,19 @@ const get_goals = (req, res, next) => {
 }
 
 const update_goal = async (req, res, next) => {
-    let updatedGoal = req.body;
+    let { goalId, goal} = req.body;
+    console.log(goalId)
+    console.log(goal)
 
     Goal.findOneAndUpdate(
-        { task: updatedGoal.task, accountId: res.locals.user._id },
-        updatedGoal,
+        { _id: goalId, accountId: res.locals.user._id },
+        goal,
         {
             new: true
         },
         (err, doc) => {
             if (err) return next(err);
-            res.send(updatedGoal);
+            res.send(goal);
         });
 }
 
