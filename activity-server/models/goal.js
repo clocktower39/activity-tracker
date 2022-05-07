@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 
 const goalSchema = new mongoose.Schema({
-    task: {type: String, required: true},
-    interval: {type: String, required: true},
-    defaultTarget: {type: Number, required: true},
-    category: {type: String, required: true},
+    task: { type: String, required: true },
+    interval: { type: String, required: true },
+    defaultTarget: { type: Number, required: true },
+    category: { type: String, required: true },
+    order: { type: Number, required: true },
     history: {
         type: [
             {
