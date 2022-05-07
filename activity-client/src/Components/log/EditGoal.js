@@ -50,6 +50,7 @@ export default function EditGoal({ goal, openDrawer, setOpenDrawer, categories }
     const [interval, setInterval] = useState(goal.interval);
     const [defaultTarget, setDefaultTarget] = useState(goal.defaultTarget);
     const [category, setCategory] = useState(goal.category);
+    const [order, setOrder] = useState(goal.order);
 
     const handleChange = (e, setter) => setter(e.target.value);
 
@@ -63,6 +64,7 @@ export default function EditGoal({ goal, openDrawer, setOpenDrawer, categories }
                 task,
                 category,
                 defaultTarget,
+                order
             }))
         }
     }
@@ -100,6 +102,7 @@ export default function EditGoal({ goal, openDrawer, setOpenDrawer, categories }
                         renderInput={(params) => <TextField sx={{ ...classes.TextField, width: 227 }} {...params} label="Category" />}
                     />
                 </Grid>
+                <Grid container item sx={classes.GridCC}><TextField label="Order in Category" type="Number" onChange={(e) => handleChange(e, setOrder)} value={order} sx={classes.TextField} /></Grid>
                 <Grid container item xs={12} spacing={1} sx={classes.GridCC}>
                     <Grid item ><Button variant="contained">Delete</Button></Grid>
                     <Grid item ><Button variant="contained" onClick={saveChanges}>Save</Button></Grid>

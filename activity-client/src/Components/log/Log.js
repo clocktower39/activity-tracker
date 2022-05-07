@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { Redirect } from "react-router-dom";
 import {
+  Box,
   Button,
   Container,
   Grid,
@@ -20,7 +21,7 @@ const classes = {
     justifyContent: "center",
   },
   dateContainer: {
-    marginTop: "25px",
+    // marginTop: "25px",
     justifyContent: "center",
   },
   Paper: {
@@ -39,7 +40,7 @@ const classes = {
   goalContainer: {
     justifyContent: "center",
     backgroundColor: "#303030",
-    borderRadius: '4px',
+    borderRadius: "4px",
   },
   ArrowButton: {
     color: "#fff",
@@ -119,9 +120,6 @@ export const Log = () => {
   ) : (
     <Container maxWidth="md">
       <Grid container sx={classes.root}>
-        <Grid container item xs={12} sx={{justifyContent: 'flex-end',}} >
-          <Button variant="contained" onClick={()=>setToggleAchievedView((prev => !prev))}>{toggleAchievedView?'#':'%'}</Button>
-        </Grid>
         <Grid item xs={12} container sx={classes.dateContainer}>
           <Button onClick={() => changeDate(-1)} sx={classes.ArrowButton}>
             <ArrowBack sx={{ color: "#F9F9F9" }} />
@@ -138,17 +136,20 @@ export const Log = () => {
               shrink: true,
             }}
           />
-          <Button
-            onClick={() => changeDate(1)}
-            sx={classes.ArrowButton}
-          >
+          <Button onClick={() => changeDate(1)} sx={classes.ArrowButton}>
             <ArrowForward sx={{ color: "#F9F9F9" }} />
           </Button>
+          {/* checkpoint */}
+          <Box sx={{ alignSelf: "stretch" }}>
+            <Button  sx={{ justifySelf: "flex-end" }} variant="contained" onClick={() => setToggleAchievedView((prev) => !prev)}>
+              {toggleAchievedView ? "#" : "%"}
+            </Button>
+          </Box>
         </Grid>
         {categories.map((category) => {
           let categoryPercent = getCategoryProgress(category);
           return (
-            <Paper variant="outlined" sx={classes.Paper} key={category} >
+            <Paper variant="outlined" sx={classes.Paper} key={category}>
               <Grid container item xs={12} sx={classes.goalContainer}>
                 <Grid item xs={12} sx={classes.categoryBackground}>
                   <Typography variant="h6">{category}</Typography>
@@ -157,7 +158,7 @@ export const Log = () => {
                     value={isNaN(categoryPercent) ? 0 : categoryPercent}
                   />
                 </Grid>
-                {goals.map((goal, index) => (
+                {goals.sort((a, b) => a.order > b.order).map((goal, index) => (
                   <GoalTracker
                     key={`${goal.task}-${index}`}
                     goal={goal}
