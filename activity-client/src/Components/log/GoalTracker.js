@@ -126,7 +126,7 @@ export default function GoalTracker(props) {
           </Typography>
         </Grid>
       </Grid>
-      <EditGoal openDialog={openDialog} setOpenDialog={setOpenDialog} goal={goal} stats={currentDayStats} addAchieved={addAchieved} removeAchieved={removeAchieved} progressPercent={progressPercent} categories={categories} />
+      <EditGoal openDialog={openDialog} setOpenDialog={setOpenDialog} goal={goal} stats={currentDayStats} addAchieved={addAchieved} removeAchieved={removeAchieved} progressPercent={progressPercent} categories={categories} selectedDate={selectedDate} />
     </>
   );
 }

@@ -46,7 +46,9 @@ export const Login = (props) => {
         }
         setDisableButtonDuringLogin(false);
       }
-    );
+    )
+    .then(()=>dispatch(getActivities()))
+    .then(()=>setDisableButtonDuringLogin(false));
   };
 
   if (user.email) {

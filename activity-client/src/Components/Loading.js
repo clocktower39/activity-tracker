@@ -1,23 +1,20 @@
-import React from 'react';
-import { CircularProgress, Typography } from '@mui/material';
+import React from "react";
+import { LinearProgress, } from "@mui/material";
 
 const classes = {
   root: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    color: 'white',
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100vh",
   },
 };
 
-export default function CircularIndeterminate() {
-
+export default function Loading() {
   return (
-    <div sx={classes.root}>
-        <Typography variant='h4'>Loading</Typography>
-        <CircularProgress />
+    <div className={classes.root}>
+      <LinearProgress />
     </div>
   );
 }

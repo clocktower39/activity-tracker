@@ -4,7 +4,7 @@ import { BarChart, Bar, XAxis, YAxis } from "recharts";
 import { useSelector } from "react-redux";
 import { useWindowSize } from '../../Hooks/useWindowSize';
 
-const renderChart = (goal, width, height, startDate, endDate) => {
+export const renderChart = (goal, width, height, startDate, endDate) => {
   const history = goal.history.sort((a,b) => new Date(a.date) > new Date(b.date)).filter(day => new Date(day.date) >= new Date(startDate) && new Date(day.date) <= new Date(endDate))
 
   return (
