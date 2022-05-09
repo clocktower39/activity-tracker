@@ -34,9 +34,10 @@ const get_goals = (req, res, next) => {
             dateList.sort((a, b) => new Date(a) < new Date(b));
             let firstDate = dateList[0];
             let lastDate = dateList[dateList.length - 1];
+            let today = dateToISOLikeButLocal(new Date()).substr(0,10);
 
             // Loop through first to last date, 1 day at a time, add new day object to any missing date
-            for (let i = 0; addDays(new Date(firstDate), i) <= new Date(lastDate); i++) {
+            for (let i = 0; addDays(new Date(firstDate), i) <= new Date(today); i++) {
                 if (goal.history.every(day => day.date !== dateToISOLikeButLocal(addDays(new Date(firstDate), i)).substr(0, 10))) {
                     goal.history.push({
                         date: dateToISOLikeButLocal(addDays(new Date(firstDate), i)).substr(0, 10),
@@ -53,8 +54,6 @@ const get_goals = (req, res, next) => {
 
 const update_goal = async (req, res, next) => {
     let { goalId, goal} = req.body;
-    console.log(goalId)
-    console.log(goal)
 
     Goal.findOneAndUpdate(
         { _id: goalId, accountId: res.locals.user._id },
