@@ -5,7 +5,7 @@ import EditGoal from './EditGoal';
 import { renderChart } from '../Metrics/Metrics'
 
 const classes = {
-    DialogTitle: { display: 'flex', justifyContent: 'center', alignItems: 'center', 'h4':{ color: 'black' } },
+    DialogTitle: { display: 'flex', justifyContent: 'center', alignItems: 'center', 'h4, h6':{ color: 'black' } },
     ProgressPercentText: { textAlign: 'center', color: 'black', },
     jCaICenter: { justifyContent: 'center', alignItems: 'center', },
 }
@@ -26,8 +26,13 @@ export default function EditGoalStats({ goal, stats, openDialog, setOpenDialog, 
             >
 
                 <DialogTitle sx={classes.DialogTitle}>
-                    <Typography variant="h4">{goal.task}</Typography>
-                    <IconButton onClick={handleDrawerOpen} ><Edit /></IconButton>
+                    <Grid container sx={{ justifyContent: 'space-between', alignItems: 'center'}} >
+                        <Grid item container xs={12} sm={2} sx={classes.jCaICenter} ><Typography variant="subtitle1">{selectedDate}</Typography></Grid>
+                        <Grid item container xs={12} sm={8} sx={classes.jCaICenter} ><Typography variant="h4">{goal.task}</Typography></Grid>
+                        <Grid item container xs={12} sm={2} sx={classes.jCaICenter} ><IconButton onClick={handleDrawerOpen} ><Edit /></IconButton></Grid>
+                    </Grid>
+                    
+                    
                 </DialogTitle>
                 <Typography variant="h6" sx={classes.ProgressPercentText}>{progressPercent}%</Typography>
                 <LinearProgress variant="determinate" value={progressPercent > 100 ? 100 : progressPercent} />
@@ -37,7 +42,7 @@ export default function EditGoalStats({ goal, stats, openDialog, setOpenDialog, 
                         <Grid container item xs={4} sx={classes.jCaICenter} ><Typography>{stats.achieved}</Typography></Grid>
                         <Grid container item xs={4} sx={classes.jCaICenter} ><IconButton onClick={addAchieved}><Add /></IconButton></Grid>
                     </Grid>
-                    <Divider />
+                    <Divider sx={{ margin: '15px 0px' }} />
                     <Typography variant="h5" sx={{ textAlign: "center" }}>7 day history</Typography>
                     {renderChart(goal, 400, 250, startDate, new Date(selectedDate))}
                 </DialogContent>
