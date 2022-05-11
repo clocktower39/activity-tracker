@@ -1,6 +1,7 @@
 const Goal = require('../models/goal');
+const Category = require('../models/category');
 
-const get_goals = (req, res, next) => {
+const get_goals = async (req, res, next) => {
 
     // add or subtract days from date
     const addDays = (date, days) => {
@@ -18,6 +19,10 @@ const get_goals = (req, res, next) => {
         const isoLocal = iso.slice(0, 19);
         return isoLocal;
     };
+    const categories = await Category.findOne({ accountId: res.locals.user._id }, (err, doc) => {
+        if (err) return next(err);
+        return doc;
+    })
 
     Goal.find({ accountId: res.locals.user._id }, (err, goals) => {
         if (err) return next(err);
@@ -48,12 +53,12 @@ const get_goals = (req, res, next) => {
             }
             return goal;
         })
-        res.json(goals)
+        res.send({goals, categories: categories.categories})
     })
 }
 
 const update_goal = async (req, res, next) => {
-    let { goalId, goal} = req.body;
+    let { goalId, goal } = req.body;
 
     Goal.findOneAndUpdate(
         { _id: goalId, accountId: res.locals.user._id },
