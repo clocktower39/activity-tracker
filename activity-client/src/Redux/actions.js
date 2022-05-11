@@ -75,7 +75,7 @@ export function getActivities() {
     return async (dispatch, getState) => {
         const newState = { ...getState() };
         const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
-        newState.goals = await fetch(`${serverURL}/`, {
+        const data = await fetch(`${serverURL}/`, {
             headers: {
                 'Authorization': bearer,
             }
@@ -83,7 +83,11 @@ export function getActivities() {
 
         return dispatch({
             type: UPDATE_ACTIVITY,
-            newState
+            newState: {
+                ...newState,
+                goals: data.goals,
+                categories: data.categories,
+            }
         })
     }
 }

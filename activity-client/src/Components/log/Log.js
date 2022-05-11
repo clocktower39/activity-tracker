@@ -21,7 +21,6 @@ const classes = {
     justifyContent: "center",
   },
   dateContainer: {
-    // marginTop: "25px",
     justifyContent: "center",
   },
   Paper: {
@@ -50,6 +49,7 @@ const classes = {
 export const Log = () => {
   const goals = useSelector((state) => state.goals);
   const user = useSelector((state) => state.user);
+  const categories = useSelector((state) => state.categories);
   const [toggleAchievedView, setToggleAchievedView] = useState(true);
 
   // format a Date object like ISO
@@ -94,11 +94,11 @@ export const Log = () => {
       };
     });
 
-  let categories = [];
+  let goalCategories = [];
 
   goals.forEach((goal) => {
-    if (!categories.includes(goal.category)) {
-      categories.push(goal.category);
+    if (!goalCategories.includes(goal.category)) {
+      goalCategories.push(goal.category);
     }
   });
 
@@ -139,31 +139,30 @@ export const Log = () => {
           <Button onClick={() => changeDate(1)} sx={classes.ArrowButton}>
             <ArrowForward sx={{ color: "#F9F9F9" }} />
           </Button>
-          {/* checkpoint */}
           <Box sx={{ alignSelf: "stretch" }}>
             <Button  sx={{ justifySelf: "flex-end" }} variant="contained" onClick={() => setToggleAchievedView((prev) => !prev)}>
               {toggleAchievedView ? "#" : "%"}
             </Button>
           </Box>
         </Grid>
-        {categories.map((category) => {
-          let categoryPercent = getCategoryProgress(category);
+        {categories.sort((a,b) => a.order - b.order).map((category) => {
+          let categoryPercent = getCategoryProgress(category.category);
           return (
-            <Paper variant="outlined" sx={classes.Paper} key={category}>
+            <Paper variant="outlined" sx={classes.Paper} key={category.category}>
               <Grid container item xs={12} sx={classes.goalContainer}>
                 <Grid item xs={12} sx={classes.categoryBackground}>
-                  <Typography variant="h6">{category}</Typography>
+                  <Typography variant="h6">{category.category}</Typography>
                   <LinearProgress
                     variant="determinate"
                     value={isNaN(categoryPercent) ? 0 : categoryPercent}
                   />
                 </Grid>
-                {goals.sort((a, b) => a.order > b.order).map((goal, index) => (
+                {goals.sort((a, b) => a.order - b.order).map((goal, index) => (
                   <GoalTracker
                     key={`${goal.task}-${index}`}
                     goal={goal}
                     index={index}
-                    category={category}
+                    category={category.category}
                     selectedDate={selectedDate}
                     toggleAchievedView={toggleAchievedView}
                     categories={categories}

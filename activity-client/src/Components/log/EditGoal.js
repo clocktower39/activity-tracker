@@ -58,8 +58,6 @@ export default function EditGoal({ goal, openDrawer, setOpenDrawer, categories }
 
     const saveChanges = () => {
         if (task !== '' && category !== '' && defaultTarget !== '') {
-            console.log("goal")
-            console.log(goal._id)
             dispatch(EditActivity(goal._id, {
                 task,
                 category,
@@ -97,7 +95,7 @@ export default function EditGoal({ goal, openDrawer, setOpenDrawer, categories }
                 <Grid container item sx={classes.GridCC}>
                     <Autocomplete
                         value={category}
-                        options={categories}
+                        options={categories.map(c => c.category)}
                         onChange={(e, getTagProps) => setCategory(getTagProps)}
                         renderInput={(params) => <TextField sx={{ ...classes.TextField, width: 227 }} {...params} label="Category" />}
                     />

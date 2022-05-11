@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import { useWindowSize } from '../../Hooks/useWindowSize';
 
 export const renderChart = (goal, width, height, startDate, endDate) => {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const history = goal.history
     .sort((a, b) => new Date(a.date) > new Date(b.date))
