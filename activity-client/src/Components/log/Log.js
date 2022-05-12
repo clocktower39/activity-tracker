@@ -7,12 +7,13 @@ import {
   Container,
   Dialog,
   Grid,
+  IconButton,
   LinearProgress,
   Paper,
   TextField,
   Typography,
 } from "@mui/material";
-import { ArrowBack, ArrowForward } from "@mui/icons-material";
+import { ArrowBack, ArrowForward, Edit } from "@mui/icons-material";
 import GoalTracker from "./GoalTracker";
 import Categories from "./Categories";
 
@@ -124,11 +125,6 @@ export const Log = () => {
     <Container maxWidth="md">
       <Grid container sx={classes.root}>
         <Grid item xs={12} container sx={classes.dateContainer}>
-          <Box sx={{ alignSelf: "stretch" }}>
-            <Button sx={{ justifySelf: "flex-end" }} variant="contained" onClick={() => setToggleCategoryView((prev) => !prev)}>
-              Categories
-            </Button>
-          </Box>
           <Button onClick={() => changeDate(-1)} sx={classes.ArrowButton}>
             <ArrowBack sx={{ color: "#F9F9F9" }} />
           </Button>
@@ -183,6 +179,9 @@ export const Log = () => {
             </Paper>
           );
         })}
+        <Grid container item sx={{justifyContent: 'center', alignItems: 'center', }}>
+          <IconButton color="primary" size="large" onClick={() => setToggleCategoryView((prev) => !prev)} ><Edit sx={{color: "#FFF"}} /></IconButton>
+        </Grid>
       </Grid>
     </Container>
   );
