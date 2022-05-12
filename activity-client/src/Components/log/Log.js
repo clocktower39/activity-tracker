@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   Container,
+  Dialog,
   Grid,
   LinearProgress,
   Paper,
@@ -13,6 +14,7 @@ import {
 } from "@mui/material";
 import { ArrowBack, ArrowForward } from "@mui/icons-material";
 import GoalTracker from "./GoalTracker";
+import Categories from "./Categories";
 
 const classes = {
   root: {
@@ -51,6 +53,7 @@ export const Log = () => {
   const user = useSelector((state) => state.user);
   const categories = useSelector((state) => state.categories);
   const [toggleAchievedView, setToggleAchievedView] = useState(true);
+  const [toggleCategoryView, setToggleCategoryView] = useState(false);
 
   // format a Date object like ISO
   const dateToISOLikeButLocal = (date) => {
@@ -121,6 +124,11 @@ export const Log = () => {
     <Container maxWidth="md">
       <Grid container sx={classes.root}>
         <Grid item xs={12} container sx={classes.dateContainer}>
+          <Box sx={{ alignSelf: "stretch" }}>
+            <Button sx={{ justifySelf: "flex-end" }} variant="contained" onClick={() => setToggleCategoryView((prev) => !prev)}>
+              Categories
+            </Button>
+          </Box>
           <Button onClick={() => changeDate(-1)} sx={classes.ArrowButton}>
             <ArrowBack sx={{ color: "#F9F9F9" }} />
           </Button>
@@ -140,12 +148,15 @@ export const Log = () => {
             <ArrowForward sx={{ color: "#F9F9F9" }} />
           </Button>
           <Box sx={{ alignSelf: "stretch" }}>
-            <Button  sx={{ justifySelf: "flex-end" }} variant="contained" onClick={() => setToggleAchievedView((prev) => !prev)}>
+            <Button sx={{ justifySelf: "flex-end" }} variant="contained" onClick={() => setToggleAchievedView((prev) => !prev)}>
               {toggleAchievedView ? "#" : "%"}
             </Button>
           </Box>
         </Grid>
-        {categories.sort((a,b) => a.order - b.order).map((category) => {
+        <Dialog open={toggleCategoryView} onClose={() => setToggleCategoryView(false)} >
+          <Categories categories={categories} setToggleCategoryView={setToggleCategoryView}/>
+        </Dialog>
+        {categories.sort((a, b) => a.order - b.order).map((category) => {
           let categoryPercent = getCategoryProgress(category.category);
           return (
             <Paper variant="outlined" sx={classes.Paper} key={category.category}>
