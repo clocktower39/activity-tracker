@@ -13,9 +13,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { ArrowBack, ArrowForward, Edit } from "@mui/icons-material";
+import { ArrowBack, ArrowForward, AddCircle, FilterList, Category } from "@mui/icons-material";
 import GoalTracker from "./GoalTracker";
 import Categories from "./Categories";
+import NewGoal from "./NewGoal";
 
 const classes = {
   root: {
@@ -55,6 +56,7 @@ export const Log = () => {
   const categories = useSelector((state) => state.categories);
   const [toggleAchievedView, setToggleAchievedView] = useState(true);
   const [toggleCategoryView, setToggleCategoryView] = useState(false);
+  const [toggleNewTaskView, setToggleNewTaskView] = useState(false);
 
   // format a Date object like ISO
   const dateToISOLikeButLocal = (date) => {
@@ -152,6 +154,26 @@ export const Log = () => {
         <Dialog open={toggleCategoryView} onClose={() => setToggleCategoryView(false)} >
           <Categories categories={categories} setToggleCategoryView={setToggleCategoryView}/>
         </Dialog>
+        <Dialog open={toggleNewTaskView} onClose={() => setToggleNewTaskView(false)} >
+          <NewGoal setToggleNewTaskView={setToggleNewTaskView}/>
+        </Dialog>
+        <Grid container item sx={{ justifyContent: 'center', alignItems: 'center', }}>
+          <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
+            <IconButton color="primary" size="large" onClick={() => null} >
+              <FilterList sx={{color: "#FFF"}} />
+            </IconButton>
+          </Grid>
+          <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
+            <IconButton color="primary" size="large" onClick={() => setToggleCategoryView((prev) => !prev)} >
+              <Category sx={{color: "#FFF"}} />
+            </IconButton>
+          </Grid>
+          <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
+            <IconButton color="primary" size="large" onClick={() => setToggleNewTaskView((prev) => !prev)} >
+              <AddCircle sx={{color: "#FFF"}} />
+            </IconButton>
+          </Grid>
+        </Grid>
         {categories.sort((a, b) => a.order - b.order).map((category) => {
           let categoryPercent = getCategoryProgress(category.category);
           return (
@@ -179,9 +201,6 @@ export const Log = () => {
             </Paper>
           );
         })}
-        <Grid container item sx={{justifyContent: 'center', alignItems: 'center', }}>
-          <IconButton color="primary" size="large" onClick={() => setToggleCategoryView((prev) => !prev)} ><Edit sx={{color: "#FFF"}} /></IconButton>
-        </Grid>
       </Grid>
     </Container>
   );
