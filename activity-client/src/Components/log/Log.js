@@ -155,7 +155,7 @@ export const Log = () => {
           <Categories categories={categories} setToggleCategoryView={setToggleCategoryView}/>
         </Dialog>
         <Dialog open={toggleNewTaskView} onClose={() => setToggleNewTaskView(false)} >
-          <NewGoal setToggleNewTaskView={setToggleNewTaskView}/>
+          <NewGoal categories={categories} setToggleNewTaskView={setToggleNewTaskView}/>
         </Dialog>
         <Grid container item sx={{ justifyContent: 'center', alignItems: 'center', }}>
           <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>

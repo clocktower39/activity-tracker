@@ -1,15 +1,41 @@
 import React, { useState } from "react";
-import { AppBar, Button, IconButton, Grid, TextField, Toolbar, Typography } from "@mui/material";
+import { useDispatch } from "react-redux";
+import {
+  AppBar,
+  Autocomplete,
+  Button,
+  IconButton,
+  Grid,
+  TextField,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 import { Close } from "@mui/icons-material";
+import { AddNewActivity } from "../../Redux/actions";
 
-export default function NewGoal({ setToggleNewTaskView }) {
+export default function NewGoal({ categories, setToggleNewTaskView }) {
+  const dispatch = useDispatch();
   const [task, setTask] = useState("");
   const [interval, setInterval] = useState("");
   const [goal, setGoal] = useState("");
   const [category, setCategory] = useState("");
   const [order, setOrder] = useState("");
 
+  const intervalOptions = ["Daily", "Weekly", "Monthly", "Yearly"];
+
   const handleChange = (e, setter) => setter(e.target.value);
+
+  const handleNewActivitySubmit = () => {
+    if(task !== ''){
+      dispatch(AddNewActivity({
+        task,
+        interval,
+        defaultTarget: goal,
+        category,
+        order
+      }))
+    }
+  }
 
   return (
     <Grid container sx={{ backgroundColor: "#303030" }}>
@@ -27,7 +53,7 @@ export default function NewGoal({ setToggleNewTaskView }) {
             <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
               New Goal
             </Typography>
-            <Button autoFocus color="inherit" onClick={() => setToggleNewTaskView(false)}>
+            <Button autoFocus color="inherit" onClick={handleNewActivitySubmit}>
               Add
             </Button>
           </Toolbar>
@@ -44,27 +70,29 @@ export default function NewGoal({ setToggleNewTaskView }) {
             />
           </Grid>
           <Grid container item xs={12}>
-            <TextField
+            <Autocomplete
               fullWidth
-              label="Interval"
+              value={category}
+              options={categories.map((c) => c.category)}
+              onChange={(e, getTagProps) => setCategory(getTagProps)}
+              renderInput={(params) => <TextField {...params} label="Category" />}
+            />
+          </Grid>
+          <Grid container item xs={12}>
+            <Autocomplete
+              fullWidth
               value={interval}
-              onChange={(e) => handleChange(e, setInterval)}
+              options={intervalOptions}
+              onChange={(e, getTagProps) => setInterval(getTagProps)}
+              renderInput={(params) => <TextField {...params} label="Interval" />}
             />
           </Grid>
           <Grid container item xs={12}>
             <TextField
               fullWidth
-              label="Goal"
+              label="Goal per Interval"
               value={goal}
               onChange={(e) => handleChange(e, setGoal)}
-            />
-          </Grid>
-          <Grid container item xs={12}>
-            <TextField
-              fullWidth
-              label="Category"
-              value={category}
-              onChange={(e) => handleChange(e, setCategory)}
             />
           </Grid>
           <Grid container item xs={12}>
