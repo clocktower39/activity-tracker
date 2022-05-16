@@ -11,10 +11,9 @@ const classes = {
 }
 
 export default function EditGoalStats({ goal, stats, openDialog, setOpenDialog, addAchieved, removeAchieved, progressPercent, categories, selectedDate }) {
-    const [openDrawer, setOpenDrawer] = useState(false);
+    const [toggleEditTaskView, setToggleEditTaskView] = useState(false);
 
     const onDialogClose = (e) => setOpenDialog(false);
-    const handleDrawerOpen = () => setOpenDrawer(true);
     let startDate = new Date(selectedDate).setDate(new Date(selectedDate).getDate() - 6);
 
     return (
@@ -29,7 +28,7 @@ export default function EditGoalStats({ goal, stats, openDialog, setOpenDialog, 
                     <Grid container sx={{ justifyContent: 'space-between', alignItems: 'center'}} >
                         <Grid item container xs={12} sm={2} sx={classes.jCaICenter} ><Typography variant="subtitle1">{selectedDate}</Typography></Grid>
                         <Grid item container xs={12} sm={8} sx={classes.jCaICenter} ><Typography variant="h4">{goal.task}</Typography></Grid>
-                        <Grid item container xs={12} sm={2} sx={classes.jCaICenter} ><IconButton onClick={handleDrawerOpen} ><Edit /></IconButton></Grid>
+                        <Grid item container xs={12} sm={2} sx={classes.jCaICenter} ><IconButton onClick={()=>setToggleEditTaskView(true)} ><Edit /></IconButton></Grid>
                     </Grid>
                     
                     
@@ -46,7 +45,9 @@ export default function EditGoalStats({ goal, stats, openDialog, setOpenDialog, 
                     <Typography variant="h5" sx={{ textAlign: "center" }}>7 day history</Typography>
                     {renderChart(goal, 400, 250, startDate, new Date(selectedDate))}
                 </DialogContent>
-                <EditGoal goal={goal} openDrawer={openDrawer} setOpenDrawer={setOpenDrawer} categories={categories} />
+                <Dialog open={toggleEditTaskView} onClose={() => setToggleEditTaskView(false)} >
+                    <EditGoal goal={goal} categories={categories} setToggleEditTaskView={setToggleEditTaskView}/>
+                </Dialog>
             </Dialog>
         </>
     )

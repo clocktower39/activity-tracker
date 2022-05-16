@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useDispatch } from 'react-redux';
 import {
     AppBar,
     Button,
@@ -11,6 +12,7 @@ import {
     InputAdornment,
 } from "@mui/material";
 import { AddCircle, Close, } from "@mui/icons-material";
+import { updateCategories } from '../../Redux/actions';
 
 const CategoryItem = ({ category }) => {
     const [categoryName, setCategoryName] = useState(category.category);
@@ -27,10 +29,19 @@ const CategoryItem = ({ category }) => {
 }
 
 export default function Categories({ categories, setToggleCategoryView, }) {
+    const dispatch = useDispatch();
     const [newCategoryName, setNewCategoryName] = useState("");
     const [newOrder, setNewOrder] = useState("");
 
     const handleChange = (e, setter) => setter(e.target.value);
+
+    
+    const handleAddCategory = () => {
+        dispatch(updateCategories([
+            ...categories,
+            { category: newCategoryName, order: newOrder, } 
+        ]))
+    }
 
     return (
         <Grid container sx={{ backgroundColor: '#303030', }}>
@@ -68,7 +79,7 @@ export default function Categories({ categories, setToggleCategoryView, }) {
                             InputProps={{
                                 endAdornment: (
                                     <InputAdornment position="end">
-                                        <IconButton onClick={null}>
+                                        <IconButton onClick={handleAddCategory}>
                                             <AddCircle />
                                         </IconButton>
                                     </InputAdornment>

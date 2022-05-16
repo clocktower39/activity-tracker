@@ -1,6 +1,7 @@
 import jwt from 'jwt-decode';
 
 export const UPDATE_ACTIVITY = 'UPDATE_ACTIVITY';
+export const UPDATE_CATEGORIES = 'UPDATE_CATEGORIES';
 export const LOGIN_USER = 'LOGIN_USER';
 export const LOGOUT_USER = 'LOGOUT_USER';
 export const SIGNUP_USER = 'SIGNUP_USER';
@@ -147,6 +148,28 @@ export function AddNewActivity(newActivity) {
         return dispatch({
             type: UPDATE_ACTIVITY,
             newState,
+        })
+    }
+}
+export function updateCategories(categories) {
+    return async (dispatch) => {
+        const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
+        fetch(`${serverURL}/updateCategories`, {
+                    method: 'POST', // *GET, POST, PUT, DELETE, etc.
+                    mode: 'cors', // no-cors, *cors, same-origin
+                    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+                    credentials: 'same-origin', // include, *same-origin, omit
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': bearer,
+                        // 'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+                    body: JSON.stringify({ categories }) // body data type must match "Content-Type" header
+                })
+        return dispatch({
+            type: UPDATE_CATEGORIES,
+            categories,
         })
     }
 }
