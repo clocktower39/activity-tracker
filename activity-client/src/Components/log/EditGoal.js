@@ -13,7 +13,7 @@ import {
 import { Close } from "@mui/icons-material";
 import { EditActivity } from "../../Redux/actions";
 
-export default function EditGoal({ goal, setToggleNewTaskView, categories }) {
+export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
   const dispatch = useDispatch();
   const [task, setTask] = useState(goal.task);
   const [interval, setInterval] = useState(goal.interval);
@@ -46,7 +46,7 @@ export default function EditGoal({ goal, setToggleNewTaskView, categories }) {
             <IconButton
               edge="start"
               color="inherit"
-              onClick={() => setToggleNewTaskView(false)}
+              onClick={() => setToggleEditTaskView(false)}
               aria-label="close"
             >
               <Close />

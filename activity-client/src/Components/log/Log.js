@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { Redirect } from "react-router-dom";
 import {
-  Box,
   Button,
   Container,
   Dialog,
@@ -13,7 +12,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { ArrowBack, ArrowForward, AddCircle, FilterList, Category } from "@mui/icons-material";
+import { ArrowBack, ArrowForward, AddCircle, FilterList, Category, Flaky } from "@mui/icons-material";
 import GoalTracker from "./GoalTracker";
 import Categories from "./Categories";
 import NewGoal from "./NewGoal";
@@ -145,11 +144,6 @@ export const Log = () => {
           <Button onClick={() => changeDate(1)} sx={classes.ArrowButton}>
             <ArrowForward sx={{ color: "#F9F9F9" }} />
           </Button>
-          <Box sx={{ alignSelf: "stretch" }}>
-            <Button sx={{ justifySelf: "flex-end" }} variant="contained" onClick={() => setToggleAchievedView((prev) => !prev)}>
-              {toggleAchievedView ? "#" : "%"}
-            </Button>
-          </Box>
         </Grid>
         <Dialog open={toggleCategoryView} onClose={() => setToggleCategoryView(false)} >
           <Categories categories={categories} setToggleCategoryView={setToggleCategoryView}/>
@@ -171,6 +165,11 @@ export const Log = () => {
           <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
             <IconButton color="primary" size="large" onClick={() => setToggleNewTaskView((prev) => !prev)} >
               <AddCircle sx={{color: "#FFF"}} />
+            </IconButton>
+          </Grid>
+          <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
+            <IconButton color="primary" size="large" onClick={() => setToggleAchievedView((prev) => !prev)} >
+              <Flaky sx={{color: "#FFF"}} />
             </IconButton>
           </Grid>
         </Grid>
