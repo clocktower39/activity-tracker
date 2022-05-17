@@ -87,8 +87,25 @@ const add_goal = (req, res, next) => {
     saveGoal();
 }
 
+const update_categories =  async (req, res, next) => {
+    let { categories } = req.body;
+
+    Category.findOneAndUpdate(
+        { accountId: res.locals.user._id },
+        { categories },
+        {
+            new: true
+        },
+        (err, doc) => {
+            if (err) return next(err);
+            // Search through goals and update categories as needed
+            res.send(doc);
+        });
+}
+
 module.exports = {
     get_goals,
     update_goal,
     add_goal,
+    update_categories,
 }
