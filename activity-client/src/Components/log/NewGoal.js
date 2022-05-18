@@ -26,7 +26,7 @@ export default function NewGoal({ categories, setToggleNewTaskView }) {
   const handleChange = (e, setter) => setter(e.target.value);
 
   const handleNewActivitySubmit = () => {
-    if(task !== ''){
+    if(task !== '' && interval !== '' && goal !== '' && category !== '' && order !== '' ){
       dispatch(AddNewActivity({
         task,
         interval,
@@ -34,6 +34,10 @@ export default function NewGoal({ categories, setToggleNewTaskView }) {
         category,
         order
       }))
+      setTask("");
+      setGoal("");
+      setCategory("");
+      setOrder("");
     }
   }
 
