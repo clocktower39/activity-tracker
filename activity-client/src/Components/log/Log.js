@@ -49,16 +49,8 @@ const classes = {
   },
 };
 
-export const Log = () => {
-  const goals = useSelector((state) => state.goals);
-  const user = useSelector((state) => state.user);
-  const categories = useSelector((state) => state.categories);
-  const [toggleAchievedView, setToggleAchievedView] = useState(true);
-  const [toggleCategoryView, setToggleCategoryView] = useState(false);
-  const [toggleNewTaskView, setToggleNewTaskView] = useState(false);
-
   // format a Date object like ISO
-  const dateToISOLikeButLocal = (date) => {
+export const dateToISOLikeButLocal = (date) => {
     const offsetMs = date.getTimezoneOffset() * 60 * 1000;
     const msLocal = date.getTime() - offsetMs;
     const dateLocal = new Date(msLocal);
@@ -66,6 +58,21 @@ export const Log = () => {
     const isoLocal = iso.slice(0, 19);
     return isoLocal;
   };
+  
+  
+export const adjustDays = (date, days) => {
+  var result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+export const Log = () => {
+  const goals = useSelector((state) => state.goals);
+  const user = useSelector((state) => state.user);
+  const categories = useSelector((state) => state.categories);
+  const [toggleAchievedView, setToggleAchievedView] = useState(true);
+  const [toggleCategoryView, setToggleCategoryView] = useState(false);
+  const [toggleNewTaskView, setToggleNewTaskView] = useState(false);
 
   // set the log date to today
   const [selectedDate, setSelectedDate] = useState(dateToISOLikeButLocal(new Date()).substr(0, 10));
