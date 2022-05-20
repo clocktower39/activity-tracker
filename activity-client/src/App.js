@@ -5,7 +5,6 @@ import { ThemeProvider } from "@mui/material";
 import { getActivities, loginJWT } from "./Redux/actions";
 import Log from "./Components/Log/Log";
 import Navbar from "./Components/Navbar";
-import Metrics from "./Components/Metrics/Metrics";
 import AuthRoute from "./Components/AuthRoute";
 import Login from "./Components/Login";
 import SignUp from "./Components/SignUp";
@@ -39,7 +38,6 @@ function App() {
           <Route exact path="/login" component={Login} />
           <Route exact path="/signup" component={SignUp} />
           <AuthRoute exact path="/" component={Log} />
-          <AuthRoute exact path="/metrics" component={Metrics} />
           <AuthRoute exact path="/settings" component={Settings} />
         </Switch>
         <Navbar />

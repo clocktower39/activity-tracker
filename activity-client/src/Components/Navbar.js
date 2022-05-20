@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BottomNavigation, BottomNavigationAction } from '@mui/material';
-import { Home, Assessment, Settings } from '@mui/icons-material';
+import { Home, Settings } from '@mui/icons-material';
 import { Link, useLocation } from 'react-router-dom';
 
 const classes = {
@@ -30,7 +30,6 @@ useEffect(()=>{
   return (
     <BottomNavigation value={value} onChange={handleChange} sx={classes.root}>
       <BottomNavigationAction disabled={disableNav} label="Log" value="/" to='/' icon={<Home />} component={Link} />
-      <BottomNavigationAction disabled={disableNav} label="Metrics" value="/metrics" to='/metrics' icon={<Assessment />} component={Link} />
       <BottomNavigationAction disabled={disableNav} label="Settings" value="/settings" to='/settings' icon={<Settings />} component={Link} />
     </BottomNavigation>
   );

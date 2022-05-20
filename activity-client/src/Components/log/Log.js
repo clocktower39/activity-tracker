@@ -77,6 +77,15 @@ export const Log = () => {
   // set the log date to today
   const [selectedDate, setSelectedDate] = useState(dateToISOLikeButLocal(new Date()).substr(0, 10));
 
+  const handleSelectedDateChange = (e) => {
+      if(e.target.value && e.target.value !== ''){
+        setSelectedDate(e.target.value);
+      }
+      else {
+        console.log(`Invalid date selected: '${e.target.value}'`)
+      }
+  }
+
   // handles when arrow buttons are clicked
   const changeDate = (change) => {
     let newDate = new Date(selectedDate).setDate(new Date(selectedDate).getDate() + change);
@@ -143,7 +152,7 @@ export const Log = () => {
             variant="standard"
             value={selectedDate}
             sx={classes.TextField}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={handleSelectedDateChange}
             InputLabelProps={{
               shrink: true,
             }}
