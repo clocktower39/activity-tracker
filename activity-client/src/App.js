@@ -8,7 +8,8 @@ import Navbar from "./Components/Navbar";
 import AuthRoute from "./Components/AuthRoute";
 import Login from "./Components/Login";
 import SignUp from "./Components/SignUp";
-import Settings from "./Components/Settings";
+import Settings from "./Components/Settings/Settings";
+import AccountSettings from "./Components/Settings/AccountSettings";
 import Loading from "./Components/Loading";
 import { theme } from "./theme";
 import "./App.css";
@@ -41,8 +42,10 @@ function App() {
           <Route exact path="/" element={<AuthRoute />}>
             <Route exact path="/" element={<Log />} />
           </Route>
-          <Route exact path="/settings" element={<AuthRoute />}>
-            <Route exact path="/settings" element={<Settings />} />
+          <Route exact path="/settings/*" element={<AuthRoute />}>
+            <Route exact path="/settings/*/*" element={<Settings />} >
+              <Route index={true} exact path="" element={<AccountSettings />} />
+            </Route>
           </Route>
 
         </Routes>
