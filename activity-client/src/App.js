@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { ThemeProvider } from "@mui/material";
 import { getActivities, loginJWT } from "./Redux/actions";
@@ -23,23 +23,29 @@ function App() {
 
   useEffect(() => {
     if (localStorage.getItem("JWT_AUTH_TOKEN") !== null) {
-      handleLoginAttempt().then(()=>dispatch(getActivities()).then(()=>setLoading(false)));
+      handleLoginAttempt().then(() => dispatch(getActivities()).then(() => setLoading(false)));
     }
-    else{
+    else {
       setLoading(false);
     }
     // eslint-disable-next-line
   }, []);
 
-  return loading?<Loading/>:(
+  return loading ? <Loading /> : (
     <ThemeProvider theme={theme}>
       <Router basename="/activity-tracker/">
-        <Switch>
-          <Route exact path="/login" component={Login} />
-          <Route exact path="/signup" component={SignUp} />
-          <AuthRoute exact path="/" component={Log} />
-          <AuthRoute exact path="/settings" component={Settings} />
-        </Switch>
+        <Routes>
+          <Route exact path="/login" element={Login} />
+          <Route exact path="/signup" element={SignUp} />
+
+          <Route exact path="/" element={<AuthRoute />}>
+            <Route exact path="/" element={<Log />} />
+          </Route>
+          <Route exact path="/settings" element={<AuthRoute />}>
+            <Route exact path="/settings" element={<Settings />} />
+          </Route>
+
+        </Routes>
         <Navbar />
       </Router>
     </ThemeProvider>

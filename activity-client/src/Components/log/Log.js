@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
-import { Redirect } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import {
   Button,
   Container,
@@ -137,7 +137,7 @@ export const Log = () => {
   };
 
   return !user ? (
-    <Redirect to={{ pathname: "/login" }} />
+    <Navigate to={{ pathname: "/login" }} />
   ) : (
     <Container maxWidth="md">
       <Grid container sx={classes.root}>
@@ -169,7 +169,7 @@ export const Log = () => {
         </Dialog>
         <Grid container item sx={{ justifyContent: 'center', alignItems: 'center', }}>
           <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
-            <IconButton color="primary" size="large" onClick={() => null} >
+            <IconButton color="primary" size="large" onClick={() => null} disabled >
               <FilterList sx={{color: "#FFF"}} />
             </IconButton>
           </Grid>
