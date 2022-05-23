@@ -10,7 +10,7 @@ import {
   circularProgressClasses,
 } from "@mui/material";
 import { updateActivityProgress } from "../../Redux/actions";
-import EditGoal from './EditGoalStats';
+import GoalDetails from './GoalDetails';
 
 const classes = {
   root: {},
@@ -25,7 +25,7 @@ const classes = {
   },
 };
 
-export default function GoalTracker(props) {
+export default function GoalCircularProgress(props) {
   const { category, goal, selectedDate, index, toggleAchievedView, categories } = props;
   const [openDialog, setOpenDialog] = useState(false);
 
@@ -126,7 +126,7 @@ export default function GoalTracker(props) {
           </Typography>
         </Grid>
       </Grid>
-      <EditGoal openDialog={openDialog} setOpenDialog={setOpenDialog} goal={goal} stats={currentDayStats} addAchieved={addAchieved} removeAchieved={removeAchieved} progressPercent={progressPercent} categories={categories} selectedDate={selectedDate} />
+      <GoalDetails openDialog={openDialog} setOpenDialog={setOpenDialog} goal={goal} stats={currentDayStats} addAchieved={addAchieved} removeAchieved={removeAchieved} progressPercent={progressPercent} categories={categories} selectedDate={selectedDate} />
     </>
   );
 }

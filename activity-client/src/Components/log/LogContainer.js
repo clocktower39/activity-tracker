@@ -13,8 +13,8 @@ import {
   Typography,
 } from "@mui/material";
 import { ArrowBack, ArrowForward, AddCircle, FilterList, Category, Flaky } from "@mui/icons-material";
-import GoalTracker from "./GoalTracker";
-import Categories from "./Categories";
+import GoalCircularProgress from "./GoalCircularProgress";
+import Categories from "./EditCategories";
 import NewGoal from "./NewGoal";
 
 const classes = {
@@ -66,7 +66,7 @@ export const adjustDays = (date, days) => {
   return result;
 }
 
-export const Log = () => {
+export const LogContainer = () => {
   const goals = useSelector((state) => state.goals);
   const user = useSelector((state) => state.user);
   const categories = useSelector((state) => state.categories);
@@ -202,7 +202,7 @@ export const Log = () => {
                   />
                 </Grid>
                 {goals.sort((a, b) => a.order - b.order).map((goal, index) => (
-                  <GoalTracker
+                  <GoalCircularProgress
                     key={`${goal.task}-${index}`}
                     goal={goal}
                     index={index}
@@ -221,4 +221,4 @@ export const Log = () => {
   );
 };
 
-export default Log;
+export default LogContainer;

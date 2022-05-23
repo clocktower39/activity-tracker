@@ -3,7 +3,7 @@ import { Container, Grid, TextField } from "@mui/material";
 import { BarChart, Bar, Tooltip, XAxis, YAxis } from "recharts";
 import { useSelector } from "react-redux";
 import { useWindowSize } from '../../Hooks/useWindowSize';
-import { dateToISOLikeButLocal, adjustDays } from '../Log/Log';
+import { dateToISOLikeButLocal, adjustDays } from './LogContainer';
 
 export const renderChart = (goal, width, height, startDate, endDate) => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

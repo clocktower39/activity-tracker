@@ -16,7 +16,7 @@ import {
   Typography
 } from "@mui/material";
 import { Settings as SettingsIcon } from '@mui/icons-material';
-import ChangePassword from '../ChangePassword';
+import ChangePassword from './ChangePassword';
 
 export default function Settings() {
   const dispatch = useDispatch();

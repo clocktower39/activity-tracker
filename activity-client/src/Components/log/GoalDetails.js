@@ -2,9 +2,9 @@ import React, { useState } from 'react'
 import { Dialog, DialogContent, DialogTitle, Divider, Grid, IconButton, LinearProgress, Typography } from '@mui/material';
 import { Add, Remove, Edit } from '@mui/icons-material';
 import EditGoal from './EditGoal';
-import { renderChart } from '../Metrics/Metrics';
-import { dateToISOLikeButLocal, adjustDays } from '../Log/Log';
-import { DateRange } from '../Metrics/Metrics';
+import { renderChart } from './Metrics';
+import { dateToISOLikeButLocal, adjustDays } from './LogContainer';
+import { DateRange } from './Metrics';
 
 const classes = {
     DialogTitle: { display: 'flex', justifyContent: 'center', alignItems: 'center', },
@@ -13,7 +13,7 @@ const classes = {
     ColorWhite: { color: '#f3f3f3', },
 }
 
-export default function EditGoalStats({ goal, stats, openDialog, setOpenDialog, addAchieved, removeAchieved, progressPercent, categories, selectedDate }) {
+export default function GoalDetails({ goal, stats, openDialog, setOpenDialog, addAchieved, removeAchieved, progressPercent, categories, selectedDate }) {
     const [toggleEditTaskView, setToggleEditTaskView] = useState(false);
 
     const onDialogClose = (e) => setOpenDialog(false);

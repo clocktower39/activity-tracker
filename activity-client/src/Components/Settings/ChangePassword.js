@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch } from 'react-redux';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, TextField } from "@mui/material";
-import { changePassword } from '../Redux/actions';
+import { changePassword } from '../../Redux/actions';
 
 export default function ChangePassword({ open, handlePasswordClose }) {
   const dispatch = useDispatch();

@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { ThemeProvider } from "@mui/material";
 import { getActivities, loginJWT } from "./Redux/actions";
-import Log from "./Components/Log/Log";
+import LogContainer from "./Components/Log/LogContainer";
 import Navbar from "./Components/Navbar";
 import AuthRoute from "./Components/AuthRoute";
 import Login from "./Components/Login";
@@ -40,7 +40,7 @@ function App() {
           <Route exact path="/signup" element={SignUp} />
 
           <Route exact path="/" element={<AuthRoute />}>
-            <Route exact path="/" element={<Log />} />
+            <Route exact path="/" element={<LogContainer />} />
           </Route>
           <Route exact path="/settings/*" element={<AuthRoute />}>
             <Route exact path="/settings/*/*" element={<Settings />} >
