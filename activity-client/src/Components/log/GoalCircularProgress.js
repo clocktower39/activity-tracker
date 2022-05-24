@@ -79,18 +79,17 @@ export default function GoalCircularProgress(props) {
             <Box position="relative" display="inline-flex" alignItems={"center"}>
               <CircularProgress
                 variant="determinate"
-                sx={{
-                  color: (theme) => progressPercent <= 100 ? "#ccc" : progressPercent <= 200 ? "#388e3c" : "#0288d1",
-                }}
+                color={progressPercent <= 100 ? "grey" : progressPercent <= 200 ? "success" : "secondary"}
                 size={60}
                 thickness={5}
                 value={100}
+                sx={{ animationDuration: "0ms", }}
               />
               <CircularProgress
                 variant="determinate"
                 value={progressPercent > 200 ? progressPercent - 200 :progressPercent > 100 ? progressPercent - 100 : progressPercent}
+                color={progressPercent <= 0 ? "grey" : progressPercent <= 34 ? "error" : progressPercent < 51 ? "warning" : progressPercent <= 100 ? "success" : "primary"}
                 sx={{
-                  color: (theme) => (progressPercent <= 0 ? "#ccc" : progressPercent < 34 ? "#d32f2f" : progressPercent < 51 ? "#f57c00" : progressPercent <= 100 ? "#388e3c" : "#0288d1"),
                   animationDuration: "550ms",
                   position: "absolute",
                   left: 0,

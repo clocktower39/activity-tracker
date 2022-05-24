@@ -16,6 +16,7 @@ import { ArrowBack, ArrowForward, AddCircle, FilterList, Category, Flaky } from 
 import GoalCircularProgress from "./GoalCircularProgress";
 import Categories from "./EditCategories";
 import NewGoal from "./NewGoal";
+import { theme } from '../../theme';
 
 const classes = {
   root: {
@@ -29,11 +30,9 @@ const classes = {
   Paper: {
     width: "100%",
     margin: "12.5px",
-    backgroundColor: "#303030",
-    color: "#000000",
   },
   categoryBackground: {
-    backgroundColor: "#1B1B1B",
+    backgroundColor: theme.palette.background.categoryBackground,
     width: "100%",
     height: "100%",
     padding: "15px",
@@ -41,11 +40,8 @@ const classes = {
   },
   goalContainer: {
     justifyContent: "center",
-    backgroundColor: "#303030",
+    backgroundColor: theme.palette.background.goalContainer,
     borderRadius: "4px",
-  },
-  ArrowButton: {
-    color: "#fff",
   },
 };
 
@@ -142,8 +138,8 @@ export const LogContainer = () => {
     <Container maxWidth="md">
       <Grid container sx={classes.root}>
         <Grid item xs={12} container sx={classes.dateContainer}>
-          <Button onClick={() => changeDate(-1)} sx={classes.ArrowButton}>
-            <ArrowBack sx={{ color: "#F9F9F9" }} />
+          <Button onClick={() => changeDate(-1)} >
+            <ArrowBack color="action" />
           </Button>
           <TextField
             id="date"
@@ -151,14 +147,13 @@ export const LogContainer = () => {
             type="date"
             variant="standard"
             value={selectedDate}
-            sx={classes.TextField}
             onChange={handleSelectedDateChange}
             InputLabelProps={{
               shrink: true,
             }}
           />
-          <Button onClick={() => changeDate(1)} sx={classes.ArrowButton}>
-            <ArrowForward sx={{ color: "#F9F9F9" }} />
+          <Button onClick={() => changeDate(1)} >
+            <ArrowForward color="action" />
           </Button>
         </Grid>
         <Dialog open={toggleCategoryView} onClose={() => setToggleCategoryView(false)} >
@@ -169,23 +164,23 @@ export const LogContainer = () => {
         </Dialog>
         <Grid container item sx={{ justifyContent: 'center', alignItems: 'center', }}>
           <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
-            <IconButton color="primary" size="large" onClick={() => null} disabled >
-              <FilterList sx={{color: "#FFF"}} />
+            <IconButton size="large" onClick={() => null} >
+              <FilterList color="action" />
             </IconButton>
           </Grid>
           <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
-            <IconButton color="primary" size="large" onClick={() => setToggleCategoryView((prev) => !prev)} >
-              <Category sx={{color: "#FFF"}} />
+            <IconButton size="large" onClick={() => setToggleCategoryView((prev) => !prev)} >
+              <Category color="action" />
             </IconButton>
           </Grid>
           <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
-            <IconButton color="primary" size="large" onClick={() => setToggleNewTaskView((prev) => !prev)} >
-              <AddCircle sx={{color: "#FFF"}} />
+            <IconButton size="large" onClick={() => setToggleNewTaskView((prev) => !prev)} >
+              <AddCircle color="action" />
             </IconButton>
           </Grid>
           <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
-            <IconButton color="primary" size="large" onClick={() => setToggleAchievedView((prev) => !prev)} >
-              <Flaky sx={{color: "#FFF"}} />
+            <IconButton size="large" onClick={() => setToggleAchievedView((prev) => !prev)} >
+              <Flaky color="action" />
             </IconButton>
           </Grid>
         </Grid>

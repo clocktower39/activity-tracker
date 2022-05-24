@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { ThemeProvider } from "@mui/material";
+import { ThemeProvider, CssBaseline, } from "@mui/material";
 import { getActivities, loginJWT } from "./Redux/actions";
 import LogContainer from "./Components/Log/LogContainer";
 import Navbar from "./Components/Navbar";
@@ -34,6 +34,7 @@ function App() {
 
   return loading ? <Loading /> : (
     <ThemeProvider theme={theme}>
+      <CssBaseline enableColorScheme />
       <Router basename="/activity-tracker/">
         <Routes>
           <Route exact path="/login" element={Login} />
