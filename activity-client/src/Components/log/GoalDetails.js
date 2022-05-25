@@ -10,7 +10,6 @@ const classes = {
     DialogTitle: { display: 'flex', justifyContent: 'center', alignItems: 'center', },
     ProgressPercentText: { textAlign: 'center', },
     jCaICenter: { justifyContent: 'center', alignItems: 'center', },
-    ColorWhite: { color: '#f3f3f3', },
 }
 
 export default function GoalDetails({ goal, stats, openDialog, setOpenDialog, addAchieved, removeAchieved, progressPercent, categories, selectedDate }) {
@@ -26,14 +25,13 @@ export default function GoalDetails({ goal, stats, openDialog, setOpenDialog, ad
                 open={openDialog}
                 onClose={onDialogClose}
                 fullWidth
-                sx={{ '& .MuiDialog-paper':{backgroundColor: "#303030",} }}
             >
 
                 <DialogTitle sx={classes.DialogTitle}>
                     <Grid container sx={{ justifyContent: 'space-between', alignItems: 'center' }} >
                         <Grid item container xs={12} sm={2} sx={classes.jCaICenter} ><Typography variant="subtitle1">{selectedDate}</Typography></Grid>
                         <Grid item container xs={12} sm={8} sx={classes.jCaICenter} ><Typography variant="h4">{goal.task}</Typography></Grid>
-                        <Grid item container xs={12} sm={2} sx={classes.jCaICenter} ><IconButton onClick={() => setToggleEditTaskView(true)} sx={ classes.ColorWhite } ><Edit /></IconButton></Grid>
+                        <Grid item container xs={12} sm={2} sx={classes.jCaICenter} ><IconButton onClick={() => setToggleEditTaskView(true)} ><Edit /></IconButton></Grid>
                     </Grid>
 
 
@@ -42,9 +40,9 @@ export default function GoalDetails({ goal, stats, openDialog, setOpenDialog, ad
                 <LinearProgress variant="determinate" value={progressPercent > 100 ? 100 : progressPercent} />
                 <DialogContent>
                     <Grid container >
-                        <Grid container item xs={4} sx={classes.jCaICenter} ><IconButton onClick={removeAchieved} sx={ classes.ColorWhite } ><Remove /></IconButton></Grid>
-                        <Grid container item xs={4} sx={classes.jCaICenter} ><Typography sx={ classes.ColorWhite } >{stats.achieved}</Typography></Grid>
-                        <Grid container item xs={4} sx={classes.jCaICenter} ><IconButton onClick={addAchieved} sx={ classes.ColorWhite } ><Add /></IconButton></Grid>
+                        <Grid container item xs={4} sx={classes.jCaICenter} ><IconButton onClick={removeAchieved}  ><Remove /></IconButton></Grid>
+                        <Grid container item xs={4} sx={classes.jCaICenter} ><Typography >{stats.achieved}</Typography></Grid>
+                        <Grid container item xs={4} sx={classes.jCaICenter} ><IconButton onClick={addAchieved} ><Add /></IconButton></Grid>
                     </Grid>
                     <Divider sx={{ margin: '15px 0px' }} />
                     <Typography variant="h6" sx={{ textAlign: "center" }}>History</Typography>

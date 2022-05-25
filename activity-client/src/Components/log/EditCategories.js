@@ -90,7 +90,7 @@ export default function Categories({ categoryId, categories, setToggleCategoryVi
   };
 
   return (
-    <Grid container sx={{ backgroundColor: "#303030" }}>
+    <Grid container >
       <Grid container item xs={12}>
         <AppBar sx={{ position: "relative" }}>
           <Toolbar>

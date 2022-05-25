@@ -49,7 +49,10 @@ export default function Settings() {
             <Box component={Grid} display={{ xs: "none", sm: "flex" }}>
               <List>
                 <ListItem button component={Link} to="/settings">
-                  <ListItemText primary="My Account" style={{ color: "white" }} />
+                  <ListItemText primary="Account" />
+                </ListItem>
+                <ListItem button component={Link} to="/settings/theme">
+                  <ListItemText primary="Theme" />
                 </ListItem>
               </List>
             </Box>

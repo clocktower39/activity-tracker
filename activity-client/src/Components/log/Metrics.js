@@ -91,7 +91,7 @@ export default function Metrics() {
               fullWidth
               value={selectedTaskIndex}
               onChange={(e) => setSelectedTaskIndex(Number(e.target.value))}
-              style={{ margin: "25px 0px" }}
+              sx={{ margin: "25px 0px" }}
             >
               {goals.map((goal, index) => (
                 <option key={`option-${index}`} value={index}>

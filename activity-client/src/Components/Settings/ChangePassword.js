@@ -23,7 +23,6 @@ export default function ChangePassword({ open, handlePasswordClose }) {
       onClose={handlePasswordClose}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
-      PaperProps={{sx: (theme)=>({ backgroundColor: '#303030'})}}
     >
       <DialogTitle id="alert-dialog-title">
         {"Change password"}

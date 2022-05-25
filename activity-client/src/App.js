@@ -10,6 +10,7 @@ import Login from "./Components/Login";
 import SignUp from "./Components/SignUp";
 import Settings from "./Components/Settings/Settings";
 import AccountSettings from "./Components/Settings/AccountSettings";
+import ThemeSettings from "./Components/Settings/ThemeSettings";
 import Loading from "./Components/Loading";
 import { theme } from "./theme";
 import "./App.css";
@@ -46,6 +47,7 @@ function App() {
           <Route exact path="/settings/*" element={<AuthRoute />}>
             <Route exact path="/settings/*/*" element={<Settings />} >
               <Route index={true} exact path="" element={<AccountSettings />} />
+              <Route index={true} exact path="theme" element={<ThemeSettings />} />
             </Route>
           </Route>
 

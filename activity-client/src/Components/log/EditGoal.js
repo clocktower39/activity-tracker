@@ -39,7 +39,7 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
   const intervalOptions = ["Daily", "Weekly", "Monthly", "Yearly"];
 
   return (
-    <Grid container sx={{ backgroundColor: "#303030" }}>
+    <Grid container >
       <Grid container item xs={12}>
         <AppBar sx={{ position: "relative" }}>
           <Toolbar>
