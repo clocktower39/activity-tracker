@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { ThemeProvider, CssBaseline, } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
 import { getActivities, loginJWT } from "./Redux/actions";
 import LogContainer from "./Components/Log/LogContainer";
 import Navbar from "./Components/Navbar";
@@ -18,10 +18,16 @@ import "./App.css";
 function App() {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
+  const userThemeMode = useSelector(state => state.theme.mode);
+  const [currentTheme, setCurrentTheme] = useState(createTheme(theme(userThemeMode)))
 
   const handleLoginAttempt = async (e) => {
     dispatch(loginJWT(localStorage.getItem("JWT_AUTH_TOKEN")));
   };
+
+  useEffect(() => {
+    setCurrentTheme(createTheme(theme(userThemeMode)));
+  }, [userThemeMode, setCurrentTheme])
 
   useEffect(() => {
     if (localStorage.getItem("JWT_AUTH_TOKEN") !== null) {
@@ -32,14 +38,13 @@ function App() {
     }
     // eslint-disable-next-line
   }, []);
-
   return loading ? <Loading /> : (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={currentTheme}>
       <CssBaseline enableColorScheme />
       <Router basename="/activity-tracker/">
         <Routes>
-          <Route exact path="/login" element={Login} />
-          <Route exact path="/signup" element={SignUp} />
+          <Route exact path="/login" element={<Login />} />
+          <Route exact path="/signup" element={<SignUp />} />
 
           <Route exact path="/" element={<AuthRoute />}>
             <Route exact path="/" element={<LogContainer />} />

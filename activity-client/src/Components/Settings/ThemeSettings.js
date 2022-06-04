@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { updateThemeMode } from '../../Redux/actions';
 import {
     Autocomplete,
     Button,
@@ -10,11 +12,14 @@ import {
 } from "@mui/material";
 
 export default function AccountSettings() {
+    const dispatch = useDispatch();
+    const userThemeMode = useSelector(state => state.theme.mode);
     const options = [ { label:'Dark', value: 'dark', }, { label: 'Light', value: 'light', }, { label:'Custom', value: 'custom', disabled: true }, ]
-    const [themeSelection, setThemeSelection] = useState(options[0]);
+    const [themeSelection, setThemeSelection] = useState(options.filter(option => option.value === userThemeMode)[0]);
 
     const handleChange = (e, selection) => {
         setThemeSelection(selection);
+        dispatch(updateThemeMode(selection.value))
     }
 
     return (

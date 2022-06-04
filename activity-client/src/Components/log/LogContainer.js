@@ -16,7 +16,7 @@ import { ArrowBack, ArrowForward, AddCircle, FilterList, Category, Flaky } from 
 import GoalCircularProgress from "./GoalCircularProgress";
 import Categories from "./EditCategories";
 import NewGoal from "./NewGoal";
-import { theme } from '../../theme';
+// import { theme } from '../../theme';
 
 const classes = {
   root: {
@@ -32,7 +32,7 @@ const classes = {
     margin: "12.5px",
   },
   categoryBackground: {
-    backgroundColor: theme.palette.background.categoryBackground,
+    // backgroundColor: theme.palette.background.categoryBackground,
     width: "100%",
     height: "100%",
     padding: "15px",
@@ -40,7 +40,7 @@ const classes = {
   },
   goalContainer: {
     justifyContent: "center",
-    backgroundColor: theme.palette.background.goalContainer,
+    // backgroundColor: theme.palette.background.goalContainer,
     borderRadius: "4px",
   },
 };

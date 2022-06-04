@@ -1,7 +1,7 @@
-import { LOGIN_USER, LOGOUT_USER, ERROR, UPDATE_ACTIVITY, UPDATE_CATEGORIES, } from './actions';
-import { goals, categories, user } from './states';
+import { LOGIN_USER, LOGOUT_USER, ERROR, UPDATE_ACTIVITY, UPDATE_CATEGORIES, UPDATE_THEME_MODE, } from './actions';
+import { goals, categories, user, theme } from './states';
 
-export let reducer = (state = { goals, categories, user }, action) => {
+export let reducer = (state = { goals, categories, user, theme }, action) => {
     switch (action.type) {
     case LOGIN_USER:
         return {
@@ -28,6 +28,14 @@ export let reducer = (state = { goals, categories, user }, action) => {
         return {
             ...state,
             categories: [...action.categories],
+        }
+    case UPDATE_THEME_MODE:
+        return {
+            ...state,
+            theme: {
+                ...state.theme,
+                mode: action.mode,
+            }
         }
     case ERROR:
         return {
