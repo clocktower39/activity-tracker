@@ -1,13 +1,12 @@
-import { LOGIN_USER, LOGOUT_USER, ERROR, UPDATE_ACTIVITY, UPDATE_CATEGORIES, UPDATE_THEME_MODE, } from './actions';
-import { goals, categories, user, theme } from './states';
+import { LOGIN_USER, LOGOUT_USER, ERROR, UPDATE_ACTIVITY, UPDATE_CATEGORIES, } from './actions';
+import { goals, categories, user } from './states';
 
-export let reducer = (state = { goals, categories, user, theme }, action) => {
+export let reducer = (state = { goals, categories, user }, action) => {
     switch (action.type) {
     case LOGIN_USER:
         return {
             ...state,
             user: {
-                ...state.user,
                 ...action.user,
             },
         }
@@ -16,6 +15,7 @@ export let reducer = (state = { goals, categories, user, theme }, action) => {
             ...state,
             goals: [],
             user: {
+                themeMode: 'dark',
             },
         }
     case UPDATE_ACTIVITY:
@@ -28,14 +28,6 @@ export let reducer = (state = { goals, categories, user, theme }, action) => {
         return {
             ...state,
             categories: [...action.categories],
-        }
-    case UPDATE_THEME_MODE:
-        return {
-            ...state,
-            theme: {
-                ...state.theme,
-                mode: action.mode,
-            }
         }
     case ERROR:
         return {

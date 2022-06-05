@@ -34,7 +34,6 @@ const CategoryItem = ({ category, setLocalCategories }) => {
         if (category._id === prevCategory._id) {
           prevCategory.order = order;
           prevCategory.category = categoryName;
-          console.log(prev);
         }
         return prevCategory;
       })

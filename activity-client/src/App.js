@@ -18,7 +18,7 @@ import "./App.css";
 function App() {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
-  const userThemeMode = useSelector(state => state.theme.mode);
+  const userThemeMode = useSelector(state => state.user.themeMode);
   const [currentTheme, setCurrentTheme] = useState(createTheme(theme(userThemeMode)))
 
   const handleLoginAttempt = async (e) => {

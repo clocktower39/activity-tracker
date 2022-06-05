@@ -5,7 +5,6 @@ export const UPDATE_CATEGORIES = 'UPDATE_CATEGORIES';
 export const LOGIN_USER = 'LOGIN_USER';
 export const LOGOUT_USER = 'LOGOUT_USER';
 export const SIGNUP_USER = 'SIGNUP_USER';
-export const UPDATE_THEME_MODE = 'UPDATE_THEME_MODE';
 export const ERROR = 'ERROR';
 
 // dev server
@@ -177,10 +176,31 @@ export function updateCategories(categories) {
 
 export function updateThemeMode(mode) {
     return async (dispatch) => {
-        return dispatch({
-            type: UPDATE_THEME_MODE,
-            mode,
+        const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
+        const response = await fetch(`${serverURL}/updateUser`, {
+            method: 'post',
+            dataType: 'json',
+            body: JSON.stringify({ themeMode: mode }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8",
+                "Authorization": bearer,
+            }
         })
+        const data = await response.json();
+        if (data.error) {
+            return dispatch({
+                type: ERROR,
+                error: data.error
+            });
+        }
+        const accessToken = data.accessToken;
+        const decodedAccessToken = jwt(accessToken);
+  
+        localStorage.setItem('JWT_AUTH_TOKEN', accessToken);
+        return dispatch({
+            type: LOGIN_USER,
+            user: decodedAccessToken,
+        });
     }
 }
 

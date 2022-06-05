@@ -13,14 +13,15 @@ import {
 
 export default function AccountSettings() {
     const dispatch = useDispatch();
-    const userThemeMode = useSelector(state => state.theme.mode);
+    const userThemeMode = useSelector(state => state.user.themeMode);
     const options = [ { label:'Dark', value: 'dark', }, { label: 'Light', value: 'light', }, { label:'Custom', value: 'custom', disabled: true }, ]
     const [themeSelection, setThemeSelection] = useState(options.filter(option => option.value === userThemeMode)[0]);
 
     const handleChange = (e, selection) => {
         setThemeSelection(selection);
-        dispatch(updateThemeMode(selection.value))
     }
+
+    const saveTheme = () => dispatch(updateThemeMode(themeSelection.value));
 
     return (
         <Container maxWidth="md" sx={{ height: "100%" }}>
@@ -47,7 +48,7 @@ export default function AccountSettings() {
                             <Button variant="contained" onClick={() => null}>Cancel</Button>
                         </Grid>
                         <Grid item >
-                            <Button variant="contained" onClick={() => null}>Save</Button>
+                            <Button variant="contained" onClick={saveTheme}>Save</Button>
                         </Grid>
                     </Grid>
                 </Grid>
