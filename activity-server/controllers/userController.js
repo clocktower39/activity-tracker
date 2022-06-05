@@ -2,6 +2,24 @@ const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
+const update_user = (req, res, next) => {
+  User.findByIdAndUpdate(res.locals.user._id, { ...req.body }, { new: true }, function (err, user) {
+    if (err) return next(err);
+    if (!user) {
+      res.send({
+        status: 'error',
+        err: err ? err : '',
+      })
+    }
+    else {
+      const accessToken = jwt.sign(user._doc, ACCESS_TOKEN_SECRET, {
+        expiresIn: "30d", // expires in 30 days
+      });
+      res.send({ status: 'Successful', accessToken });
+    }
+  })
+}
+
 const signup_user = (req, res, next) => {
   let user = new User(req.body);
   let saveUser = () => {
@@ -89,6 +107,7 @@ const checkAuthLoginToken = (req, res) => {
 };
 
 module.exports = {
+  update_user,
   signup_user,
   login_user,
   checkAuthLoginToken,
