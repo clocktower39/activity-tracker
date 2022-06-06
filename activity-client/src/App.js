@@ -11,6 +11,7 @@ import SignUp from "./Components/SignUp";
 import Settings from "./Components/Settings/Settings";
 import AccountSettings from "./Components/Settings/AccountSettings";
 import ThemeSettings from "./Components/Settings/ThemeSettings";
+import NotFoundPage from "./Components/NotFoundPage";
 import Loading from "./Components/Loading";
 import { theme } from "./theme";
 import "./App.css";
@@ -45,10 +46,12 @@ function App() {
         <Routes>
           <Route exact path="/login" element={<Login />} />
           <Route exact path="/signup" element={<SignUp />} />
+          <Route path="*" element={<NotFoundPage />} />
 
           <Route exact path="/" element={<AuthRoute />}>
             <Route exact path="/" element={<LogContainer />} />
           </Route>
+          
           <Route exact path="/settings/*" element={<AuthRoute />}>
             <Route exact path="/settings/*/*" element={<Settings />} >
               <Route index={true} exact path="" element={<AccountSettings />} />

@@ -192,7 +192,7 @@ export const LogContainer = () => {
                   <Typography variant="h6">{category.category}</Typography>
                   <LinearProgress
                     variant="determinate"
-                    value={isNaN(categoryPercent) ? 0 : categoryPercent}
+                    value={isNaN(categoryPercent) ? 0 : categoryPercent > 100 ? 100 : categoryPercent}
                   />
                 </Grid>
                 {goals.sort((a, b) => a.order - b.order).map((goal, index) => (
