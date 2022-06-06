@@ -4,8 +4,8 @@ const lightTheme = {
     palette:{
         mode: 'light',
         background: {
-            categoryBackground: '#1B1B1B',
-            goalContainer: '#303030',
+            categoryBackground: 'grey',
+            goalContainer: '#DDD',
         }
     },
     typography: {

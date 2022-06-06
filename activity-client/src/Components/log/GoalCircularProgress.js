@@ -87,7 +87,7 @@ export default function GoalCircularProgress(props) {
               />
               <CircularProgress
                 variant="determinate"
-                value={progressPercent > 200 ? progressPercent - 200 :progressPercent > 100 ? progressPercent - 100 : progressPercent}
+                value={progressPercent > 200 ? progressPercent - 200 : progressPercent > 100 ? progressPercent - 100 : progressPercent}
                 color={progressPercent <= 0 ? "grey" : progressPercent <= 34 ? "error" : progressPercent < 51 ? "warning" : progressPercent <= 100 ? "success" : "primary"}
                 sx={{
                   animationDuration: "550ms",

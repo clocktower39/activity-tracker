@@ -39,7 +39,7 @@ export default function Settings() {
 
   return (
     <Container maxWidth="md">
-      <Paper sx={{ marginTop: "25px", padding: '12.5px 0', height: '85vh', color: 'white', backgroundColor: '#303030', }}>
+      <Paper sx={{ marginTop: "25px", padding: '12.5px 0', height: '85vh', backgroundColor: 'background.goalContainer', }}>
         <Grid container >
           <Grid container item xs={12} sx={{ justifyContent: 'space-between', padding: '0px 7.5px' }}>
             <Typography variant="h4" >Settings</Typography>

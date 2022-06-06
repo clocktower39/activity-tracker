@@ -26,7 +26,7 @@ export default function AccountSettings() {
                     Account
                 </Typography>
             </Grid>
-            <Paper sx={{ backgroundColor: '#1B1B1B' }}>
+            <Paper >
                 <Grid container spacing={2} sx={{ padding: "15px" }}>
                     <Grid container item xs={12} sx={{ justifyContent: 'center' }}>
                         <TextField

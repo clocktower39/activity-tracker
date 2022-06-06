@@ -16,7 +16,6 @@ import { ArrowBack, ArrowForward, AddCircle, FilterList, Category, Flaky } from 
 import GoalCircularProgress from "./GoalCircularProgress";
 import Categories from "./EditCategories";
 import NewGoal from "./NewGoal";
-// import { theme } from '../../theme';
 
 const classes = {
   root: {
@@ -32,7 +31,7 @@ const classes = {
     margin: "12.5px",
   },
   categoryBackground: {
-    // backgroundColor: theme.palette.background.categoryBackground,
+    backgroundColor: 'background.categoryBackground',
     width: "100%",
     height: "100%",
     padding: "15px",
@@ -40,22 +39,22 @@ const classes = {
   },
   goalContainer: {
     justifyContent: "center",
-    // backgroundColor: theme.palette.background.goalContainer,
+    backgroundColor: 'background.goalContainer',
     borderRadius: "4px",
   },
 };
 
-  // format a Date object like ISO
+// format a Date object like ISO
 export const dateToISOLikeButLocal = (date) => {
-    const offsetMs = date.getTimezoneOffset() * 60 * 1000;
-    const msLocal = date.getTime() - offsetMs;
-    const dateLocal = new Date(msLocal);
-    const iso = dateLocal.toISOString();
-    const isoLocal = iso.slice(0, 19);
-    return isoLocal;
-  };
-  
-  
+  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+  const msLocal = date.getTime() - offsetMs;
+  const dateLocal = new Date(msLocal);
+  const iso = dateLocal.toISOString();
+  const isoLocal = iso.slice(0, 19);
+  return isoLocal;
+};
+
+
 export const adjustDays = (date, days) => {
   var result = new Date(date);
   result.setDate(result.getDate() + days);
@@ -74,12 +73,12 @@ export const LogContainer = () => {
   const [selectedDate, setSelectedDate] = useState(dateToISOLikeButLocal(new Date()).substr(0, 10));
 
   const handleSelectedDateChange = (e) => {
-      if(e.target.value && e.target.value !== ''){
-        setSelectedDate(e.target.value);
-      }
-      else {
-        console.log(`Invalid date selected: '${e.target.value}'`)
-      }
+    if (e.target.value && e.target.value !== '') {
+      setSelectedDate(e.target.value);
+    }
+    else {
+      console.log(`Invalid date selected: '${e.target.value}'`)
+    }
   }
 
   // handles when arrow buttons are clicked
@@ -157,28 +156,28 @@ export const LogContainer = () => {
           </Button>
         </Grid>
         <Dialog open={toggleCategoryView} onClose={() => setToggleCategoryView(false)} >
-          <Categories categories={categories} setToggleCategoryView={setToggleCategoryView}/>
+          <Categories categories={categories} setToggleCategoryView={setToggleCategoryView} />
         </Dialog>
         <Dialog open={toggleNewTaskView} onClose={() => setToggleNewTaskView(false)} >
-          <NewGoal categories={categories} setToggleNewTaskView={setToggleNewTaskView}/>
+          <NewGoal categories={categories} setToggleNewTaskView={setToggleNewTaskView} />
         </Dialog>
         <Grid container item sx={{ justifyContent: 'center', alignItems: 'center', }}>
-          <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
+          <Grid item sx={{ justifyContent: 'center', alignItems: 'center', }}>
             <IconButton size="large" onClick={() => null} >
               <FilterList color="action" />
             </IconButton>
           </Grid>
-          <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
+          <Grid item sx={{ justifyContent: 'center', alignItems: 'center', }}>
             <IconButton size="large" onClick={() => setToggleCategoryView((prev) => !prev)} >
               <Category color="action" />
             </IconButton>
           </Grid>
-          <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
+          <Grid item sx={{ justifyContent: 'center', alignItems: 'center', }}>
             <IconButton size="large" onClick={() => setToggleNewTaskView((prev) => !prev)} >
               <AddCircle color="action" />
             </IconButton>
           </Grid>
-          <Grid item sx={{justifyContent: 'center', alignItems: 'center', }}>
+          <Grid item sx={{ justifyContent: 'center', alignItems: 'center', }}>
             <IconButton size="large" onClick={() => setToggleAchievedView((prev) => !prev)} >
               <Flaky color="action" />
             </IconButton>

@@ -14,7 +14,7 @@ import {
 export default function AccountSettings() {
     const dispatch = useDispatch();
     const userThemeMode = useSelector(state => state.user.themeMode);
-    const options = [ { label:'Dark', value: 'dark', }, { label: 'Light', value: 'light', }, { label:'Custom', value: 'custom', disabled: true }, ]
+    const options = [{ label: 'Dark', value: 'dark', }, { label: 'Light', value: 'light', }, { label: 'Custom', value: 'custom', disabled: true },]
     const [themeSelection, setThemeSelection] = useState(options.filter(option => option.value === userThemeMode)[0]);
 
     const handleChange = (e, selection) => {

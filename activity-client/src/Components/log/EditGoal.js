@@ -4,6 +4,7 @@ import {
   AppBar,
   Autocomplete,
   Button,
+  Checkbox,
   IconButton,
   Grid,
   TextField,
@@ -20,8 +21,11 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
   const [defaultTarget, setDefaultTarget] = useState(goal.defaultTarget);
   const [category, setCategory] = useState(goal.category);
   const [order, setOrder] = useState(goal.order);
+  const [disabledDelete, setDisabledDelete] = useState(true);
 
   const handleChange = (e, setter) => setter(e.target.value);
+
+  const handleUnderstandDelete = () => setDisabledDelete(prev => !prev)
 
   const saveChanges = () => {
     if (task !== "" && category !== "" && defaultTarget !== "") {
@@ -103,6 +107,15 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
               value={order}
               onChange={(e) => handleChange(e, setOrder)}
             />
+          </Grid>
+          <Grid container item xs={12}>
+            <Grid container item xs={2} sx={{ justifyContent: 'flex-end' }}>
+              <Button variant="contained" disabled={disabledDelete}>Delete</Button>
+            </Grid>
+            <Grid container item xs={10} sx={{ alignItems: 'center' }}>
+              <Checkbox onChange={handleUnderstandDelete} checked={!disabledDelete} />
+              <Typography variant="caption">If deleted, all history will be removed and can not be recovered.</Typography>
+            </Grid>
           </Grid>
         </Grid>
       </Grid>
