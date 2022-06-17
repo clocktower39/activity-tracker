@@ -68,6 +68,7 @@ export const LogContainer = () => {
   const [toggleAchievedView, setToggleAchievedView] = useState(true);
   const [toggleCategoryView, setToggleCategoryView] = useState(false);
   const [toggleNewTaskView, setToggleNewTaskView] = useState(false);
+  const [sortBy, setSortBy] = useState(true);
 
   // set the log date to today
   const [selectedDate, setSelectedDate] = useState(dateToISOLikeButLocal(new Date()).substr(0, 10));
@@ -86,6 +87,8 @@ export const LogContainer = () => {
     let newDate = new Date(selectedDate).setDate(new Date(selectedDate).getDate() + change);
     setSelectedDate(new Date(newDate).toISOString().substr(0, 10));
   };
+
+  const handleSortToggle = () => setSortBy(prev => !prev);
 
   // gathers daily history for calculating progress percentages
   let allGoalsStatsToday = goals
@@ -131,6 +134,18 @@ export const LogContainer = () => {
     return (achievedTotal / goalTotal) * 100;
   };
 
+  const getAllProgress = () => {
+    let achievedTotal = 0;
+    let goalTotal = 0;
+
+    allGoalsStatsToday.forEach((goal) => {
+      achievedTotal += goal.stats.achieved;
+      goalTotal += goal.stats.targetPerDuration;
+    });
+
+    return (achievedTotal / goalTotal) * 100;
+  };
+
   return !user ? (
     <Navigate to={{ pathname: "/login" }} />
   ) : (
@@ -163,7 +178,7 @@ export const LogContainer = () => {
         </Dialog>
         <Grid container item sx={{ justifyContent: 'center', alignItems: 'center', }}>
           <Grid item sx={{ justifyContent: 'center', alignItems: 'center', }}>
-            <IconButton size="large" onClick={() => null} >
+            <IconButton size="large" onClick={handleSortToggle} >
               <FilterList color="action" />
             </IconButton>
           </Grid>
@@ -183,7 +198,8 @@ export const LogContainer = () => {
             </IconButton>
           </Grid>
         </Grid>
-        {categories.sort((a, b) => a.order - b.order).map((category) => {
+        {sortBy ? 
+        categories.sort((a, b) => a.order - b.order).map((category) => {
           let categoryPercent = getCategoryProgress(category.category);
           return (
             <Paper variant="outlined" sx={classes.Paper} key={category.category}>
@@ -209,7 +225,29 @@ export const LogContainer = () => {
               </Grid>
             </Paper>
           );
-        })}
+        }): 
+        <Paper variant="outlined" sx={classes.Paper} >
+          <Grid container item xs={12} sx={classes.goalContainer}>
+            <Grid item xs={12} sx={classes.categoryBackground}>
+              <Typography variant="h6">All</Typography>
+              <LinearProgress
+                variant="determinate"getAllProgress
+                value={isNaN(getAllProgress()) ? 0 : getAllProgress() > 100 ? 100 : getAllProgress()}
+              />
+            </Grid>
+            {goals.sort((a, b) => a.task > b.task).map((goal, index) => (
+              <GoalCircularProgress
+                key={`${goal.task}-${index}`}
+                goal={goal}
+                index={index}
+                category={goal.category}
+                selectedDate={selectedDate}
+                toggleAchievedView={toggleAchievedView}
+                categories={categories}
+              />
+            ))}
+          </Grid>
+        </Paper>}
       </Grid>
     </Container>
   );
