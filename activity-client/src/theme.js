@@ -1,59 +1,42 @@
 import { createTheme } from '@mui/material';
+import { store } from './Redux/store';
 
 const lightTheme = {
-    palette:{
+    palette: {
         mode: 'light',
         background: {
             categoryBackground: 'grey',
             goalContainer: '#DDD',
         }
     },
-    typography: {
-    },
     components: {
-        // Name of the component
         MuiButton: {
             styleOverrides: {
-                // Name of the slot
                 root: {
-                    // Some CSS
                     fontSize: '1rem',
                 },
             },
         },
     },
-    overrides: {
-        MuiInputBase: {
-        }
-    }
 };
 
 const darkTheme = {
-    palette:{
+    palette: {
         mode: 'dark',
         background: {
             categoryBackground: '#1B1B1B',
             goalContainer: '#303030',
         }
     },
-    typography: {
-    },
     components: {
-        // Name of the component
         MuiButton: {
             styleOverrides: {
-                // Name of the slot
                 root: {
-                    // Some CSS
                     fontSize: '1rem',
                 },
             },
         },
     },
-    overrides: {
-        MuiInputBase: {
-        }
-    }
 }
 
-export const theme = (userThemeMode) => userThemeMode === 'light' ? createTheme(lightTheme) : createTheme(darkTheme);
+export const theme = () => createTheme(store.getState().user.themeMode === 'light' ? lightTheme : darkTheme);

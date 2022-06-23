@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
+import { ThemeProvider, CssBaseline } from "@mui/material";
 import { getActivities, loginJWT } from "./Redux/actions";
 import LogContainer from "./Components/Log/LogContainer";
 import Navbar from "./Components/Navbar";
@@ -19,16 +19,16 @@ import "./App.css";
 function App() {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
-  const userThemeMode = useSelector(state => state.user.themeMode);
-  const [currentTheme, setCurrentTheme] = useState(createTheme(theme(userThemeMode)))
+  const themeMode = useSelector(state => state.user.themeMode);
+  const [themeSelection, setThemeSelection] = useState(theme());
 
   const handleLoginAttempt = async (e) => {
     dispatch(loginJWT(localStorage.getItem("JWT_AUTH_TOKEN")));
   };
 
-  useEffect(() => {
-    setCurrentTheme(createTheme(theme(userThemeMode)));
-  }, [userThemeMode, setCurrentTheme])
+  useEffect(()=>{
+    setThemeSelection(theme());
+  },[themeMode])
 
   useEffect(() => {
     if (localStorage.getItem("JWT_AUTH_TOKEN") !== null) {
@@ -40,7 +40,7 @@ function App() {
     // eslint-disable-next-line
   }, []);
   return loading ? <Loading /> : (
-    <ThemeProvider theme={currentTheme}>
+    <ThemeProvider theme={themeSelection}>
       <CssBaseline enableColorScheme />
       <Router basename="/activity-tracker/">
         <Routes>
