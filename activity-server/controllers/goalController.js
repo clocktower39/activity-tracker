@@ -87,6 +87,13 @@ const add_goal = (req, res, next) => {
     saveGoal();
 }
 
+const delete_goal = (req, res, next) => {
+    Goal.findByIdAndDelete(req.body.goalId, (err, docs) => {
+        if (err) return next(err);
+        res.sendStatus(200);
+    })
+}
+
 const update_categories =  async (req, res, next) => {
     let { categories } = req.body;
 
@@ -107,5 +114,6 @@ module.exports = {
     get_goals,
     update_goal,
     add_goal,
+    delete_goal,
     update_categories,
 }
