@@ -1,4 +1,4 @@
-import { LOGIN_USER, LOGOUT_USER, ERROR, UPDATE_ACTIVITY, UPDATE_CATEGORIES, } from './actions';
+import { LOGIN_USER, LOGOUT_USER, ERROR, UPDATE_ACTIVITY, UPDATE_CATEGORIES, DELETE_GOAL } from './actions';
 import { goals, categories, user } from './states';
 
 export let reducer = (state = { goals, categories, user }, action) => {
@@ -28,6 +28,11 @@ export let reducer = (state = { goals, categories, user }, action) => {
         return {
             ...state,
             categories: [...action.categories],
+        }
+    case DELETE_GOAL:
+        return {
+            ...state,
+            goals: [ ...state.goals.filter(goal => goal._id !== action.goalId) ]
         }
     case ERROR:
         return {

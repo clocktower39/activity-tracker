@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
-import { EditActivity } from "../../Redux/actions";
+import { EditActivity, deleteGoal } from "../../Redux/actions";
 
 export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
   const dispatch = useDispatch();
@@ -39,6 +39,8 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
       );
     }
   };
+
+  const confirmedDeleteGoal = () => dispatch(deleteGoal(goal._id))
 
   const intervalOptions = ["Daily", "Weekly", "Monthly", "Yearly"];
 
@@ -110,7 +112,7 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
           </Grid>
           <Grid container item xs={12}>
             <Grid container item xs={2} sx={{ justifyContent: 'flex-end' }}>
-              <Button variant="contained" disabled={disabledDelete}>Delete</Button>
+              <Button variant="contained" disabled={disabledDelete} onClick={confirmedDeleteGoal} >Delete</Button>
             </Grid>
             <Grid container item xs={10} sx={{ alignItems: 'center' }}>
               <Checkbox onChange={handleUnderstandDelete} checked={!disabledDelete} />

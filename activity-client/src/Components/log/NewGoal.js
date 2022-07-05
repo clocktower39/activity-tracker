@@ -38,6 +38,7 @@ export default function NewGoal({ categories, setToggleNewTaskView }) {
       setGoal("");
       setCategory("");
       setOrder("");
+      setToggleNewTaskView(false);
     }
   }
 

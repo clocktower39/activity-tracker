@@ -5,6 +5,7 @@ export const UPDATE_CATEGORIES = 'UPDATE_CATEGORIES';
 export const LOGIN_USER = 'LOGIN_USER';
 export const LOGOUT_USER = 'LOGOUT_USER';
 export const SIGNUP_USER = 'SIGNUP_USER';
+export const DELETE_GOAL = 'DELETE_GOAL';
 export const ERROR = 'ERROR';
 
 // dev server
@@ -68,6 +69,25 @@ export function addDateToHistory(index, historyObject) {
         return dispatch({
             type: UPDATE_ACTIVITY,
             newState,
+        })
+    }
+}
+
+export function deleteGoal(goalId) {
+    return async (dispatch, getState) => {
+        const bearer = `Bearer ${localStorage.getItem('JWT_AUTH_TOKEN')}`;
+        fetch(`${serverURL}/deleteGoal`, {
+            method: 'post',
+            dataType: 'json',
+            body: JSON.stringify({ goalId }),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8",
+                "Authorization": bearer,
+            }
+        })
+        return dispatch({
+            type: DELETE_GOAL,
+            goalId,
         })
     }
 }
