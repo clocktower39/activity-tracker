@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const categorySchema = new mongoose.Schema({
-    accountId: {type: String, required: true},
+    account: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     categories: {
         type: [
             {
