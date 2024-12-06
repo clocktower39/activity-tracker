@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { getActivities, loginJWT } from "./Redux/actions";
@@ -39,10 +39,11 @@ function App() {
     }
     // eslint-disable-next-line
   }, []);
+
   return loading ? <Loading /> : (
     <ThemeProvider theme={themeSelection}>
       <CssBaseline enableColorScheme />
-      <Router basename="/activity-tracker/">
+      <Router>
         <Routes>
           <Route exact path="/login" element={<Login />} />
           <Route exact path="/signup" element={<SignUp />} />
@@ -63,7 +64,7 @@ function App() {
         <Navbar />
       </Router>
     </ThemeProvider>
-  );
+  )
 }
 
-export default App;
+export default App

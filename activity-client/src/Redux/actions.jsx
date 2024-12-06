@@ -1,4 +1,4 @@
-import jwt from 'jwt-decode';
+import { jwtDecode as jwt } from "jwt-decode";
 
 export const UPDATE_ACTIVITY = 'UPDATE_ACTIVITY';
 export const UPDATE_CATEGORIES = 'UPDATE_CATEGORIES';

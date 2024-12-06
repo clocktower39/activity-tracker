@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Navigate } from "react-router-dom";
+import { Navigate } from "react-router";
 import { Button, Container, Grid, Paper, TextField, Typography } from "@mui/material";
 import { loginUser, getActivities } from "../Redux/actions";
 

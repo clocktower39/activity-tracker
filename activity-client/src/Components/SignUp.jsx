@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Container, Grid, Paper, TextField, Typography } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router';
 import { signupUser } from '../Redux/actions';
 
 
