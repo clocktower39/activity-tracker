@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getActivities } from "../../Redux/actions";
 import { Navigate } from "react-router";
 import {
   Button,
@@ -12,10 +13,18 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { ArrowBack, ArrowForward, AddCircle, FilterList, Category, Flaky } from "@mui/icons-material";
+import {
+  ArrowBack,
+  ArrowForward,
+  AddCircle,
+  FilterList,
+  Category,
+  Flaky,
+} from "@mui/icons-material";
 import GoalCircularProgress from "./GoalCircularProgress";
 import Categories from "./EditCategories";
 import NewGoal from "./NewGoal";
+import dayjs from "dayjs";
 
 const classes = {
   root: {
@@ -31,7 +40,7 @@ const classes = {
     margin: "12.5px",
   },
   categoryBackground: {
-    backgroundColor: 'background.categoryBackground',
+    backgroundColor: "background.categoryBackground",
     width: "100%",
     height: "100%",
     padding: "15px",
@@ -39,29 +48,13 @@ const classes = {
   },
   goalContainer: {
     justifyContent: "center",
-    backgroundColor: 'background.goalContainer',
+    backgroundColor: "background.goalContainer",
     borderRadius: "4px",
   },
 };
 
-// format a Date object like ISO
-export const dateToISOLikeButLocal = (date) => {
-  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
-  const msLocal = date.getTime() - offsetMs;
-  const dateLocal = new Date(msLocal);
-  const iso = dateLocal.toISOString();
-  const isoLocal = iso.slice(0, 19);
-  return isoLocal;
-};
-
-
-export const adjustDays = (date, days) => {
-  var result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
 export const LogContainer = () => {
+  const dispatch = useDispatch();
   const goals = useSelector((state) => state.goals);
   const user = useSelector((state) => state.user);
   const categories = useSelector((state) => state.categories);
@@ -71,24 +64,28 @@ export const LogContainer = () => {
   const [sortBy, setSortBy] = useState(true);
 
   // set the log date to today
-  const [selectedDate, setSelectedDate] = useState(dateToISOLikeButLocal(new Date()).substr(0, 10));
+  const [selectedDate, setSelectedDate] = useState(dayjs(new Date()).format("YYYY-MM-DD"));
+
+  useEffect(() => {
+    dispatch(getActivities(selectedDate));
+    // eslint-disable-next-line
+  }, [selectedDate]);
 
   const handleSelectedDateChange = (e) => {
-    if (e.target.value && e.target.value !== '') {
+    if (e.target.value && e.target.value !== "") {
       setSelectedDate(e.target.value);
+    } else {
+      console.log(`Invalid date selected: '${e.target.value}'`);
     }
-    else {
-      console.log(`Invalid date selected: '${e.target.value}'`)
-    }
-  }
+  };
 
   // handles when arrow buttons are clicked
   const changeDate = (change) => {
-    let newDate = new Date(selectedDate).setDate(new Date(selectedDate).getDate() + change);
-    setSelectedDate(new Date(newDate).toISOString().substr(0, 10));
+    const newDate = dayjs(selectedDate).add(change, "day").format("YYYY-MM-DD");
+    setSelectedDate(newDate);
   };
 
-  const handleSortToggle = () => setSortBy(prev => !prev);
+  const handleSortToggle = () => setSortBy((prev) => !prev);
 
   // gathers daily history for calculating progress percentages
   let allGoalsStatsToday = goals
@@ -99,7 +96,7 @@ export const LogContainer = () => {
     }))
     .map((goal) => {
       // filteredHistory will return an array with a single object of the selected date
-      const filteredHistory = goal.history.filter((day) => day.date === selectedDate)[0];
+      const filteredHistory = goal.history.filter((day) => day.date === dayjs(selectedDate))[0];
       // if filteredHistory is null, it will use the filler history
       const fillerHistory = {
         date: selectedDate,
@@ -152,7 +149,7 @@ export const LogContainer = () => {
     <Container maxWidth="md">
       <Grid container sx={classes.root}>
         <Grid item xs={12} container sx={classes.dateContainer}>
-          <Button onClick={() => changeDate(-1)} >
+          <Button onClick={() => changeDate(-1)}>
             <ArrowBack color="action" />
           </Button>
           <TextField
@@ -166,88 +163,101 @@ export const LogContainer = () => {
               shrink: true,
             }}
           />
-          <Button onClick={() => changeDate(1)} >
+          <Button onClick={() => changeDate(1)}>
             <ArrowForward color="action" />
           </Button>
         </Grid>
-        <Dialog open={toggleCategoryView} onClose={() => setToggleCategoryView(false)} >
+        <Dialog open={toggleCategoryView} onClose={() => setToggleCategoryView(false)}>
           <Categories categories={categories} setToggleCategoryView={setToggleCategoryView} />
         </Dialog>
-        <Dialog open={toggleNewTaskView} onClose={() => setToggleNewTaskView(false)} >
+        <Dialog open={toggleNewTaskView} onClose={() => setToggleNewTaskView(false)}>
           <NewGoal categories={categories} setToggleNewTaskView={setToggleNewTaskView} />
         </Dialog>
-        <Grid container item sx={{ justifyContent: 'center', alignItems: 'center', }}>
-          <Grid item sx={{ justifyContent: 'center', alignItems: 'center', }}>
-            <IconButton size="large" onClick={handleSortToggle} >
+        <Grid container item sx={{ justifyContent: "center", alignItems: "center" }}>
+          <Grid item sx={{ justifyContent: "center", alignItems: "center" }}>
+            <IconButton size="large" onClick={handleSortToggle}>
               <FilterList color="action" />
             </IconButton>
           </Grid>
-          <Grid item sx={{ justifyContent: 'center', alignItems: 'center', }}>
-            <IconButton size="large" onClick={() => setToggleCategoryView((prev) => !prev)} >
+          <Grid item sx={{ justifyContent: "center", alignItems: "center" }}>
+            <IconButton size="large" onClick={() => setToggleCategoryView((prev) => !prev)}>
               <Category color="action" />
             </IconButton>
           </Grid>
-          <Grid item sx={{ justifyContent: 'center', alignItems: 'center', }}>
-            <IconButton size="large" onClick={() => setToggleNewTaskView((prev) => !prev)} >
+          <Grid item sx={{ justifyContent: "center", alignItems: "center" }}>
+            <IconButton size="large" onClick={() => setToggleNewTaskView((prev) => !prev)}>
               <AddCircle color="action" />
             </IconButton>
           </Grid>
-          <Grid item sx={{ justifyContent: 'center', alignItems: 'center', }}>
-            <IconButton size="large" onClick={() => setToggleAchievedView((prev) => !prev)} >
+          <Grid item sx={{ justifyContent: "center", alignItems: "center" }}>
+            <IconButton size="large" onClick={() => setToggleAchievedView((prev) => !prev)}>
               <Flaky color="action" />
             </IconButton>
           </Grid>
         </Grid>
-        {sortBy ? 
-        categories.sort((a, b) => a.order - b.order).map((category) => {
-          let categoryPercent = getCategoryProgress(category.category);
-          return (
-            <Paper variant="outlined" sx={classes.Paper} key={category.category}>
-              <Grid container item xs={12} sx={classes.goalContainer}>
-                <Grid item xs={12} sx={classes.categoryBackground}>
-                  <Typography variant="h6">{category.category}</Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={isNaN(categoryPercent) ? 0 : categoryPercent > 100 ? 100 : categoryPercent}
-                  />
-                </Grid>
-                {goals.sort((a, b) => a.order - b.order).map((goal, index) => (
+        {sortBy ? (
+          categories
+            .sort((a, b) => a.order - b.order)
+            .map((category) => {
+              let categoryPercent = getCategoryProgress(category.category);
+              return (
+                <Paper variant="outlined" sx={classes.Paper} key={category.category}>
+                  <Grid container item xs={12} sx={classes.goalContainer}>
+                    <Grid item xs={12} sx={classes.categoryBackground}>
+                      <Typography variant="h6">{category.category}</Typography>
+                      <LinearProgress
+                        variant="determinate"
+                        value={
+                          isNaN(categoryPercent) ? 0 : categoryPercent > 100 ? 100 : categoryPercent
+                        }
+                      />
+                    </Grid>
+                    {goals
+                      .sort((a, b) => a.order - b.order)
+                      .map((goal, index) => (
+                        <GoalCircularProgress
+                          key={`${goal.task}-${index}`}
+                          goal={goal}
+                          index={index}
+                          category={category.category}
+                          selectedDate={selectedDate}
+                          toggleAchievedView={toggleAchievedView}
+                          categories={categories}
+                        />
+                      ))}
+                  </Grid>
+                </Paper>
+              );
+            })
+        ) : (
+          <Paper variant="outlined" sx={classes.Paper}>
+            <Grid container item xs={12} sx={classes.goalContainer}>
+              <Grid item xs={12} sx={classes.categoryBackground}>
+                <Typography variant="h6">All</Typography>
+                <LinearProgress
+                  variant="determinate"
+                  getAllProgress
+                  value={
+                    isNaN(getAllProgress()) ? 0 : getAllProgress() > 100 ? 100 : getAllProgress()
+                  }
+                />
+              </Grid>
+              {goals
+                .sort((a, b) => a.task > b.task)
+                .map((goal, index) => (
                   <GoalCircularProgress
                     key={`${goal.task}-${index}`}
                     goal={goal}
                     index={index}
-                    category={category.category}
+                    category={goal.category}
                     selectedDate={selectedDate}
                     toggleAchievedView={toggleAchievedView}
                     categories={categories}
                   />
                 ))}
-              </Grid>
-            </Paper>
-          );
-        }): 
-        <Paper variant="outlined" sx={classes.Paper} >
-          <Grid container item xs={12} sx={classes.goalContainer}>
-            <Grid item xs={12} sx={classes.categoryBackground}>
-              <Typography variant="h6">All</Typography>
-              <LinearProgress
-                variant="determinate"getAllProgress
-                value={isNaN(getAllProgress()) ? 0 : getAllProgress() > 100 ? 100 : getAllProgress()}
-              />
             </Grid>
-            {goals.sort((a, b) => a.task > b.task).map((goal, index) => (
-              <GoalCircularProgress
-                key={`${goal.task}-${index}`}
-                goal={goal}
-                index={index}
-                category={goal.category}
-                selectedDate={selectedDate}
-                toggleAchievedView={toggleAchievedView}
-                categories={categories}
-              />
-            ))}
-          </Grid>
-        </Paper>}
+          </Paper>
+        )}
       </Grid>
     </Container>
   );

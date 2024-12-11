@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { Dialog, DialogContent, DialogTitle, Divider, Grid, IconButton, LinearProgress, Typography } from '@mui/material';
 import { Add, Remove, Edit } from '@mui/icons-material';
+import dayjs from "dayjs";
 import EditGoal from './EditGoal';
 import { renderChart } from './Metrics';
-import { dateToISOLikeButLocal, adjustDays } from './LogContainer';
 import { DateRange } from './Metrics';
 
 const classes = {
@@ -16,8 +16,9 @@ export default function GoalDetails({ goal, stats, openDialog, setOpenDialog, ad
     const [toggleEditTaskView, setToggleEditTaskView] = useState(false);
 
     const onDialogClose = (e) => setOpenDialog(false);
-    const [startDate, setStartDate] = useState(dateToISOLikeButLocal(adjustDays(new Date(selectedDate), -7)).substr(0, 10));
-    const [endDate, setEndDate] = useState(dateToISOLikeButLocal(new Date(selectedDate)).substr(0, 10));
+    const [startDate, setStartDate] = useState(dayjs(selectedDate).subtract(7, 'day').format('YYYY-MM-DD'));
+    const [endDate, setEndDate] = useState(dayjs(selectedDate).format('YYYY-MM-DD'));
+
 
     return (
         <>

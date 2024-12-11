@@ -3,7 +3,7 @@ import { Container, Grid, TextField } from "@mui/material";
 import { BarChart, Bar, Tooltip, XAxis, YAxis } from "recharts";
 import { useSelector } from "react-redux";
 import { useWindowSize } from '../../Hooks/useWindowSize';
-import { dateToISOLikeButLocal, adjustDays } from './LogContainer';
+import dayjs from "dayjs";
 
 export const renderChart = (goal, width, height, startDate, endDate) => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -74,8 +74,8 @@ export const DateRange = ({ startDate, setStartDate, endDate, setEndDate }) => {
 
 export default function Metrics() {
   const goals = useSelector((state) => state.goals);
-  const [startDate, setStartDate] = useState(dateToISOLikeButLocal(adjustDays(new Date(), -7)).substr(0, 10));
-  const [endDate, setEndDate] = useState(dateToISOLikeButLocal(new Date()).substr(0, 10));
+  const [startDate, setStartDate] = useState(dayjs(new Date()).subtract(7, 'day').format('YYYY-MM-DD'));
+  const [endDate, setEndDate] = useState(dayjs(new Date()).format("YYYY-MM-DD"));
   const [selectedTaskIndex, setSelectedTaskIndex] = useState(0);
   const sizes = useWindowSize();
 

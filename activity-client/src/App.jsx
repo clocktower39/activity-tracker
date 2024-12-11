@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { ThemeProvider, CssBaseline } from "@mui/material";
-import { getActivities, loginJWT } from "./Redux/actions";
+import { loginJWT } from "./Redux/actions";
 import LogContainer from "./Components/Log/LogContainer";
 import Navbar from "./Components/Navbar";
 import AuthRoute from "./Components/AuthRoute";
@@ -32,7 +32,7 @@ function App() {
 
   useEffect(() => {
     if (localStorage.getItem("JWT_AUTH_TOKEN") !== null) {
-      handleLoginAttempt().then(() => dispatch(getActivities()).then(() => setLoading(false)));
+      handleLoginAttempt().then(() => setLoading(false));
     }
     else {
       setLoading(false);

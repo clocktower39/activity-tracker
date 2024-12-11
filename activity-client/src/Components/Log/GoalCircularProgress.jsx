@@ -9,6 +9,7 @@ import {
   Typography,
   circularProgressClasses,
 } from "@mui/material";
+import dayjs from "dayjs";
 import { updateActivityProgress } from "../../Redux/actions";
 import GoalDetails from './GoalDetails';
 
@@ -26,10 +27,11 @@ const classes = {
 };
 
 export default function GoalCircularProgress(props) {
+  const dispatch = useDispatch();
   const { category, goal, selectedDate, index, toggleAchievedView, categories } = props;
   const [openDialog, setOpenDialog] = useState(false);
 
-  let currentDayStats = goal.history.filter((day) => day.date === selectedDate)[0];
+  let currentDayStats = goal.history.filter((day) => dayjs(day.date).add(1, 'day').format("YYYY-MM-DD") === selectedDate)[0];
 
   if (currentDayStats === undefined) {
     currentDayStats = {
@@ -38,6 +40,7 @@ export default function GoalCircularProgress(props) {
       achieved: 0,
     };
   }
+
   let progressPercent = Number(
     (currentDayStats.achieved / currentDayStats.targetPerDuration) * 100
   );
@@ -45,10 +48,9 @@ export default function GoalCircularProgress(props) {
   if (progressPercent < 0) {
     progressPercent = 0;
   }
-  const dispatch = useDispatch();
 
-  const handleActivityUpdate = (taskIndex, newAchieved) => {
-    dispatch(updateActivityProgress(taskIndex, newAchieved, selectedDate));
+  const handleActivityUpdate = (newAchieved) => {
+    dispatch(updateActivityProgress(goal._id, newAchieved, selectedDate));
   };
 
   const onLongPress = () => {
@@ -56,12 +58,12 @@ export default function GoalCircularProgress(props) {
   };
 
   const addAchieved = () => {
-    handleActivityUpdate(index, 1);
+    handleActivityUpdate(1);
   }
 
   const removeAchieved = () => {
     if (currentDayStats.achieved - 1 >= 0) {
-      handleActivityUpdate(index, -1);
+      handleActivityUpdate(-1);
     }
   }
 
