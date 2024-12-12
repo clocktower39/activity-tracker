@@ -23,67 +23,75 @@ export function updateActivityProgress(goadId, achieved, date) {
 
     newState.goals.map(async (goal) => {
       if (goal._id === goadId) {
-        const doesDateExist = goal.history.some((day) => {
+        const doesDateWithIdExist = goal.history.some((day) => {
           const formatDayDate = dayjs(day.date).add(1, "day").format("YYYY-MM-DD");
           const formatDate = dayjs(date).format("YYYY-MM-DD");
-          return formatDayDate === formatDate;
+          return formatDayDate === formatDate && day._id !== undefined;
         });
-        if(doesDateExist){
+        if (doesDateWithIdExist) {
           goal.history.map((day) => {
-              const formatDayDate = dayjs(day.date).add(1, "day").format("YYYY-MM-DD");
-              const formatDate = dayjs(date).format("YYYY-MM-DD");
+            const formatDayDate = dayjs(day.date).add(1, "day").format("YYYY-MM-DD");
+            const formatDate = dayjs(date).format("YYYY-MM-DD");
 
-              if (formatDayDate === formatDate) {
-                day.achieved = day.achieved + achieved;
-                // Create new update history route to accept exisiting ID for history item and update achieved
-                fetch(`${serverURL}/updateHistoryItem`, {
-                  method: "POST", // *GET, POST, PUT, DELETE, etc.
-                  mode: "cors", // no-cors, *cors, same-origin
-                  cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-                  credentials: "same-origin", // include, *same-origin, omit
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: bearer,
-                    // 'Content-Type': 'application/x-www-form-urlencoded',
-                  },
-                  
-                  body: JSON.stringify({ goalId: goal._id, historyItem: day }), // body data type must match "Content-Type" header
-                });
-              }
-              return day;
-            })
-         } else{
+            if (formatDayDate === formatDate) {
+              day.achieved = day.achieved + achieved;
+              // Create new update history route to accept exisiting ID for history item and update achieved
+              fetch(`${serverURL}/updateHistoryItem`, {
+                method: "POST", // *GET, POST, PUT, DELETE, etc.
+                mode: "cors", // no-cors, *cors, same-origin
+                cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+                credentials: "same-origin", // include, *same-origin, omit
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: bearer,
+                  // 'Content-Type': 'application/x-www-form-urlencoded',
+                },
+
+                body: JSON.stringify({ goalId: goal._id, historyItem: day }), // body data type must match "Content-Type" header
+              });
+            }
+            return day;
+          });
+        } else {
           const historyItem = {
             date: new Date(date),
             targetPerDuration: goal.defaultTarget,
             achieved,
-          }
-            // Create new new history route to create new history item and return an ID so they can be updated directly with an ID
-            await fetch(`${serverURL}/newHistoryItem`, {
-              method: "POST", // *GET, POST, PUT, DELETE, etc.
-              mode: "cors", // no-cors, *cors, same-origin
-              cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-              credentials: "same-origin", // include, *same-origin, omit
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: bearer,
-                // 'Content-Type': 'application/x-www-form-urlencoded',
-              },
-              referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-              body: JSON.stringify({ goalId: goal._id, historyItem }), // body data type must match "Content-Type" header
-            }).then(res => res.json()).then(data => {
-              console.log("new history item response data:");
-              console.log(data);
-              
-            const resHistoryItem = [
-              ...goal.history,
-              { ...data },
-            ];
+          };
 
-            goal.history = resHistoryItem;
-            })
+          goal.history.map((day) => {
+            const formatDayDate = dayjs(day.date).format("YYYY-MM-DD");
+            const formatDate = dayjs(date).format("YYYY-MM-DD");
             
-         }
+            console.log(formatDayDate)
+            console.log(formatDate)
+
+            if (formatDayDate === formatDate) {
+              day.achieved = day.achieved + achieved;
+
+              fetch(`${serverURL}/newHistoryItem`, {
+                method: "POST", // *GET, POST, PUT, DELETE, etc.
+                mode: "cors", // no-cors, *cors, same-origin
+                cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+                credentials: "same-origin", // include, *same-origin, omit
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: bearer,
+                  // 'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+                body: JSON.stringify({ goalId: goal._id, historyItem }), // body data type must match "Content-Type" header
+              })
+              .then((res) => res.json())
+              .then((data) => {
+                day._id = data.goal.history[data.goal.history.length - 1]._id;
+                const resHistoryItem = [ ...data.goal.history, ];
+                goal.history = resHistoryItem;
+              });
+            }
+            return day;
+          });
+        }
       }
       return goal;
     });

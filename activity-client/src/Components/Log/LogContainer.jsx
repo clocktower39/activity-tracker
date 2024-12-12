@@ -218,6 +218,7 @@ export const LogContainer = () => {
                         <GoalCircularProgress
                           key={`${goal.task}-${index}`}
                           goal={goal}
+                          history={goal.history}
                           index={index}
                           category={category.category}
                           selectedDate={selectedDate}
@@ -246,8 +247,9 @@ export const LogContainer = () => {
                 .sort((a, b) => a.task > b.task)
                 .map((goal, index) => (
                   <GoalCircularProgress
-                    key={`${goal.task}-${index}`}
+                    key={`${goal.task}`}
                     goal={goal}
+                    history={goal.history}
                     index={index}
                     category={goal.category}
                     selectedDate={selectedDate}
