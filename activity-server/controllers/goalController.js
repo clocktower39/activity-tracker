@@ -29,7 +29,7 @@ const get_goals = async (req, res, next) => {
             $filter: {
               input: "$history", // The history array
               as: "entry", // Alias for each element in the array
-              cond: { $lt: ["$$entry.date", new Date(formattedSelectedDate)] }, // Filter condition
+              cond: { $lt: ["$$entry.date", new Date(formattedSelectedDate.utc())] }, // Filter condition
             },
           },
         },
