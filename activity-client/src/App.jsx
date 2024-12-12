@@ -43,7 +43,7 @@ function App() {
   return loading ? <Loading /> : (
     <ThemeProvider theme={themeSelection}>
       <CssBaseline enableColorScheme />
-      <Router>
+      <Router basename="/activity-tracker/">
         <Routes>
           <Route exact path="/login" element={<Login />} />
           <Route exact path="/signup" element={<SignUp />} />

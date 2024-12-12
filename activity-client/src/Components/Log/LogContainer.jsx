@@ -67,7 +67,7 @@ export const LogContainer = () => {
   const [selectedDate, setSelectedDate] = useState(dayjs(new Date()).format("YYYY-MM-DD"));
 
   useEffect(() => {
-    dispatch(getActivities(selectedDate));
+    dispatch(getActivities(dayjs(selectedDate).add(1, 'day').format("YYYY-MM-DD")));
     // eslint-disable-next-line
   }, [selectedDate]);
 
@@ -96,7 +96,7 @@ export const LogContainer = () => {
     }))
     .map((goal) => {
       // filteredHistory will return an array with a single object of the selected date
-      const filteredHistory = goal.history.filter((day) => day.date === dayjs(selectedDate))[0];
+      const filteredHistory = goal.history.find((day) => dayjs(day.date).add(1, "day").format("YYYY-MM-DD") === selectedDate) || goal.history.find((day) => dayjs(day.date).format("YYYY-MM-DD") === selectedDate);
       // if filteredHistory is null, it will use the filler history
       const fillerHistory = {
         date: selectedDate,

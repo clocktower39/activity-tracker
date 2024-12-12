@@ -33,20 +33,21 @@ export default function GoalCircularProgress(props) {
 
   // Local history to manage optimistic updates
   const [localHistory, setLocalHistory] = useState(goal.history);
-  const [toggle, setToggle] = useState(false);
 
   useEffect(() => {
     // Sync local history with Redux state whenever goal.history changes
     setLocalHistory(history);
-  }, [history, toggle]);
+  }, [history]);
 
   // Find the current day's stats
-  const currentDayStats =
-    localHistory.find(
-      (day) => dayjs(day.date).add(1, "day").format("YYYY-MM-DD") === selectedDate
-    ) ||  localHistory.find(
-      (day) => dayjs(day.date).format("YYYY-MM-DD") === selectedDate
-    );
+  const currentDayStats = localHistory.find(
+    (day) => dayjs(day.date).add(1, "day").format("YYYY-MM-DD") === selectedDate
+  ) ||
+    localHistory.find((day) => dayjs(day.date).format("YYYY-MM-DD") === selectedDate) || {
+      date: selectedDate,
+      targetPerDuration: Number(goal.defaultTarget),
+      achieved: 0,
+    };
 
   // Calculate progress percentage
   const progressPercent = Math.max(
@@ -59,8 +60,7 @@ export default function GoalCircularProgress(props) {
     setLocalHistory((prevHistory) => {
       const updatedHistory = [...prevHistory];
       const existingEntryIndex = updatedHistory.findIndex(
-        (day) =>
-          dayjs(day.date).add(1, "day").format("YYYY-MM-DD") === selectedDate
+        (day) => dayjs(day.date).add(1, "day").format("YYYY-MM-DD") === selectedDate
       );
 
       if (existingEntryIndex !== -1) {
@@ -82,8 +82,7 @@ export default function GoalCircularProgress(props) {
     });
 
     // Dispatch Redux action to update the global state
-    dispatch(updateActivityProgress(goal._id, newAchieved, selectedDate)).then(()=> 
-      setToggle(prev => !prev));
+    dispatch(updateActivityProgress(goal._id, newAchieved, selectedDate));
   };
 
   const onLongPress = () => {

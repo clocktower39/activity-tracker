@@ -1,5 +1,10 @@
 import { jwtDecode as jwt } from "jwt-decode";
 import dayjs from "dayjs";
+import advancedFormat from "dayjs/plugin/advancedFormat";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
+dayjs.extend(advancedFormat);
 
 export const UPDATE_ACTIVITY = "UPDATE_ACTIVITY";
 export const UPDATE_CATEGORIES = "UPDATE_CATEGORIES";
@@ -10,11 +15,11 @@ export const DELETE_GOAL = "DELETE_GOAL";
 export const ERROR = "ERROR";
 
 // dev server
-const currentIP = window.location.href.split(":")[1];
-const serverURL = `http:${currentIP}:8000`;
+// const currentIP = window.location.href.split(":")[1];
+// const serverURL = `http:${currentIP}:8000`;
 
 // live server
-// const serverURL = "https://myactivitytracker.herokuapp.com";
+const serverURL = "https://myactivitytracker.herokuapp.com";
 
 export function updateActivityProgress(goadId, achieved, date) {
   return async (dispatch, getState) => {
@@ -26,28 +31,26 @@ export function updateActivityProgress(goadId, achieved, date) {
         const doesDateWithIdExist = goal.history.some((day) => {
           const formatDayDate = dayjs(day.date).add(1, "day").format("YYYY-MM-DD");
           const formatDate = dayjs(date).format("YYYY-MM-DD");
+
+
           return formatDayDate === formatDate && day._id !== undefined;
         });
         if (doesDateWithIdExist) {
-          goal.history.map((day) => {
+          goal.history.map(async (day) => {
             const formatDayDate = dayjs(day.date).add(1, "day").format("YYYY-MM-DD");
             const formatDate = dayjs(date).format("YYYY-MM-DD");
 
             if (formatDayDate === formatDate) {
               day.achieved = day.achieved + achieved;
-              // Create new update history route to accept exisiting ID for history item and update achieved
-              fetch(`${serverURL}/updateHistoryItem`, {
+              await fetch(`${serverURL}/updateHistoryItem`, {
                 method: "POST", // *GET, POST, PUT, DELETE, etc.
-                mode: "cors", // no-cors, *cors, same-origin
-                cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-                credentials: "same-origin", // include, *same-origin, omit
+                dataType: "json",
                 headers: {
                   "Content-Type": "application/json",
                   Authorization: bearer,
-                  // 'Content-Type': 'application/x-www-form-urlencoded',
                 },
 
-                body: JSON.stringify({ goalId: goal._id, historyItem: day }), // body data type must match "Content-Type" header
+                body: JSON.stringify({ goalId: goal._id, historyItem: day }),
               });
             }
             return day;
@@ -59,28 +62,25 @@ export function updateActivityProgress(goadId, achieved, date) {
             achieved,
           };
 
-          goal.history.map((day) => {
-            const formatDayDate = dayjs(day.date).format("YYYY-MM-DD");
-            const formatDate = dayjs(date).format("YYYY-MM-DD");
-            
-            console.log(formatDayDate)
-            console.log(formatDate)
+          goal.history.map(async (day) => {
+            const formatDayDate = dayjs(day.date).add(-1, 'day').utc().format("YYYY-MM-DD");
+            const formatDate = dayjs(date).utc().format("YYYY-MM-DD");
+
+            console.log(formatDayDate);
+            console.log(formatDate);
+            console.log(formatDayDate === formatDate);
 
             if (formatDayDate === formatDate) {
               day.achieved = day.achieved + achieved;
 
-              fetch(`${serverURL}/newHistoryItem`, {
-                method: "POST", // *GET, POST, PUT, DELETE, etc.
-                mode: "cors", // no-cors, *cors, same-origin
-                cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-                credentials: "same-origin", // include, *same-origin, omit
+              await fetch(`${serverURL}/newHistoryItem`, {
+                method: "POST",
+                dataType: "json",
                 headers: {
                   "Content-Type": "application/json",
                   Authorization: bearer,
-                  // 'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-                body: JSON.stringify({ goalId: goal._id, historyItem }), // body data type must match "Content-Type" header
+                body: JSON.stringify({ goalId: goal._id, historyItem }),
               })
               .then((res) => res.json())
               .then((data) => {
