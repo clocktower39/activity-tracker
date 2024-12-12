@@ -35,8 +35,8 @@ const signup_user = (req, res, next) => {
 };
 
 const login_user = (req, res, next) => {
-  User.findOne({ email: req.body.email }, function (err, user) {
-    if (err) return next(err);
+  User.findOne({ email: req.body.email })
+  .then((user) => {
     if (!user) {
       res.send({
         authenticated: false,
@@ -63,12 +63,13 @@ const login_user = (req, res, next) => {
         }
       });
     }
-  });
+  })
+  .catch((err) => next(err));
 };
 
 const change_password = (req, res, next) => {
-  User.findOne({ email: res.locals.user.email }, function (err, user) {
-    if (err) return next(err);
+  User.findOne({ email: res.locals.user.email })
+  .then((user) => {
     if (!user) {
       res.send({
         error: { status: "User not found" },
@@ -99,7 +100,8 @@ const change_password = (req, res, next) => {
         }
       });
     }
-  });
+  })
+  .catch((err) => next(err));
 };
 
 const checkAuthLoginToken = (req, res) => {
