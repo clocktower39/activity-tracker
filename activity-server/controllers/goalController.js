@@ -5,7 +5,7 @@ const dayjs = require("dayjs");
 
 const get_goals = async (req, res, next) => {
   const { selectedDate } = req.body;
-  const formattedSelectedDate = dayjs(selectedDate);
+  const formattedSelectedDate = dayjs(selectedDate).utc();
 
   try {
     // Fetch categories
@@ -44,7 +44,7 @@ const get_goals = async (req, res, next) => {
     // Adjust the goals to ensure a history entry for the selected date
     const adjustedGoals = goals.map((goal) => {
       const historyExists = goal.history.some((day) => {
-        const formatDayDate = dayjs(day.date).add(1, "day").format("YYYY-MM-DD");
+        const formatDayDate = dayjs(day.date).utc().add(1, "day").format("YYYY-MM-DD");
         return formatDayDate === formattedSelectedDate;
       });
 
