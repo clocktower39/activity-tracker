@@ -5,7 +5,7 @@ const dayjs = require("dayjs");
 
 const get_goals = async (req, res, next) => {
   const { selectedDate } = req.body;
-  const formattedSelectedDate = dayjs(selectedDate).utc().startOf("day").toDate(); // Ensure UTC and start of day
+  const formattedSelectedDate = dayjs(selectedDate);
 
   try {
     // Fetch categories
@@ -20,16 +20,16 @@ const get_goals = async (req, res, next) => {
       },
       {
         $project: {
-          task: 1,
-          interval: 1,
-          defaultTarget: 1,
-          category: 1,
-          order: 1,
+          task: 1, // Include task field
+          interval: 1, // Include interval field
+          defaultTarget: 1, // Include defaultTarget field
+          category: 1, // Include category field
+          order: 1, // Include order field
           history: {
             $filter: {
               input: "$history", // The history array
               as: "entry", // Alias for each element in the array
-              cond: { $lt: ["$$entry.date", formattedSelectedDate] }, // Filter condition with UTC date
+              cond: { $lt: ["$$entry.date", new Date(formattedSelectedDate)] }, // Filter condition
             },
           },
         },
@@ -43,16 +43,15 @@ const get_goals = async (req, res, next) => {
 
     // Adjust the goals to ensure a history entry for the selected date
     const adjustedGoals = goals.map((goal) => {
-      const utcSelectedDate = dayjs(selectedDate).utc().format("YYYY-MM-DD");
-
       const historyExists = goal.history.some((day) => {
-        const formatDayDate = dayjs.utc(day.date).format("YYYY-MM-DD");
-        return formatDayDate === utcSelectedDate;
+        const formatDayDate = dayjs(day.date).utc().add(1, "day").format("YYYY-MM-DD");
+        return formatDayDate === formattedSelectedDate;
       });
 
       if (!historyExists) {
+        // Add a default history entry for the selected date
         goal.history.push({
-          date: new Date(selectedDate).toISOString(), // Use ISO 8601 (UTC)
+          date: new Date(formattedSelectedDate),
           targetPerDuration: Number(goal.defaultTarget),
           achieved: 0,
         });
