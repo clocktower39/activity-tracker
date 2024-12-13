@@ -23,7 +23,8 @@
     "react-router": "^7.0.2",
     "recharts": "^2.14.1",
     "redux": "^5.0.1",
-    "redux-thunk": "^3.1.0"
+    "redux-thunk": "^3.1.0",
+    "vite-plugin-pwa": "^0.21.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
