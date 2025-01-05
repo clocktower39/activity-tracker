@@ -11,11 +11,14 @@ const get_goals = async (req, res, next) => {
     // Fetch categories
     const categories = await Category.findOne({ accountId: res.locals.user._id });
 
+    // Convert user ID to ObjectId
+    const userObjectId = new mongoose.Types.ObjectId(res.locals.user._id);
+
     // Fetch goals with filtered history
     const goals = await Goal.aggregate([
       {
         $match: {
-          accountId: res.locals.user._id, // Match based on user
+          accountId: userObjectId, // Match based on user
         },
       },
       {
@@ -27,16 +30,11 @@ const get_goals = async (req, res, next) => {
           order: 1, // Include order field
           history: {
             $filter: {
-              input: "$history", // The history array
+              input: { $ifNull: ["$history", []] }, // <--- Ensure it's always an array
               as: "entry", // Alias for each element in the array
               cond: { $lt: ["$$entry.date", new Date(formattedSelectedDate.utc())] }, // Filter condition
             },
           },
-        },
-      },
-      {
-        $addFields: {
-          history: { $slice: ["$history", -30] }, // Limit to the last 30 entries
         },
       },
     ]);
@@ -118,10 +116,11 @@ const add_goal = (req, res, next) => {
   });
 
   let saveGoal = () => {
-    goal.save((err) => {
-      if (err) return next(err);
+    goal.save()
+    .then((data) => {
       res.sendStatus(200);
-    });
+    })
+    .catch((err) => next(err));
   };
   saveGoal();
 };
