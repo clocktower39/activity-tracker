@@ -1,12 +1,13 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      injectRegister: 'auto',
       registerType: "autoUpdate",
       manifest: {
         name: "Activity Tracker",
@@ -15,22 +16,23 @@ export default defineConfig({
         theme_color: "#ffffff",
         background_color: "#ffffff",
         display: "standalone",
-        scope: "/activity-tracker/",
-        start_url: "/activity-tracker/",
+        start_url: "/?",
+        scope: "/",
         icons: [
           {
-            src: "/activity-tracker/assets/favicon.png",
-            sizes: "192x192",
-            type: "image/png"
+            src: "/activity-tracker/assets/favicon_144.png",
+            sizes: "144x144",
+            type: "image/png",
+            purpose: "any",
           },
           {
             src: "/activity-tracker/assets/favicon.png",
             sizes: "512x512",
-            type: "image/png"
-          }
-        ]
-      }
+            type: "image/png",
+          },
+        ],
+      },
     }),
   ],
   base: "/activity-tracker/",
-})
+});
