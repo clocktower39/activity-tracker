@@ -42,7 +42,7 @@ export function updateActivityProgress(goadId, achieved, date) {
 
             if (formatDayDate === formatDate) {
               day.achieved = day.achieved + achieved;
-              await fetch(`${serverURL}/updateHistoryItem`, {
+              fetch(`${serverURL}/updateHistoryItem`, {
                 method: "POST", // *GET, POST, PUT, DELETE, etc.
                 dataType: "json",
                 headers: {
@@ -65,10 +65,6 @@ export function updateActivityProgress(goadId, achieved, date) {
           goal.history.map(async (day) => {
             const formatDayDate = dayjs(day.date).add(-1, 'day').utc().format("YYYY-MM-DD");
             const formatDate = dayjs(date).utc().format("YYYY-MM-DD");
-
-            console.log(formatDayDate);
-            console.log(formatDate);
-            console.log(formatDayDate === formatDate);
 
             if (formatDayDate === formatDate) {
               day.achieved = day.achieved + achieved;

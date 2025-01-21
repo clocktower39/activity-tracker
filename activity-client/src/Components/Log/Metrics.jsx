@@ -8,13 +8,45 @@ import dayjs from "dayjs";
 export const renderChart = (goal, width, height, startDate, endDate) => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  const history = goal.history
+  const sortedExistingHistory = goal.history
     .sort((a, b) => new Date(a.date) > new Date(b.date))
     .filter(day => new Date(day.date) >= new Date(startDate) && new Date(day.date) <= new Date(endDate))
     .map(day => {
       day.dateDay = days[new Date(day.date).getDay()];
       return day;
-    })
+    });
+
+    const fillMissingDays = (history, startDate, endDate) => {
+      const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dateSet = new Set(history.map(day => new Date(day.date).toISOString().split('T')[0]));
+      const filledHistory = [];
+    
+      // Loop through each day in the date range
+      for (let date = new Date(startDate); date <= new Date(endDate); date.setDate(date.getDate() + 1)) {
+        const isoDate = new Date(date).toISOString().split('T')[0];
+    
+        // If the date exists in the history, add it to the result
+        if (dateSet.has(isoDate)) {
+          const existingDay = history.find(day => new Date(day.date).toISOString().split('T')[0] === isoDate);
+          filledHistory.push({
+            ...existingDay,
+            dateDay: daysOfWeek[new Date(existingDay.date).getDay()],
+          });
+        } else {
+          // If the date is missing, add a filler entry
+          filledHistory.push({
+            date: isoDate,
+            targetPerDuration: 1,
+            achieved: 0,
+            dateDay: daysOfWeek[new Date(date).getDay()],
+          });
+        }
+      }
+    
+      return filledHistory;
+    };
+    
+    const history = fillMissingDays(sortedExistingHistory, startDate, endDate);
 
   const RenderToolTip = ({ payload }) => {
     return (
