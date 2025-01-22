@@ -116,11 +116,12 @@ const add_goal = (req, res, next) => {
   });
 
   let saveGoal = () => {
-    goal.save()
-    .then((data) => {
-      res.sendStatus(200);
-    })
-    .catch((err) => next(err));
+    goal
+      .save()
+      .then((data) => {
+        res.sendStatus(200);
+      })
+      .catch((err) => next(err));
   };
   saveGoal();
 };
@@ -153,9 +154,9 @@ const update_history_item = async (req, res, next) => {
   const { goalId, historyItem } = req.body;
 
   try {
-    const goal = await Goal.findOne({ 
-        _id: goalId, 
-     });
+    const goal = await Goal.findOne({
+      _id: goalId,
+    });
     if (!goal || goal.accountId.toString() !== res.locals.user._id) {
       return res.status(404).send({ message: "Goal not found" });
     }
@@ -182,25 +183,30 @@ const new_history_item = async (req, res, next) => {
   const { goalId, historyItem } = req.body;
 
   try {
-    const goal = await Goal.findOne({ 
-        _id: goalId, 
-     });
+    const goal = await Goal.findOne({
+      _id: goalId,
+    });
     if (!goal || goal.accountId.toString() !== res.locals.user._id) {
       return res.status(404).send({ message: "Goal not found" });
     }
     // Find and update the matching history item
-    const itemIndex = goal.history.findIndex((item) => item._id.toString() === historyItem?._id && item.date === historyItem.date);
+    const itemIndex = goal.history.findIndex(
+      (item) => item._id.toString() === historyItem?._id && item.date === historyItem.date
+    );
 
     if (itemIndex === -1) {
       // Add to the history item
-      goal.history = [ ...goal.history, { ...historyItem }, ];
+      goal.history = [...goal.history, { ...historyItem }];
     } else {
       return res.status(404).send({ message: "History item not found" });
     }
     // Save the updated goal
     await goal.save();
 
-    res.send({ message: "Save successful", goal });
+    // Retrieve the newly added history item
+    const savedNewHistoryItem = goal.history[goal.history.length - 1]; // The last added item
+    
+    res.send({ message: "Save successful", goal, newHistoryItem: savedNewHistoryItem, });
   } catch (err) {
     next(err);
   }
