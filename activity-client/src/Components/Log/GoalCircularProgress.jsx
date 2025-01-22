@@ -82,7 +82,25 @@ export default function GoalCircularProgress(props) {
     });
 
     // Dispatch Redux action to update the global state
-    dispatch(updateActivityProgress(goal._id, newAchieved, selectedDate));
+    dispatch(updateActivityProgress(goal._id, newAchieved, selectedDate)).then((res) => {
+      setLocalHistory((prevHistory) => {
+        console.log("ran")
+        const updatedHistory = [...prevHistory];
+        const existingEntryIndex = updatedHistory.findIndex(
+          (day) => dayjs(day.date).format("YYYY-MM-DD") === selectedDate
+        );
+  
+        if (existingEntryIndex !== -1) {
+          console.log("found")
+          // Update existing entry
+          updatedHistory[existingEntryIndex] = {
+            ...res.historyItem,
+          };
+        }
+  
+        return updatedHistory;
+      });
+    });
   };
 
   const onLongPress = () => {

@@ -21,81 +21,93 @@ export const ERROR = "ERROR";
 // live server
 const serverURL = "https://myactivitytracker.herokuapp.com";
 
-export function updateActivityProgress(goadId, achieved, date) {
+export function updateActivityProgress(goalId, achieved, date) {
   return async (dispatch, getState) => {
     const bearer = `Bearer ${localStorage.getItem("JWT_AUTH_TOKEN")}`;
     const newState = { ...getState() };
+    let targetHistoryItem = null;
 
-    newState.goals.map(async (goal) => {
-      if (goal._id === goadId) {
-        const doesDateWithIdExist = goal.history.some((day) => {
-          const formatDayDate = dayjs(day.date).add(1, "day").format("YYYY-MM-DD");
-          const formatDate = dayjs(date).format("YYYY-MM-DD");
+    // Find the target goal
+    const goal = newState.goals.find((goal) => goal._id === goalId);
+    if (!goal) {
+      console.error("Goal not found");
+      return Promise.reject(new Error("Goal not found"));
+    }
 
+    const formattedDate = dayjs(date).format("YYYY-MM-DD");
 
-          return formatDayDate === formatDate && day._id !== undefined;
-        });
-        if (doesDateWithIdExist) {
-          goal.history.map(async (day) => {
-            const formatDayDate = dayjs(day.date).add(1, "day").format("YYYY-MM-DD");
-            const formatDate = dayjs(date).format("YYYY-MM-DD");
+    // Check if the entry exists in the goal history
+    const existingEntry = goal.history.find(
+      (day) => dayjs(day.date).add(1, "day").format("YYYY-MM-DD") === formattedDate
+    );
 
-            if (formatDayDate === formatDate) {
-              day.achieved = day.achieved + achieved;
-              fetch(`${serverURL}/updateHistoryItem`, {
-                method: "POST", // *GET, POST, PUT, DELETE, etc.
-                dataType: "json",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: bearer,
-                },
-
-                body: JSON.stringify({ goalId: goal._id, historyItem: day }),
-              });
-            }
-            return day;
-          });
-        } else {
-          const historyItem = {
-            date: new Date(date),
-            targetPerDuration: goal.defaultTarget,
-            achieved,
-          };
-
-          goal.history.map(async (day) => {
-            const formatDayDate = dayjs(day.date).add(-1, 'day').utc().format("YYYY-MM-DD");
-            const formatDate = dayjs(date).utc().format("YYYY-MM-DD");
-
-            if (formatDayDate === formatDate) {
-              day.achieved = day.achieved + achieved;
-
-              await fetch(`${serverURL}/newHistoryItem`, {
-                method: "POST",
-                dataType: "json",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: bearer,
-                },
-                body: JSON.stringify({ goalId: goal._id, historyItem }),
-              })
-              .then((res) => res.json())
-              .then((data) => {
-                day._id = data.goal.history[data.goal.history.length - 1]._id;
-                const resHistoryItem = [ ...data.goal.history, ];
-                goal.history = resHistoryItem;
-              });
-            }
-            return day;
-          });
-        }
+    if (existingEntry) {
+      targetHistoryItem = existingEntry;
+      if (!existingEntry._id) {
+        console.error("Existing entry does not have an _id");
+        return Promise.reject(new Error("Invalid entry: missing _id"));
       }
-      return goal;
-    });
 
-    return dispatch({
+      // Update existing entry
+      existingEntry.achieved += achieved;
+
+      // Send to the server
+      try {
+        await fetch(`${serverURL}/updateHistoryItem`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: bearer,
+          },
+          body: JSON.stringify({ goalId, historyItem: existingEntry }),
+        });
+      } catch (error) {
+        console.error("Failed to update history item:", error);
+        return Promise.reject(error);
+      }
+    } else {
+      // Add a new entry
+      const newHistoryItem = {
+        date: new Date(date).toISOString(),
+        targetPerDuration: goal.defaultTarget,
+        achieved,
+      };
+
+      // Optimistically add the new item to the history
+      goal.history.push(newHistoryItem);
+
+      try {
+        const response = await fetch(`${serverURL}/newHistoryItem`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: bearer,
+          },
+          body: JSON.stringify({ goalId, historyItem: newHistoryItem }),
+        });
+        const result = await response.json();
+
+        // Update the _id for the new item
+        if (result.newHistoryItem._id) {
+          targetHistoryItem = result.newHistoryItem;
+          newHistoryItem._id = result.newHistoryItem._id;
+        } else {
+          console.error("Failed to retrieve new ID from server");
+          return Promise.reject(new Error("Failed to retrieve new ID"));
+        }
+      } catch (error) {
+        console.error("Failed to add new history item:", error);
+        return Promise.reject(error);
+      }
+    }
+
+    // Dispatch the updated state
+    dispatch({
       type: UPDATE_ACTIVITY,
       newState,
     });
+
+    return { promise: Promise.resolve(), historyItem: targetHistoryItem};
   };
 }
 
