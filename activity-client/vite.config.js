@@ -11,7 +11,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       manifest: {
         name: "Activity Tracker",
-        short_name: "Tracker",
+        short_name: "Activity Tracker",
         description: "Track your activities effortlessly!",
         theme_color: "#ffffff",
         background_color: "#ffffff",

@@ -1,11 +1,11 @@
 {
   "name": "Activity Tracker",
-  "short_name": "Tracker",
-  "start_url": "/?",
+  "short_name": "Activity Tracker",
+  "start_url": "/activity-tracker/",
   "display": "standalone",
   "background_color": "#ffffff",
   "lang": "en",
-  "scope": "/",
+  "scope": "/activity-tracker/",
   "description": "Track your activities effortlessly!",
   "theme_color": "#ffffff",
   "icons": [
