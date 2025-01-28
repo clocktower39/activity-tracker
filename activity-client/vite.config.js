@@ -16,8 +16,8 @@ export default defineConfig({
         theme_color: "#ffffff",
         background_color: "#ffffff",
         display: "standalone",
-        start_url: "/?",
-        scope: "/",
+        start_url: "/activity-tracker/",
+        scope: "/activity-tracker/",
         icons: [
           {
             src: "/activity-tracker/assets/favicon_144.png",
