@@ -1,20 +1,20 @@
 {
   "name": "Activity Tracker",
   "short_name": "Activity Tracker",
-  "start_url": "/activity-tracker/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "lang": "en",
-  "scope": "/activity-tracker/",
   "description": "Track your activities effortlessly!",
-  "theme_color": "#ffffff",
+  "theme_color": "#000",
+  "background_color": "#000",
+  "display": "standalone",
+  "id": "/activity-tracker/",
+  "start_url": "/activity-tracker/",
+  "scope": "/activity-tracker/",
   "icons": [
     {
-      "src": "/activity-tracker/assets/favicon_144.png",
+      "src": "favicon_144.png",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "any"
     },
-    { "src": "/activity-tracker/assets/favicon.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "favicon.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
