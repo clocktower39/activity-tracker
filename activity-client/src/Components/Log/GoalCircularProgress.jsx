@@ -42,8 +42,7 @@ export default function GoalCircularProgress(props) {
   // Find the current day's stats
   const currentDayStats = localHistory.find(
     (day) => dayjs(day.date).add(1, "day").format("YYYY-MM-DD") === selectedDate
-  ) ||
-    localHistory.find((day) => dayjs(day.date).format("YYYY-MM-DD") === selectedDate) || {
+  ) || {
       date: selectedDate,
       targetPerDuration: Number(goal.defaultTarget),
       achieved: 0,
@@ -84,14 +83,12 @@ export default function GoalCircularProgress(props) {
     // Dispatch Redux action to update the global state
     dispatch(updateActivityProgress(goal._id, newAchieved, selectedDate)).then((res) => {
       setLocalHistory((prevHistory) => {
-        console.log("ran")
         const updatedHistory = [...prevHistory];
         const existingEntryIndex = updatedHistory.findIndex(
           (day) => dayjs(day.date).format("YYYY-MM-DD") === selectedDate
         );
   
         if (existingEntryIndex !== -1) {
-          console.log("found")
           // Update existing entry
           updatedHistory[existingEntryIndex] = {
             ...res.historyItem,
