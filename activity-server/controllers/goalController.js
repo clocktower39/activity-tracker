@@ -5,7 +5,7 @@ const dayjs = require("dayjs");
 
 const get_goals = async (req, res, next) => {
   const { selectedDate } = req.body;
-  const formattedSelectedDate = dayjs(selectedDate);
+  const formattedSelectedDate = dayjs.utc(selectedDate).subtract(1, "day").startOf("day");
 
   try {
     // Fetch categories
@@ -14,51 +14,44 @@ const get_goals = async (req, res, next) => {
     // Convert user ID to ObjectId
     const userObjectId = new mongoose.Types.ObjectId(res.locals.user._id);
 
-    // Fetch goals with filtered history
-    const goals = await Goal.aggregate([
-      {
-        $match: {
-          accountId: userObjectId, // Match based on user
-        },
-      },
-      {
-        $project: {
-          task: 1, // Include task field
-          interval: 1, // Include interval field
-          defaultTarget: 1, // Include defaultTarget field
-          category: 1, // Include category field
-          order: 1, // Include order field
-          history: {
-            $filter: {
-              input: { $ifNull: ["$history", []] }, // <--- Ensure it's always an array
-              as: "entry", // Alias for each element in the array
-              cond: { $lt: ["$$entry.date", new Date(formattedSelectedDate.utc())] }, // Filter condition
-            },
-          },
-        },
-      },
-    ]);
+    // Fetch goals with full history
+    const goals = await Goal.find({ accountId: userObjectId });
 
-    // Adjust the goals to ensure a history entry for the selected date
-    const adjustedGoals = goals.map((goal) => {
-      const historyExists = goal.history.some((day) => {
-        const formatDayDate = dayjs(day.date).utc().add(1, "day").format("YYYY-MM-DD");
-        return formatDayDate === formattedSelectedDate;
-      });
+    // Process goals and ensure unique history entries using MongoDB atomic operation
+    const updatedGoals = await Promise.all(
+      goals.map(async (goal) => {
+        goal.history = goal.history || [];
 
-      if (!historyExists) {
-        // Add a default history entry for the selected date
-        goal.history.push({
-          date: new Date(formattedSelectedDate),
-          targetPerDuration: Number(goal.defaultTarget),
-          achieved: 0,
-        });
-      }
+        // Check if an entry for the selected date exists
+        const historyExists = goal.history.some((entry) =>
+          dayjs.utc(entry.date).isSame(formattedSelectedDate, "day")
+        );
 
-      return goal;
-    });
+        if (!historyExists) {
+          const newHistoryEntry = {
+            _id: new mongoose.Types.ObjectId(),
+            date: formattedSelectedDate.toDate(), // Correctly formatted UTC midnight
+            targetPerDuration: Number(goal.defaultTarget),
+            achieved: 0,
+          };
 
-    res.send({ goals: adjustedGoals, categories: categories?.categories || [] });
+          // **Atomic MongoDB update to prevent duplicate entries**
+          const updatedGoal = await Goal.findOneAndUpdate(
+            { _id: goal._id, "history.date": { $ne: formattedSelectedDate.toDate() } }, // Ensures no duplicate
+            { $push: { history: newHistoryEntry } }, // Add only if it doesn't exist
+            { new: true }
+          );
+
+          if (updatedGoal) {
+            return updatedGoal.toObject();
+          }
+        }
+
+        return goal.toObject();
+      })
+    );
+
+    res.send({ goals: updatedGoals, categories: categories?.categories || [] });
   } catch (err) {
     next(err);
   }
@@ -154,30 +147,38 @@ const update_history_item = async (req, res, next) => {
   const { goalId, historyItem } = req.body;
 
   try {
-    const goal = await Goal.findOne({
-      _id: goalId,
-    });
+    const goal = await Goal.findOne({ _id: goalId });
+
     if (!goal || goal.accountId.toString() !== res.locals.user._id) {
       return res.status(404).send({ message: "Goal not found" });
     }
+
+    // Convert historyItem._id to ObjectId if necessary
+    const historyItemId = new mongoose.Types.ObjectId(historyItem._id);
+
     // Find and update the matching history item
-    const itemIndex = goal.history.findIndex((item) => item._id.toString() === historyItem._id);
+    const itemIndex = goal.history.findIndex((item) => item._id.toString() === historyItemId.toString());
 
     if (itemIndex !== -1) {
+
       // Update the history item at the found index
-      goal.history[itemIndex] = { ...goal.history[itemIndex], ...historyItem };
+      goal.history[itemIndex] = { ...goal.history[itemIndex].toObject(), ...historyItem };
+
+      // Ensure Mongoose detects the change
+      goal.markModified(`history.${itemIndex}`);
+
+      // Save the updated goal
+      await goal.save();
+
+      return res.send({ message: "Save successful", goal });
     } else {
       return res.status(404).send({ message: "History item not found" });
     }
-
-    // Save the updated goal
-    await goal.save();
-
-    res.send({ message: "Save successful", goal });
   } catch (err) {
     next(err);
   }
 };
+
 
 const new_history_item = async (req, res, next) => {
   const { goalId, historyItem } = req.body;
