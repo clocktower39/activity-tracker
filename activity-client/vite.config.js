@@ -35,5 +35,24 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "react-vendor": ["react", "react-dom"],
+          "mui-vendor": [
+            "@mui/material",
+            "@mui/icons-material",
+            "@emotion/react",
+            "@emotion/styled",
+          ],
+          "redux-vendor": ["react-redux", "redux", "redux-thunk", "@redux-devtools/extension"],
+          charts: ["recharts"],
+          "date-utils": ["dayjs"],
+          utils: ["jwt-decode"],
+        },
+      },
+    },
+  },
   base: "/activity-tracker/",
 });
