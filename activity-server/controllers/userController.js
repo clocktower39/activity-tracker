@@ -3,8 +3,8 @@ const jwt = require("jsonwebtoken");
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
 const update_user = (req, res, next) => {
-  User.findByIdAndUpdate(res.locals.user._id, { ...req.body }, { new: true }, function (err, user) {
-    if (err) return next(err);
+  User.findByIdAndUpdate(res.locals.user._id, { ...req.body }, { new: true })
+  .then((user) => {
     if (!user) {
       res.send({
         status: 'error',
@@ -18,6 +18,7 @@ const update_user = (req, res, next) => {
       res.send({ status: 'Successful', accessToken });
     }
   })
+  .catch((err) => next(err));
 }
 
 const signup_user = (req, res, next) => {
