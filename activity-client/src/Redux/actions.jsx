@@ -165,6 +165,7 @@ export function EditActivity(goalId, newTarget) {
         goal.category = newTarget.category;
         goal.defaultTarget = newTarget.defaultTarget;
         goal.order = newTarget.order;
+        goal.hidden = newTarget.hidden;
         fetch(`${serverURL}/update`, {
           method: "POST", // *GET, POST, PUT, DELETE, etc.
           mode: "cors", // no-cors, *cors, same-origin
