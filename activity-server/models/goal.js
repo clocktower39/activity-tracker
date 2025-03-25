@@ -17,6 +17,7 @@ const goalSchema = new mongoose.Schema({
         required: true,
     },
     accountId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    hidden: { type: Boolean, default: false, },
 })
 
 const Goal = mongoose.model('Goal', goalSchema);
