@@ -18,6 +18,7 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
   const dispatch = useDispatch();
   const [task, setTask] = useState(goal.task);
   const [interval, setInterval] = useState(goal.interval);
+  const [hidden, setHidden] = useState(goal.hidden || false);
   const [defaultTarget, setDefaultTarget] = useState(goal.defaultTarget);
   const [category, setCategory] = useState(goal.category);
   const [order, setOrder] = useState(goal.order);
@@ -25,7 +26,7 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
 
   const handleChange = (e, setter) => setter(e.target.value);
 
-  const handleUnderstandDelete = () => setDisabledDelete(prev => !prev)
+  const handleUnderstandDelete = () => setDisabledDelete((prev) => !prev);
 
   const saveChanges = () => {
     if (task !== "" && category !== "" && defaultTarget !== "") {
@@ -35,17 +36,18 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
           category,
           defaultTarget,
           order,
+          hidden,
         })
       );
     }
   };
 
-  const confirmedDeleteGoal = () => dispatch(deleteGoal(goal._id))
+  const confirmedDeleteGoal = () => dispatch(deleteGoal(goal._id));
 
   const intervalOptions = ["Daily", "Weekly", "Monthly", "Yearly"];
 
   return (
-    <Grid container >
+    <Grid container>
       <Grid container item xs={12}>
         <AppBar sx={{ position: "relative" }}>
           <Toolbar>
@@ -110,13 +112,21 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
               onChange={(e) => handleChange(e, setOrder)}
             />
           </Grid>
+          <Grid container item xs={12} alignItems="center">
+            <Checkbox onChange={(e)=> setHidden(prev => !prev)} checked={hidden} />
+            <Typography variant="caption">Hide this goal?</Typography>
+          </Grid>
           <Grid container item xs={12}>
-            <Grid container item xs={2} sx={{ justifyContent: 'flex-end' }}>
-              <Button variant="contained" disabled={disabledDelete} onClick={confirmedDeleteGoal} >Delete</Button>
+            <Grid container item xs={2} sx={{ justifyContent: "flex-end" }}>
+              <Button variant="contained" disabled={disabledDelete} onClick={confirmedDeleteGoal}>
+                Delete
+              </Button>
             </Grid>
-            <Grid container item xs={10} sx={{ alignItems: 'center' }}>
+            <Grid container item xs={10} sx={{ alignItems: "center" }}>
               <Checkbox onChange={handleUnderstandDelete} checked={!disabledDelete} />
-              <Typography variant="caption">If deleted, all history will be removed and can not be recovered.</Typography>
+              <Typography variant="caption">
+                If deleted, all history will be removed and can not be recovered.
+              </Typography>
             </Grid>
           </Grid>
         </Grid>

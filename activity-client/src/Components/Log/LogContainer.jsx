@@ -67,7 +67,7 @@ export const LogContainer = () => {
   const [selectedDate, setSelectedDate] = useState(dayjs(new Date()).format("YYYY-MM-DD"));
 
   useEffect(() => {
-    dispatch(getActivities(dayjs(selectedDate).add(1, 'day').format("YYYY-MM-DD")));
+    dispatch(getActivities(dayjs(selectedDate).add(1, "day").format("YYYY-MM-DD")));
     // eslint-disable-next-line
   }, [selectedDate]);
 
@@ -89,6 +89,7 @@ export const LogContainer = () => {
 
   // gathers daily history for calculating progress percentages
   let allGoalsStatsToday = goals
+    .filter((goal) => goal.hidden)
     .map((goal) => ({
       history: goal.history,
       category: goal.category,
@@ -96,7 +97,10 @@ export const LogContainer = () => {
     }))
     .map((goal) => {
       // filteredHistory will return an array with a single object of the selected date
-      const filteredHistory = goal.history.find((day) => dayjs(day.date).add(1, "day").format("YYYY-MM-DD") === selectedDate) || goal.history.find((day) => dayjs(day.date).format("YYYY-MM-DD") === selectedDate);
+      const filteredHistory =
+        goal.history.find(
+          (day) => dayjs(day.date).add(1, "day").format("YYYY-MM-DD") === selectedDate
+        ) || goal.history.find((day) => dayjs(day.date).format("YYYY-MM-DD") === selectedDate);
       // if filteredHistory is null, it will use the filler history
       const fillerHistory = {
         date: selectedDate,
@@ -213,6 +217,7 @@ export const LogContainer = () => {
                       />
                     </Grid>
                     {goals
+                      .filter((goal) => !goal.hidden)
                       .sort((a, b) => a.order - b.order)
                       .map((goal, index) => (
                         <GoalCircularProgress
