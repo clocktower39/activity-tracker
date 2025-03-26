@@ -89,7 +89,7 @@ export const LogContainer = () => {
 
   // gathers daily history for calculating progress percentages
   let allGoalsStatsToday = goals
-    .filter((goal) => goal.hidden)
+  .filter((goal) => !goal.hidden)
     .map((goal) => ({
       history: goal.history,
       category: goal.category,
