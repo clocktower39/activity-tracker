@@ -66,35 +66,11 @@ const update_goal = async (req, res, next) => {
       return res.status(404).send({ message: "Goal not found" });
     }
 
-    // Extract history from the request body
-    const { history, ...goalWithoutHistory } = goal;
-
-    // Update fields other than history
     let updatedGoal = await Goal.findOneAndUpdate(
       { _id: goalId, accountId: res.locals.user._id },
-      { $set: goalWithoutHistory },
+      { $set: goal },
       { new: true }
     );
-
-    // Handle history updates
-    if (history && history.length > 0) {
-      const existingHistory = existingGoal.history || [];
-      const updatedHistory = existingHistory.map((item) => {
-        const newItem = history.find((h) => h.id === item.id); // Match by unique identifier
-        return newItem ? { ...item, ...newItem } : item; // Merge if matched, keep as is if not
-      });
-
-      // Add any new history items that are not in the existing history
-      const newHistory = history.filter((h) => !existingHistory.some((item) => item.id === h.id));
-
-      updatedGoal = await Goal.findOneAndUpdate(
-        { _id: goalId, accountId: res.locals.user._id },
-        {
-          $set: { history: [...updatedHistory, ...newHistory] }, // Merge updated and new history
-        },
-        { new: true }
-      );
-    }
 
     res.send(updatedGoal);
   } catch (err) {
