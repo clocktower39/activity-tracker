@@ -50,6 +50,9 @@ export default function Settings() {
         <ListItem button component={Link} to="/settings/theme">
           <ListItemText primary="Theme" />
         </ListItem>
+        <ListItem button component={Link} to="/settings/hidden">
+          <ListItemText primary="Hidden" />
+        </ListItem>
       </List>
     )
   }

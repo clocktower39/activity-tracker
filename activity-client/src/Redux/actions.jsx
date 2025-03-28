@@ -166,6 +166,9 @@ export function EditActivity(goalId, newTarget) {
         goal.defaultTarget = newTarget.defaultTarget;
         goal.order = newTarget.order;
         goal.hidden = newTarget.hidden;
+
+        const { history, ...goalWithoutHistory } = goal;
+
         fetch(`${serverURL}/update`, {
           method: "POST", // *GET, POST, PUT, DELETE, etc.
           mode: "cors", // no-cors, *cors, same-origin
@@ -176,7 +179,7 @@ export function EditActivity(goalId, newTarget) {
             Authorization: bearer,
           },
           referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-          body: JSON.stringify({ goalId, goal }),
+          body: JSON.stringify({ goalId, goal: goalWithoutHistory, }),
         });
       }
       return goal;
