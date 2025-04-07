@@ -48,7 +48,7 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
 
   return (
     <Grid container>
-      <Grid container item xs={12}>
+      <Grid container size={12}>
         <AppBar sx={{ position: "relative" }}>
           <Toolbar>
             <IconButton
@@ -68,9 +68,9 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
           </Toolbar>
         </AppBar>
       </Grid>
-      <Grid container item xs={12} spacing={1} sx={{ padding: "15px" }}>
-        <Grid container item xs={12} spacing={1}>
-          <Grid container item xs={12}>
+      <Grid container size={12} spacing={1} sx={{ padding: "15px" }}>
+        <Grid container size={12} spacing={1}>
+          <Grid container size={12}>
             <TextField
               fullWidth
               label="Task"
@@ -78,7 +78,7 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
               onChange={(e) => handleChange(e, setTask)}
             />
           </Grid>
-          <Grid container item xs={12}>
+          <Grid container size={12}>
             <Autocomplete
               fullWidth
               value={category}
@@ -87,7 +87,7 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
               renderInput={(params) => <TextField {...params} label="Category" />}
             />
           </Grid>
-          <Grid container item xs={12}>
+          <Grid container size={12}>
             <Autocomplete
               fullWidth
               value={interval}
@@ -96,7 +96,7 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
               renderInput={(params) => <TextField {...params} label="Interval" />}
             />
           </Grid>
-          <Grid container item xs={12}>
+          <Grid container size={12}>
             <TextField
               fullWidth
               label="Goal per Interval"
@@ -104,7 +104,7 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
               onChange={(e) => handleChange(e, setDefaultTarget)}
             />
           </Grid>
-          <Grid container item xs={12}>
+          <Grid container size={12}>
             <TextField
               fullWidth
               label="Order"
@@ -112,17 +112,17 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
               onChange={(e) => handleChange(e, setOrder)}
             />
           </Grid>
-          <Grid container item xs={12} alignItems="center">
+          <Grid container size={12} alignItems="center">
             <Checkbox onChange={(e)=> setHidden(prev => !prev)} checked={hidden} />
             <Typography variant="caption">Hide this goal?</Typography>
           </Grid>
-          <Grid container item xs={12}>
-            <Grid container item xs={2} sx={{ justifyContent: "flex-end" }}>
+          <Grid container size={12}>
+            <Grid container size={2} sx={{ justifyContent: "flex-end" }}>
               <Button variant="contained" disabled={disabledDelete} onClick={confirmedDeleteGoal}>
                 Delete
               </Button>
             </Grid>
-            <Grid container item xs={10} sx={{ alignItems: "center" }}>
+            <Grid container size={10} sx={{ alignItems: "center" }}>
               <Checkbox onChange={handleUnderstandDelete} checked={!disabledDelete} />
               <Typography variant="caption">
                 If deleted, all history will be removed and can not be recovered.

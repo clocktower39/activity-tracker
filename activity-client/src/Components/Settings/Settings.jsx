@@ -61,17 +61,17 @@ export default function Settings() {
     <Container maxWidth="md">
       <Paper sx={{ marginTop: "25px", padding: '12.5px 0', height: '85vh', backgroundColor: 'background.goalContainer', }}>
         <Grid container >
-          <Grid container item xs={12} sx={{ justifyContent: 'space-between', padding: '0px 7.5px' }}>
+          <Grid container size={12} sx={{ justifyContent: 'space-between', padding: '0px 7.5px' }}>
             <Box sx={{ display: 'flex', flexDirection: 'row', }}>
               <IconButton onClick={handleOutletLists} ><ListIcon /></IconButton>
               <Typography variant="h4" >Settings</Typography>
             </Box>
             <Button variant="contained" onClick={handleClick}><SettingsIcon /></Button>
           </Grid>
-          <Grid container item xs={12} sm={4} sx={{ display: openOutletList ? 'flex' : 'none', }}>
+          <Grid container size={{ xs: 12, sm: 4, }} sx={{ display: openOutletList ? 'flex' : 'none', }}>
             <OutletList />
           </Grid>
-          <Grid container item xs={12} sm={openOutletList ? 8 : 12}>
+          <Grid container size={{ xs: 12, sm: openOutletList ? 8 : 12,}} >
             <Outlet />
           </Grid>
         </Grid>

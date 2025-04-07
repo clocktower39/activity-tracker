@@ -21,14 +21,14 @@ export default function AccountSettings() {
 
     return (
         <Container maxWidth="md" sx={{ height: "100%" }}>
-            <Grid container item xs={12} sx={{ padding: "15px" }}>
+            <Grid container size={12} sx={{ padding: "15px" }}>
                 <Typography variant="h5" gutterBottom >
                     Account
                 </Typography>
             </Grid>
             <Paper >
                 <Grid container spacing={2} sx={{ padding: "15px" }}>
-                    <Grid container item xs={12} sx={{ justifyContent: 'center' }}>
+                    <Grid container size={12} sx={{ justifyContent: 'center' }}>
                         <TextField
                             value={firstName}
                             onChange={(e) => handleChange(e, setFirstName)}
@@ -36,7 +36,7 @@ export default function AccountSettings() {
                             fullWidth
                         />
                     </Grid>
-                    <Grid container item xs={12} sx={{ justifyContent: 'center' }}>
+                    <Grid container size={12} sx={{ justifyContent: 'center' }}>
                         <TextField
                             value={lastName}
                             onChange={(e) => handleChange(e, setLastName)}
@@ -44,7 +44,7 @@ export default function AccountSettings() {
                             fullWidth
                         />
                     </Grid>
-                    <Grid container item xs={12} sx={{ justifyContent: 'center' }}>
+                    <Grid container size={12} sx={{ justifyContent: 'center' }}>
                         <TextField
                             value={email}
                             onChange={(e) => handleChange(e, setEmail)}
@@ -52,11 +52,11 @@ export default function AccountSettings() {
                             fullWidth
                         />
                     </Grid>
-                    <Grid container item xs={12} sx={{ justifyContent: 'center' }} spacing={1}>
-                        <Grid item >
+                    <Grid container size={12} sx={{ justifyContent: 'center' }} spacing={1}>
+                        <Grid >
                             <Button variant="contained" onClick={() => null}>Cancel</Button>
                         </Grid>
-                        <Grid item >
+                        <Grid >
                             <Button variant="contained" onClick={() => null}>Save</Button>
                         </Grid>
                     </Grid>

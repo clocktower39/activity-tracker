@@ -75,8 +75,8 @@ export const DateRange = ({ startDate, setStartDate, endDate, setEndDate }) => {
   }
 
   return (
-    <Grid item container xs={12} >
-      <Grid item container xs={6} sx={{ justifyContent: 'center' }}>
+    <Grid container size={12} >
+      <Grid container size={6} sx={{ justifyContent: 'center' }}>
         <TextField
           label="Start Date"
           value={startDate}
@@ -88,7 +88,7 @@ export const DateRange = ({ startDate, setStartDate, endDate, setEndDate }) => {
           }}
         />
       </Grid>
-      <Grid item container xs={6} sx={{ justifyContent: 'center' }}>
+      <Grid container size={6} sx={{ justifyContent: 'center' }}>
         <TextField
           label="End Date"
           value={endDate}
@@ -115,7 +115,7 @@ export default function Metrics() {
     <>
       <Container maxWidth="md" sx={{ paddingBottom: '25px' }}>
         <Grid container>
-          <Grid item container xs={12} >
+          <Grid container size={12} >
             <TextField
               label="Type"
               select

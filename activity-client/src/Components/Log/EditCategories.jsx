@@ -41,11 +41,11 @@ const CategoryItem = ({ category, setLocalCategories }) => {
   }, [category._id, categoryName, order, setLocalCategories]);
 
   return (
-    <Grid container item xs={12} spacing={1}>
-      <Grid container item xs={3} sm={2}>
+    <Grid container size={12} spacing={1}>
+      <Grid container size={3} sm={2}>
         <TextField label="Order" value={order} onChange={(e) => handleChange(e, setOrder)} />
       </Grid>
-      <Grid container item xs={9} sm={10}>
+      <Grid container size={{ xs: 9, sm: 10, }} >
         <TextField
           label="Category"
           value={categoryName}
@@ -90,7 +90,7 @@ export default function Categories({ categoryId, categories, setToggleCategoryVi
 
   return (
     <Grid container >
-      <Grid container item xs={12}>
+      <Grid container size={12}>
         <AppBar sx={{ position: "relative" }}>
           <Toolbar>
             <IconButton
@@ -110,7 +110,7 @@ export default function Categories({ categoryId, categories, setToggleCategoryVi
           </Toolbar>
         </AppBar>
       </Grid>
-      <Grid container item xs={12} spacing={1} sx={{ padding: "15px" }}>
+      <Grid container size={12} spacing={1} sx={{ padding: "15px" }}>
         {localCategories.map((category) => (
           <CategoryItem
             key={category._id}
@@ -118,18 +118,18 @@ export default function Categories({ categoryId, categories, setToggleCategoryVi
             setLocalCategories={setLocalCategories}
           />
         ))}
-        <Grid container item xs={12} spacing={1}>
-          <Grid container item xs={12}>
+        <Grid container size={12} spacing={1}>
+          <Grid container size={12}>
             <Divider />
           </Grid>
-          <Grid container item sm={2} xs={3}>
+          <Grid container size={{ xs: 3, sm: 2, }} >
             <TextField
               label="Order"
               value={newOrder}
               onChange={(e) => handleChange(e, setNewOrder)}
             />
           </Grid>
-          <Grid container item sm={10} xs={9}>
+          <Grid container size={{ xs: 9, sm: 10, }} >
             <TextField
               label="Category"
               value={newCategoryName}

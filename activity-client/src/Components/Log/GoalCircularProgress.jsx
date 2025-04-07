@@ -123,8 +123,8 @@ export default function GoalCircularProgress(props) {
   return (
     goal.category === category && (
       <>
-        <Grid container item xs={3}>
-          <Grid container item xs={12} sx={classes.goalContent}>
+        <Grid container size={3}>
+          <Grid container size={12} sx={classes.goalContent}>
             <IconButton {...longPressEvent}>
               <Box position="relative" display="inline-flex" alignItems={"center"}>
                 <CircularProgress
@@ -191,7 +191,7 @@ export default function GoalCircularProgress(props) {
               </Box>
             </IconButton>
           </Grid>
-          <Grid container item xs={12} sx={classes.goalContent}>
+          <Grid container size={12} sx={classes.goalContent}>
             <Typography variant="body2" align="center" sx={classes.CircularProgressLabel}>
               {goal.task}
             </Typography>

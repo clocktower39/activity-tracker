@@ -15,14 +15,14 @@ export default function HiddenSettings() {
 
     return (
         <Container maxWidth="md" sx={{ height: "100%" }}>
-            <Grid container item xs={12} sx={{ padding: "15px" }}>
+            <Grid container size={12} sx={{ padding: "15px" }}>
                 <Typography variant="h5" gutterBottom >
                     Hidden
                 </Typography>
             </Grid>
             <Paper >
                 <Grid container spacing={2} sx={{ padding: "15px" }}>
-                    <Grid container item xs={12} sx={{ justifyContent: 'center' }}>
+                    <Grid container size={12} sx={{ justifyContent: 'center' }}>
                         {goals.filter((goal) => goal.hidden).map((goal) => <HiddenGoal goal={goal} />)}
                     </Grid>
                 </Grid>
@@ -49,7 +49,7 @@ const HiddenGoal = ({ goal }) => {
     }
 
     return (
-        <Grid container item xs={12} alignItems="center">
+        <Grid container size={12} alignItems="center">
             <Checkbox onChange={handleChange} checked={hidden} />
             <Typography variant="caption">{goal.task}</Typography>
         </Grid>

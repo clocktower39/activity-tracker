@@ -29,7 +29,7 @@ export default function ChangePassword({ open, handlePasswordClose }) {
       </DialogTitle>
       <DialogContent>
         <Grid container spacing={1} sx={{ padding: "10px 0px" }}>
-          <Grid item container xs={12}>
+          <Grid container size={12}>
             <TextField
               type="password"
               value={currentPassword}
@@ -39,7 +39,7 @@ export default function ChangePassword({ open, handlePasswordClose }) {
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid item container xs={12}>
+          <Grid container size={12}>
             <TextField
               type="password"
               value={newPassword}
@@ -49,7 +49,7 @@ export default function ChangePassword({ open, handlePasswordClose }) {
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid item container xs={12}>
+          <Grid container size={12}>
             <TextField
               type="password"
               value={confirmNewPassword}

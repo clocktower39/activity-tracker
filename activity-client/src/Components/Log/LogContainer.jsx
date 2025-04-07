@@ -152,7 +152,7 @@ export const LogContainer = () => {
   ) : (
     <Container maxWidth="md">
       <Grid container sx={classes.root}>
-        <Grid item xs={12} container sx={classes.dateContainer}>
+        <Grid size={12} container sx={classes.dateContainer}>
           <Button onClick={() => changeDate(-1)}>
             <ArrowBack color="action" />
           </Button>
@@ -177,23 +177,23 @@ export const LogContainer = () => {
         <Dialog open={toggleNewTaskView} onClose={() => setToggleNewTaskView(false)}>
           <NewGoal categories={categories} setToggleNewTaskView={setToggleNewTaskView} />
         </Dialog>
-        <Grid container item sx={{ justifyContent: "center", alignItems: "center" }}>
-          <Grid item sx={{ justifyContent: "center", alignItems: "center" }}>
+        <Grid container sx={{ justifyContent: "center", alignItems: "center" }}>
+          <Grid sx={{ justifyContent: "center", alignItems: "center" }}>
             <IconButton size="large" onClick={handleSortToggle}>
               <FilterList color="action" />
             </IconButton>
           </Grid>
-          <Grid item sx={{ justifyContent: "center", alignItems: "center" }}>
+          <Grid sx={{ justifyContent: "center", alignItems: "center" }}>
             <IconButton size="large" onClick={() => setToggleCategoryView((prev) => !prev)}>
               <Category color="action" />
             </IconButton>
           </Grid>
-          <Grid item sx={{ justifyContent: "center", alignItems: "center" }}>
+          <Grid sx={{ justifyContent: "center", alignItems: "center" }}>
             <IconButton size="large" onClick={() => setToggleNewTaskView((prev) => !prev)}>
               <AddCircle color="action" />
             </IconButton>
           </Grid>
-          <Grid item sx={{ justifyContent: "center", alignItems: "center" }}>
+          <Grid sx={{ justifyContent: "center", alignItems: "center" }}>
             <IconButton size="large" onClick={() => setToggleAchievedView((prev) => !prev)}>
               <Flaky color="action" />
             </IconButton>
@@ -206,8 +206,8 @@ export const LogContainer = () => {
               let categoryPercent = getCategoryProgress(category.category);
               return (
                 <Paper variant="outlined" sx={classes.Paper} key={category.category}>
-                  <Grid container item xs={12} sx={classes.goalContainer}>
-                    <Grid item xs={12} sx={classes.categoryBackground}>
+                  <Grid container size={12} sx={classes.goalContainer}>
+                    <Grid size={12} sx={classes.categoryBackground}>
                       <Typography variant="h6">{category.category}</Typography>
                       <LinearProgress
                         variant="determinate"
@@ -237,8 +237,8 @@ export const LogContainer = () => {
             })
         ) : (
           <Paper variant="outlined" sx={classes.Paper}>
-            <Grid container item xs={12} sx={classes.goalContainer}>
-              <Grid item xs={12} sx={classes.categoryBackground}>
+            <Grid container size={12} sx={classes.goalContainer}>
+              <Grid size={12} sx={classes.categoryBackground}>
                 <Typography variant="h6">All</Typography>
                 <LinearProgress
                   variant="determinate"

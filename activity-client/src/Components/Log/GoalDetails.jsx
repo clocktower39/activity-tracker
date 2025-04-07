@@ -7,7 +7,6 @@ import { renderChart } from './Metrics';
 import { DateRange } from './Metrics';
 
 const classes = {
-    DialogTitle: { display: 'flex', justifyContent: 'center', alignItems: 'center', },
     ProgressPercentText: { textAlign: 'center', },
     jCaICenter: { justifyContent: 'center', alignItems: 'center', },
 }
@@ -27,23 +26,21 @@ export default function GoalDetails({ goal, stats, openDialog, setOpenDialog, ad
                 onClose={onDialogClose}
                 fullWidth
             >
-
                 <DialogTitle sx={classes.DialogTitle}>
-                    <Grid container sx={{ justifyContent: 'space-between', alignItems: 'center' }} >
-                        <Grid item container xs={12} sm={2} sx={classes.jCaICenter} ><Typography variant="subtitle1">{selectedDate}</Typography></Grid>
-                        <Grid item container xs={12} sm={8} sx={classes.jCaICenter} ><Typography variant="h4">{goal.task}</Typography></Grid>
-                        <Grid item container xs={12} sm={2} sx={classes.jCaICenter} ><IconButton onClick={() => setToggleEditTaskView(true)} ><Edit /></IconButton></Grid>
+                    <Grid container size={12} sx={{ justifyContent: 'space-between', alignItems: 'center' }} >
+                        <Grid container size={{ xs: 12, sm: 2, }} sx={classes.jCaICenter} ><Typography variant="subtitle1">{selectedDate}</Typography></Grid>
+                        <Grid container size={{ xs: 12, sm: 8, }} sx={classes.jCaICenter} ><Typography variant="h4">{goal.task}</Typography></Grid>
+                        <Grid container size={{ xs: 12, sm: 2, }} sx={classes.jCaICenter} ><IconButton onClick={() => setToggleEditTaskView(true)} ><Edit /></IconButton></Grid>
                     </Grid>
-
-
                 </DialogTitle>
+                
                 <Typography variant="h6" sx={classes.ProgressPercentText}>{progressPercent}%</Typography>
                 <LinearProgress variant="determinate" value={progressPercent > 100 ? 100 : progressPercent} />
                 <DialogContent>
                     <Grid container >
-                        <Grid container item xs={4} sx={classes.jCaICenter} ><IconButton onClick={removeAchieved}  ><Remove /></IconButton></Grid>
-                        <Grid container item xs={4} sx={classes.jCaICenter} ><Typography >{stats.achieved}</Typography></Grid>
-                        <Grid container item xs={4} sx={classes.jCaICenter} ><IconButton onClick={addAchieved} ><Add /></IconButton></Grid>
+                        <Grid container size={4} sx={classes.jCaICenter} ><IconButton onClick={removeAchieved}  ><Remove /></IconButton></Grid>
+                        <Grid container size={4} sx={classes.jCaICenter} ><Typography >{stats.achieved}</Typography></Grid>
+                        <Grid container size={4} sx={classes.jCaICenter} ><IconButton onClick={addAchieved} ><Add /></IconButton></Grid>
                     </Grid>
                     <Divider sx={{ margin: '15px 0px' }} />
                     <Typography variant="h6" sx={{ textAlign: "center" }}>History</Typography>

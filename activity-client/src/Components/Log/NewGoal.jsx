@@ -44,7 +44,7 @@ export default function NewGoal({ categories, setToggleNewTaskView }) {
 
   return (
     <Grid container >
-      <Grid container item xs={12}>
+      <Grid container size={12}>
         <AppBar sx={{ position: "relative" }}>
           <Toolbar>
             <IconButton
@@ -64,9 +64,9 @@ export default function NewGoal({ categories, setToggleNewTaskView }) {
           </Toolbar>
         </AppBar>
       </Grid>
-      <Grid container item xs={12} spacing={1} sx={{ padding: "15px" }}>
-        <Grid container item xs={12} spacing={1}>
-          <Grid container item xs={12}>
+      <Grid container size={12} spacing={1} sx={{ padding: "15px" }}>
+        <Grid container size={12} spacing={1}>
+          <Grid container size={12}>
             <TextField
               fullWidth
               label="Task"
@@ -74,7 +74,7 @@ export default function NewGoal({ categories, setToggleNewTaskView }) {
               onChange={(e) => handleChange(e, setTask)}
             />
           </Grid>
-          <Grid container item xs={12}>
+          <Grid container size={12}>
             <Autocomplete
               fullWidth
               value={category}
@@ -83,7 +83,7 @@ export default function NewGoal({ categories, setToggleNewTaskView }) {
               renderInput={(params) => <TextField {...params} label="Category" />}
             />
           </Grid>
-          <Grid container item xs={12}>
+          <Grid container size={12}>
             <Autocomplete
               fullWidth
               value={interval}
@@ -92,7 +92,7 @@ export default function NewGoal({ categories, setToggleNewTaskView }) {
               renderInput={(params) => <TextField {...params} label="Interval" />}
             />
           </Grid>
-          <Grid container item xs={12}>
+          <Grid container size={12}>
             <TextField
               fullWidth
               label="Goal per Interval"
@@ -100,7 +100,7 @@ export default function NewGoal({ categories, setToggleNewTaskView }) {
               onChange={(e) => handleChange(e, setGoal)}
             />
           </Grid>
-          <Grid container item xs={12}>
+          <Grid container size={12}>
             <TextField
               fullWidth
               label="Order"
