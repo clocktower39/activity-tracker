@@ -87,7 +87,7 @@ export const Login = (props) => {
               }}
             />
           </Grid>
-          <Grid container spacing={2}>
+          <Grid container size={12} spacing={2} justifyContent="center" >
             <Grid size={12}>
               <Button
                 variant="contained"
