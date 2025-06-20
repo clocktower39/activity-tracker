@@ -11,7 +11,8 @@ const goalSchema = new mongoose.Schema({
             {
                 date: { type: Date, required: true },
                 targetPerDuration: { type: Number, required: true },
-                achieved: { type: Number, required: true }
+                achieved: { type: Number, required: true },
+                note: { type: String, required: false }
             }
         ],
         required: true,
