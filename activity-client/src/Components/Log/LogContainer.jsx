@@ -62,12 +62,14 @@ export const LogContainer = () => {
   const [toggleCategoryView, setToggleCategoryView] = useState(false);
   const [toggleNewTaskView, setToggleNewTaskView] = useState(false);
   const [sortBy, setSortBy] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   // set the log date to today
   const [selectedDate, setSelectedDate] = useState(dayjs(new Date()).format("YYYY-MM-DD"));
 
   useEffect(() => {
-    dispatch(getActivities(dayjs(selectedDate).add(1, "day").format("YYYY-MM-DD")));
+    setLoading(true);
+    dispatch(getActivities(dayjs(selectedDate).add(1, "day").format("YYYY-MM-DD"))).then(() => setLoading(false));
     // eslint-disable-next-line
   }, [selectedDate]);
 
@@ -89,7 +91,7 @@ export const LogContainer = () => {
 
   // gathers daily history for calculating progress percentages
   let allGoalsStatsToday = goals
-  .filter((goal) => !goal.hidden)
+    .filter((goal) => !goal.hidden)
     .map((goal) => ({
       history: goal.history,
       category: goal.category,
@@ -199,7 +201,11 @@ export const LogContainer = () => {
             </IconButton>
           </Grid>
         </Grid>
-        {sortBy ? (
+        {loading ? (
+          <Grid container size={12} justifyContent="center">
+            Loading
+          </Grid>
+        ) : sortBy ? (
           categories
             .sort((a, b) => a.order - b.order)
             .map((category) => {
