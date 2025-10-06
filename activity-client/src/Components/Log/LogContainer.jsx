@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getActivities } from "../../Redux/actions";
 import { Navigate } from "react-router";
 import {
   Button,
+  CircularProgress,
   Container,
   Dialog,
   Grid,
@@ -13,149 +14,163 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import {
-  ArrowBack,
-  ArrowForward,
-  AddCircle,
-  FilterList,
-  Category,
-  Flaky,
-} from "@mui/icons-material";
+import { ArrowBack, ArrowForward, AddCircle, FilterList, Category, Flaky } from "@mui/icons-material";
 import GoalCircularProgress from "./GoalCircularProgress";
 import Categories from "./EditCategories";
 import NewGoal from "./NewGoal";
 import dayjs from "dayjs";
 
-const classes = {
-  root: {
-    paddingTop: "25px",
-    paddingBottom: "56px",
-    justifyContent: "center",
-  },
-  dateContainer: {
-    justifyContent: "center",
-  },
-  Paper: {
+// ----- Styles (MUI sx objects) -------------------------------------------------
+const sx = {
+  root: { paddingTop: "25px", paddingBottom: "56px", justifyContent: "center" },
+  dateRow: { justifyContent: "center", alignItems: "center", gap: 2 },
+  paper: { width: "100%", m: "12.5px", p: 0 },
+  categoryHeader: {
+    bgcolor: "background.categoryBackground",
     width: "100%",
-    margin: "12.5px",
-  },
-  categoryBackground: {
-    backgroundColor: "background.categoryBackground",
-    width: "100%",
-    height: "100%",
-    padding: "15px",
+    p: "15px",
     borderRadius: "5px",
   },
-  goalContainer: {
+  goalsContainer: {
     justifyContent: "center",
-    backgroundColor: "background.goalContainer",
+    bgcolor: "background.goalContainer",
     borderRadius: "4px",
+  },
+  toolbar: {
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 1,
+    mb: 1,
   },
 };
 
-export const LogContainer = () => {
+// Utility: best‑effort match for off‑by‑one UTC shifts in legacy data
+const matchesSelectedDate = (isoOrDate, selectedYYYYMMDD) => {
+  const d = dayjs(isoOrDate);
+  return (
+    d.format("YYYY-MM-DD") === selectedYYYYMMDD ||
+    d.add(1, "day").format("YYYY-MM-DD") === selectedYYYYMMDD
+  );
+};
+
+export default function LogContainer() {
   const dispatch = useDispatch();
-  const goals = useSelector((state) => state.goals);
+
+  // ----- Redux state -----
+  const goals = useSelector((state) => state.goals || []);
   const user = useSelector((state) => state.user);
-  const categories = useSelector((state) => state.categories);
-  const [toggleAchievedView, setToggleAchievedView] = useState(true);
-  const [toggleCategoryView, setToggleCategoryView] = useState(false);
-  const [toggleNewTaskView, setToggleNewTaskView] = useState(false);
-  const [sortBy, setSortBy] = useState(true);
+  const categories = useSelector((state) => state.categories || []);
+
+  // ----- Local UI state -----
+  const [showAchieved, setShowAchieved] = useState(true);
+  const [showCategoriesDialog, setShowCategoriesDialog] = useState(false);
+  const [showNewGoalDialog, setShowNewGoalDialog] = useState(false);
+  const [sortByCategory, setSortByCategory] = useState(true);
   const [loading, setLoading] = useState(true);
 
-  // set the log date to today
-  const [selectedDate, setSelectedDate] = useState(dayjs(new Date()).format("YYYY-MM-DD"));
+  // Default date = today (YYYY-MM-DD)
+  const [selectedDate, setSelectedDate] = useState(() => dayjs().format("YYYY-MM-DD"));
 
+  // Fetch activities when date changes (keeps the original +1 day behavior for legacy UTC)
   useEffect(() => {
+    let isMounted = true;
     setLoading(true);
-    dispatch(getActivities(dayjs(selectedDate).add(1, "day").format("YYYY-MM-DD"))).then(() => setLoading(false));
-    // eslint-disable-next-line
-  }, [selectedDate]);
+    dispatch(getActivities(dayjs(selectedDate).add(1, "day").format("YYYY-MM-DD"))).finally(() => {
+      if (isMounted) setLoading(false);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [dispatch, selectedDate]);
 
-  const handleSelectedDateChange = (e) => {
-    if (e.target.value && e.target.value !== "") {
-      setSelectedDate(e.target.value);
-    } else {
-      console.log(`Invalid date selected: '${e.target.value}'`);
-    }
-  };
+  // ----- Handlers -----
+  const handleSelectedDateChange = useCallback((e) => {
+    const value = e?.target?.value;
+    if (value) setSelectedDate(value);
+  }, []);
 
-  // handles when arrow buttons are clicked
-  const changeDate = (change) => {
-    const newDate = dayjs(selectedDate).add(change, "day").format("YYYY-MM-DD");
-    setSelectedDate(newDate);
-  };
+  const changeDate = useCallback((deltaDays) => {
+    setSelectedDate((prev) => dayjs(prev).add(deltaDays, "day").format("YYYY-MM-DD"));
+  }, []);
 
-  const handleSortToggle = () => setSortBy((prev) => !prev);
+  const toggleSort = useCallback(() => setSortByCategory((p) => !p), []);
 
-  // gathers daily history for calculating progress percentages
-  let allGoalsStatsToday = goals
-    .filter((goal) => !goal.hidden)
-    .map((goal) => ({
-      history: goal.history,
-      category: goal.category,
-      defaultTarget: goal.defaultTarget,
-    }))
-    .map((goal) => {
-      // filteredHistory will return an array with a single object of the selected date
-      const filteredHistory =
-        goal.history.find(
-          (day) => dayjs(day.date).add(1, "day").format("YYYY-MM-DD") === selectedDate
-        ) || goal.history.find((day) => dayjs(day.date).format("YYYY-MM-DD") === selectedDate);
-      // if filteredHistory is null, it will use the filler history
-      const fillerHistory = {
+  // ----- Derived data ----------------------------------------------------------
+  const visibleGoals = useMemo(() => goals.filter((g) => !g.hidden), [goals]);
+
+  const perGoalStatsToday = useMemo(() => {
+    return visibleGoals.map((goal) => {
+      // find match for selected day in this goal's history
+      const match = (goal.history || []).find((h) => matchesSelectedDate(h.date, selectedDate));
+      const fallback = {
         date: selectedDate,
-        targetPerDuration: goal.defaultTarget,
+        targetPerDuration: goal.defaultTarget ?? 0,
         achieved: 0,
       };
       return {
-        stats: filteredHistory ? filteredHistory : fillerHistory,
+        goalId: goal._id,
+        task: goal.task,
         category: goal.category,
-        defaultTarget: goal.defaultTarget,
+        defaultTarget: goal.defaultTarget ?? 0,
+        stats: match || fallback,
       };
     });
+  }, [visibleGoals, selectedDate]);
 
-  let goalCategories = [];
+  const categoryTotals = useMemo(() => {
+    // { [category]: { achieved: number, target: number } }
+    return perGoalStatsToday.reduce((acc, g) => {
+      const key = g.category || "Uncategorized";
+      if (!acc[key]) acc[key] = { achieved: 0, target: 0 };
+      acc[key].achieved += Number(g.stats.achieved || 0);
+      acc[key].target += Number(g.stats.targetPerDuration || 0);
+      return acc;
+    }, {});
+  }, [perGoalStatsToday]);
 
-  goals.forEach((goal) => {
-    if (!goalCategories.includes(goal.category)) {
-      goalCategories.push(goal.category);
-    }
-  });
+  const getCategoryProgress = useCallback(
+    (cat) => {
+      const t = categoryTotals[cat];
+      if (!t || !t.target) return 0;
+      return Math.min(100, Math.max(0, (t.achieved / t.target) * 100));
+    },
+    [categoryTotals]
+  );
 
-  const getCategoryProgress = (c) => {
-    let categoryHistory = allGoalsStatsToday.filter((goal) => goal.category === c);
-    let achievedTotal = 0;
-    let goalTotal = 0;
+  const allProgress = useMemo(() => {
+    const totals = Object.values(categoryTotals).reduce(
+      (acc, t) => ({ achieved: acc.achieved + t.achieved, target: acc.target + t.target }),
+      { achieved: 0, target: 0 }
+    );
+    if (!totals.target) return 0;
+    return Math.min(100, Math.max(0, (totals.achieved / totals.target) * 100));
+  }, [categoryTotals]);
 
-    categoryHistory.forEach((goal) => {
-      achievedTotal += goal.stats.achieved;
-      goalTotal += goal.stats.targetPerDuration;
-    });
+  const sortedCategories = useMemo(
+    () => [...categories].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    [categories]
+  );
 
-    return (achievedTotal / goalTotal) * 100;
-  };
+  const goalsSortedByOrder = useMemo(
+    () => [...visibleGoals].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    [visibleGoals]
+  );
 
-  const getAllProgress = () => {
-    let achievedTotal = 0;
-    let goalTotal = 0;
+  const goalsSortedByTask = useMemo(
+    () => [...visibleGoals].sort((a, b) => (a.task || "").localeCompare(b.task || "")),
+    [visibleGoals]
+  );
 
-    allGoalsStatsToday.forEach((goal) => {
-      achievedTotal += goal.stats.achieved;
-      goalTotal += goal.stats.targetPerDuration;
-    });
+  // ----- Guards -----
+  if (!user) return <Navigate to={{ pathname: "/login" }} />;
 
-    return (achievedTotal / goalTotal) * 100;
-  };
-
-  return !user ? (
-    <Navigate to={{ pathname: "/login" }} />
-  ) : (
+  // ----- Render ----------------------------------------------------------------
+  return (
     <Container maxWidth="md">
-      <Grid container sx={classes.root}>
-        <Grid size={12} container sx={classes.dateContainer}>
-          <Button onClick={() => changeDate(-1)}>
+      <Grid container sx={sx.root}>
+        {/* Date controls */}
+        <Grid container size={12} sx={sx.dateRow}>
+          <Button onClick={() => changeDate(-1)} aria-label="Previous day">
             <ArrowBack color="action" />
           </Button>
           <TextField
@@ -165,115 +180,98 @@ export const LogContainer = () => {
             variant="standard"
             value={selectedDate}
             onChange={handleSelectedDateChange}
-            InputLabelProps={{
-              shrink: true,
-            }}
+            InputLabelProps={{ shrink: true }}
           />
-          <Button onClick={() => changeDate(1)}>
+          <Button onClick={() => changeDate(1)} aria-label="Next day">
             <ArrowForward color="action" />
           </Button>
         </Grid>
-        <Dialog open={toggleCategoryView} onClose={() => setToggleCategoryView(false)}>
-          <Categories categories={categories} setToggleCategoryView={setToggleCategoryView} />
+
+        {/* Dialogs */}
+        <Dialog open={showCategoriesDialog} onClose={() => setShowCategoriesDialog(false)}>
+          <Categories categories={categories} setToggleCategoryView={setShowCategoriesDialog} />
         </Dialog>
-        <Dialog open={toggleNewTaskView} onClose={() => setToggleNewTaskView(false)}>
-          <NewGoal categories={categories} setToggleNewTaskView={setToggleNewTaskView} />
+        <Dialog open={showNewGoalDialog} onClose={() => setShowNewGoalDialog(false)}>
+          <NewGoal categories={categories} setToggleNewTaskView={setShowNewGoalDialog} />
         </Dialog>
-        <Grid container sx={{ justifyContent: "center", alignItems: "center" }}>
-          <Grid sx={{ justifyContent: "center", alignItems: "center" }}>
-            <IconButton size="large" onClick={handleSortToggle}>
-              <FilterList color="action" />
-            </IconButton>
-          </Grid>
-          <Grid sx={{ justifyContent: "center", alignItems: "center" }}>
-            <IconButton size="large" onClick={() => setToggleCategoryView((prev) => !prev)}>
-              <Category color="action" />
-            </IconButton>
-          </Grid>
-          <Grid sx={{ justifyContent: "center", alignItems: "center" }}>
-            <IconButton size="large" onClick={() => setToggleNewTaskView((prev) => !prev)}>
-              <AddCircle color="action" />
-            </IconButton>
-          </Grid>
-          <Grid sx={{ justifyContent: "center", alignItems: "center" }}>
-            <IconButton size="large" onClick={() => setToggleAchievedView((prev) => !prev)}>
-              <Flaky color="action" />
-            </IconButton>
-          </Grid>
+
+        {/* Toolbar */}
+        <Grid container size={12} sx={sx.toolbar}>
+          <IconButton size="large" onClick={toggleSort} aria-label="Toggle sort">
+            <FilterList color="action" />
+          </IconButton>
+          <IconButton size="large" onClick={() => setShowCategoriesDialog((p) => !p)} aria-label="Edit categories">
+            <Category color="action" />
+          </IconButton>
+          <IconButton size="large" onClick={() => setShowNewGoalDialog((p) => !p)} aria-label="Add goal">
+            <AddCircle color="action" />
+          </IconButton>
+          <IconButton size="large" onClick={() => setShowAchieved((p) => !p)} aria-label="Toggle achieved view">
+            <Flaky color="action" />
+          </IconButton>
         </Grid>
+
+        {/* Content */}
         {loading ? (
-          <Grid container size={12} justifyContent="center">
-            Loading
+          <Grid container size={12} justifyContent="center" alignItems="center" sx={{ py: 6 }}>
+            <CircularProgress size={28} sx={{ mr: 1 }} />
+            <Typography variant="body2">Loading…</Typography>
           </Grid>
-        ) : sortBy ? (
-          categories
-            .sort((a, b) => a.order - b.order)
-            .map((category) => {
-              let categoryPercent = getCategoryProgress(category.category);
-              return (
-                <Paper variant="outlined" sx={classes.Paper} key={category.category}>
-                  <Grid container size={12} sx={classes.goalContainer}>
-                    <Grid size={12} sx={classes.categoryBackground}>
-                      <Typography variant="h6">{category.category}</Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={
-                          isNaN(categoryPercent) ? 0 : categoryPercent > 100 ? 100 : categoryPercent
-                        }
-                      />
-                    </Grid>
-                    {goals
-                      .filter((goal) => !goal.hidden)
-                      .sort((a, b) => a.order - b.order)
-                      .map((goal, index) => (
-                        <GoalCircularProgress
-                          key={`${goal.task}-${index}`}
-                          goal={goal}
-                          history={goal.history}
-                          index={index}
-                          category={category.category}
-                          selectedDate={selectedDate}
-                          toggleAchievedView={toggleAchievedView}
-                          categories={categories}
-                        />
-                      ))}
+        ) : sortByCategory ? (
+          // Grouped by category
+          sortedCategories.map((cat) => {
+            const percent = getCategoryProgress(cat.category);
+            const goalsInCat = goalsSortedByOrder.filter((g) => g.category === cat.category);
+            if (goalsInCat.length === 0) return null;
+            return (
+              <Paper variant="outlined" sx={sx.paper} key={`cat-${cat.category}`}>
+                <Grid container size={12} sx={sx.goalsContainer}>
+                  <Grid size={12} sx={sx.categoryHeader}>
+                    <Typography variant="h6">{cat.category}</Typography>
+                    <LinearProgress variant="determinate" value={Number.isFinite(percent) ? percent : 0} />
                   </Grid>
-                </Paper>
-              );
-            })
+
+                  {goalsInCat.map((goal, index) => (
+                    <GoalCircularProgress
+                      key={goal._id || `${goal.task}-${index}`}
+                      goal={goal}
+                      history={goal.history}
+                      index={index}
+                      category={cat.category}
+                      selectedDate={selectedDate}
+                      toggleAchievedView={showAchieved}
+                      categories={categories}
+                    />
+                  ))}
+                </Grid>
+              </Paper>
+            );
+          })
         ) : (
-          <Paper variant="outlined" sx={classes.Paper}>
-            <Grid container size={12} sx={classes.goalContainer}>
-              <Grid size={12} sx={classes.categoryBackground}>
+          // Flat list (alphabetical)
+          <Paper variant="outlined" sx={sx.paper}>
+            <Grid container size={12} sx={sx.goalsContainer}>
+              <Grid size={12} sx={sx.categoryHeader}>
                 <Typography variant="h6">All</Typography>
-                <LinearProgress
-                  variant="determinate"
-                  getAllProgress
-                  value={
-                    isNaN(getAllProgress()) ? 0 : getAllProgress() > 100 ? 100 : getAllProgress()
-                  }
-                />
+                <LinearProgress variant="determinate" value={allProgress} />
               </Grid>
-              {goals
-                .sort((a, b) => a.task > b.task)
-                .map((goal, index) => (
-                  <GoalCircularProgress
-                    key={`${goal.task}`}
-                    goal={goal}
-                    history={goal.history}
-                    index={index}
-                    category={goal.category}
-                    selectedDate={selectedDate}
-                    toggleAchievedView={toggleAchievedView}
-                    categories={categories}
-                  />
-                ))}
+
+              {goalsSortedByTask.map((goal, index) => (
+                <GoalCircularProgress
+                  key={goal._id || `${goal.task}-${index}`}
+                  goal={goal}
+                  history={goal.history}
+                  index={index}
+                  category={goal.category}
+                  selectedDate={selectedDate}
+                  toggleAchievedView={showAchieved}
+                  categories={categories}
+                />
+              ))}
             </Grid>
           </Paper>
         )}
       </Grid>
     </Container>
   );
-};
-
-export default LogContainer;
+}
