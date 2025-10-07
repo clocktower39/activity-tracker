@@ -4,7 +4,6 @@ import { getActivities } from "../../Redux/actions";
 import { Navigate } from "react-router";
 import {
   Button,
-  CircularProgress,
   Container,
   Dialog,
   Grid,
@@ -73,14 +72,7 @@ export default function LogContainer() {
 
   // Fetch activities when date changes (keeps the original +1 day behavior for legacy UTC)
   useEffect(() => {
-    let isMounted = true;
-    setLoading(true);
-    dispatch(getActivities(dayjs(selectedDate).add(1, "day").format("YYYY-MM-DD"))).finally(() => {
-      if (isMounted) setLoading(false);
-    });
-    return () => {
-      isMounted = false;
-    };
+    dispatch(getActivities(dayjs(selectedDate).add(1, "day").format("YYYY-MM-DD")));
   }, [dispatch, selectedDate]);
 
   // ----- Handlers -----
@@ -134,7 +126,7 @@ export default function LogContainer() {
       if (!t || !t.target) return 0;
       return Math.min(100, Math.max(0, (t.achieved / t.target) * 100));
     },
-    [categoryTotals]
+    [categoryTotals, selectedDate]
   );
 
   const allProgress = useMemo(() => {
@@ -144,7 +136,7 @@ export default function LogContainer() {
     );
     if (!totals.target) return 0;
     return Math.min(100, Math.max(0, (totals.achieved / totals.target) * 100));
-  }, [categoryTotals]);
+  }, [categoryTotals, selectedDate]);
 
   const sortedCategories = useMemo(
     () => [...categories].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
@@ -212,12 +204,7 @@ export default function LogContainer() {
         </Grid>
 
         {/* Content */}
-        {loading ? (
-          <Grid container size={12} justifyContent="center" alignItems="center" sx={{ py: 6 }}>
-            <CircularProgress size={28} sx={{ mr: 1 }} />
-            <Typography variant="body2">Loading…</Typography>
-          </Grid>
-        ) : sortByCategory ? (
+        {sortByCategory ? (
           // Grouped by category
           sortedCategories.map((cat) => {
             const percent = getCategoryProgress(cat.category);
