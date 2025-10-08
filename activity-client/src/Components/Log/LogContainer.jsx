@@ -45,11 +45,9 @@ const sx = {
 
 // Utility: best‑effort match for off‑by‑one UTC shifts in legacy data
 const matchesSelectedDate = (isoOrDate, selectedYYYYMMDD) => {
-  const d = dayjs(isoOrDate);
-  return (
-    d.format("YYYY-MM-DD") === selectedYYYYMMDD ||
-    d.add(1, "day").format("YYYY-MM-DD") === selectedYYYYMMDD
-  );
+  const left = dayjs(isoOrDate).utc().format('YYYY-MM-DD');
+  const right = dayjs(selectedYYYYMMDD).utc().format('YYYY-MM-DD');
+  return left === right;
 };
 
 export default function LogContainer() {
@@ -72,7 +70,7 @@ export default function LogContainer() {
 
   // Fetch activities when date changes (keeps the original +1 day behavior for legacy UTC)
   useEffect(() => {
-    dispatch(getActivities(dayjs(selectedDate).add(1, "day").format("YYYY-MM-DD")));
+    dispatch(getActivities(selectedDate));
   }, [dispatch, selectedDate]);
 
   // ----- Handlers -----
