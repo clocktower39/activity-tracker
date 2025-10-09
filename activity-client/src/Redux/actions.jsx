@@ -34,11 +34,11 @@ export function updateActivityProgress(goalId, achieved, date) {
       return Promise.reject(new Error("Goal not found"));
     }
 
-    const formattedDate = dayjs(date).format("YYYY-MM-DD");
+    const formattedDate = dayjs(date).utc().format("YYYY-MM-DD");
 
     // Check if the entry exists in the goal history
     const existingEntry = goal.history.find(
-      (day) => dayjs(day.date).add(1, "day").format("YYYY-MM-DD") === formattedDate
+      (day) => dayjs(day.date).utc().format("YYYY-MM-DD") === formattedDate
     );
 
     if (existingEntry) {
@@ -68,7 +68,7 @@ export function updateActivityProgress(goalId, achieved, date) {
     } else {
       // Add a new entry
       const newHistoryItem = {
-        date: new Date(date).toISOString(),
+        date: dayjs(date).utc().toDate(),
         targetPerDuration: goal.defaultTarget,
         achieved,
       };
@@ -134,10 +134,11 @@ export function getActivities(selectedDate) {
   return async (dispatch, getState) => {
     const newState = { ...getState() };
     const bearer = `Bearer ${localStorage.getItem("JWT_AUTH_TOKEN")}`;
+    const dateUtc = dayjs(selectedDate, "YYYY-MM-DD").utc().format("YYYY-MM-DD");
     const data = await fetch(`${serverURL}/`, {
       method: "post",
       dataType: "json",
-      body: JSON.stringify({ selectedDate }),
+      body: JSON.stringify({ selectedDate: dateUtc, }),
       headers: {
         "Content-type": "application/json; charset=UTF-8",
         Authorization: bearer,
