@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import useLongPress from "../../Hooks/useLongPress";
 import { useDispatch } from "react-redux";
 import {
@@ -26,6 +26,10 @@ const classes = {
   },
 };
 
+// Strict UTC day equality
+const isSameUtcDay = (d, yyyyMmDd) =>
+  dayjs(d).utc().format("YYYY-MM-DD") === dayjs(yyyyMmDd).utc().format("YYYY-MM-DD");
+
 export default function GoalCircularProgress(props) {
   const dispatch = useDispatch();
   const { category, goal, selectedDate, toggleAchievedView, categories, history } = props;
@@ -38,28 +42,33 @@ export default function GoalCircularProgress(props) {
     // Sync local history with Redux state whenever goal.history changes
     setLocalHistory(history);
   }, [history]);
+  
+  // Find current day stats (UTC)
+  const currentDayStats = useMemo(() => {
+    const match = (localHistory || []).find((h) => isSameUtcDay(h.date, selectedDate));
+    return (
+      match || {
+        date: selectedDate, // string 'YYYY-MM-DD' is fine for local display; server will send back normalized item
+        targetPerDuration: Number(goal.defaultTarget) || 0,
+        achieved: 0,
+      }
+    );
+  }, [localHistory, selectedDate, goal.defaultTarget]);
 
-  // Find the current day's stats
-  const currentDayStats = localHistory.find(
-    (day) => dayjs(day.date).add(1, "day").format("YYYY-MM-DD") === selectedDate
-  ) || {
-      date: selectedDate,
-      targetPerDuration: Number(goal.defaultTarget),
-      achieved: 0,
-    };
-
-  // Calculate progress percentage
-  const progressPercent = Math.max(
-    (currentDayStats.achieved / currentDayStats.targetPerDuration) * 100,
-    0
-  );
+  // Progress percent
+  const progressPercent = useMemo(() => {
+    const target = Number(currentDayStats.targetPerDuration) || 0;
+    const achieved = Number(currentDayStats.achieved) || 0;
+    if (target <= 0) return 0;
+    return Math.max(0, (achieved / target) * 100);
+  }, [currentDayStats]);
 
   const handleActivityUpdate = (newAchieved) => {
     // Optimistically update the local history
     setLocalHistory((prevHistory) => {
       const updatedHistory = [...prevHistory];
       const existingEntryIndex = updatedHistory.findIndex(
-        (day) => dayjs(day.date).add(1, "day").format("YYYY-MM-DD") === selectedDate
+        (day) => isSameUtcDay(day.date, selectedDate)
       );
 
       if (existingEntryIndex !== -1) {
