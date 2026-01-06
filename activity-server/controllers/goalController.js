@@ -5,7 +5,7 @@ const dayjs = require("dayjs");
 
 const get_goals = async (req, res, next) => {
   const { selectedDate } = req.body;
-  const formattedSelectedDate = dayjs.utc(selectedDate).subtract(1, "day").startOf("day");
+  const formattedSelectedDate = dayjs.utc(selectedDate, "YYYY-MM-DD").startOf("day");
 
   try {
     // Fetch categories
@@ -167,9 +167,11 @@ const new_history_item = async (req, res, next) => {
       return res.status(404).send({ message: "Goal not found" });
     }
     // Find and update the matching history item
-    const itemIndex = goal.history.findIndex(
-      (item) => item._id.toString() === historyItem?._id && item.date === historyItem.date
-    );
+    const itemIndex = goal.history.findIndex((item) => {
+      const sameId = item._id.toString() === historyItem?._id;
+      const sameDay = dayjs.utc(item.date).isSame(dayjs.utc(historyItem?.date), "day");
+      return sameId && sameDay;
+    });
 
     if (itemIndex === -1) {
       // Add to the history item
