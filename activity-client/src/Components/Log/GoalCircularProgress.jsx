@@ -94,7 +94,7 @@ export default function GoalCircularProgress(props) {
       setLocalHistory((prevHistory) => {
         const updatedHistory = [...prevHistory];
         const existingEntryIndex = updatedHistory.findIndex(
-          (day) => dayjs(day.date).format("YYYY-MM-DD") === selectedDate
+          (day) => dayjs.utc(day.date).format("YYYY-MM-DD") === selectedDate
         );
   
         if (existingEntryIndex !== -1) {

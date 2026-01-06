@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Navigate } from "react-router";
 import { Button, Container, Grid, Paper, TextField, Typography } from "@mui/material";
-import { loginUser, getActivities } from "../Redux/actions";
+import { loginUser } from "../Redux/actions";
 
 export const Login = (props) => {
   const dispatch = useDispatch();
@@ -28,7 +28,6 @@ export const Login = (props) => {
         }
         setDisableButtonDuringLogin(false);
       })
-      .then(()=>dispatch(getActivities()))
       .then(()=>setDisableButtonDuringLogin(false));
       localStorage.setItem("email", email);
     } else {
@@ -47,7 +46,6 @@ export const Login = (props) => {
         setDisableButtonDuringLogin(false);
       }
     )
-    .then(()=>dispatch(getActivities()))
     .then(()=>setDisableButtonDuringLogin(false));
   };
 

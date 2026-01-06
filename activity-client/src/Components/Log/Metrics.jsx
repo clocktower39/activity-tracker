@@ -4,33 +4,41 @@ import { BarChart, Bar, Tooltip, XAxis, YAxis } from "recharts";
 import { useSelector } from "react-redux";
 import { useWindowSize } from '../../Hooks/useWindowSize';
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+
+dayjs.extend(utc);
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 
 export const renderChart = (goal, width, height, startDate, endDate) => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const sortedExistingHistory = goal.history
-    .sort((a, b) => new Date(a.date) > new Date(b.date))
-    .filter(day => new Date(day.date) >= new Date(startDate) && new Date(day.date) <= new Date(endDate))
+    .sort((a, b) => dayjs.utc(a.date).isAfter(dayjs.utc(b.date)) ? 1 : -1)
+    .filter(day => dayjs.utc(day.date).isSameOrAfter(dayjs.utc(startDate, "YYYY-MM-DD"))
+      && dayjs.utc(day.date).isSameOrBefore(dayjs.utc(endDate, "YYYY-MM-DD")))
     .map(day => {
-      day.dateDay = days[new Date(day.date).getDay()];
+      day.dateDay = days[dayjs.utc(day.date).day()];
       return day;
     });
 
     const fillMissingDays = (history, startDate, endDate) => {
       const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const dateSet = new Set(history.map(day => new Date(day.date).toISOString().split('T')[0]));
+      const dateSet = new Set(history.map(day => dayjs.utc(day.date).format('YYYY-MM-DD')));
       const filledHistory = [];
     
       // Loop through each day in the date range
-      for (let date = new Date(startDate); date <= new Date(endDate); date.setDate(date.getDate() + 1)) {
-        const isoDate = new Date(date).toISOString().split('T')[0];
+      for (let date = dayjs.utc(startDate, "YYYY-MM-DD"); date.isSameOrBefore(dayjs.utc(endDate, "YYYY-MM-DD")); date = date.add(1, 'day')) {
+        const isoDate = date.format('YYYY-MM-DD');
     
         // If the date exists in the history, add it to the result
         if (dateSet.has(isoDate)) {
-          const existingDay = history.find(day => new Date(day.date).toISOString().split('T')[0] === isoDate);
+          const existingDay = history.find(day => dayjs.utc(day.date).format('YYYY-MM-DD') === isoDate);
           filledHistory.push({
             ...existingDay,
-            dateDay: daysOfWeek[new Date(existingDay.date).getDay()],
+            dateDay: daysOfWeek[dayjs.utc(existingDay.date).day()],
           });
         } else {
           // If the date is missing, add a filler entry
@@ -38,7 +46,7 @@ export const renderChart = (goal, width, height, startDate, endDate) => {
             date: isoDate,
             targetPerDuration: 1,
             achieved: 0,
-            dateDay: daysOfWeek[new Date(date).getDay()],
+            dateDay: daysOfWeek[date.day()],
           });
         }
       }
@@ -71,7 +79,7 @@ export const renderChart = (goal, width, height, startDate, endDate) => {
 
 export const DateRange = ({ startDate, setStartDate, endDate, setEndDate }) => {
   const handleDateChange = (e, setter) => {
-    setter(new Date(e.target.value).toISOString().substr(0, 10))
+    setter(dayjs.utc(e.target.value, "YYYY-MM-DD").format("YYYY-MM-DD"))
   }
 
   return (
@@ -106,8 +114,8 @@ export const DateRange = ({ startDate, setStartDate, endDate, setEndDate }) => {
 
 export default function Metrics() {
   const goals = useSelector((state) => state.goals);
-  const [startDate, setStartDate] = useState(dayjs(new Date()).subtract(7, 'day').format('YYYY-MM-DD'));
-  const [endDate, setEndDate] = useState(dayjs(new Date()).format("YYYY-MM-DD"));
+  const [startDate, setStartDate] = useState(dayjs.utc().subtract(7, 'day').format('YYYY-MM-DD'));
+  const [endDate, setEndDate] = useState(dayjs.utc().format("YYYY-MM-DD"));
   const [selectedTaskIndex, setSelectedTaskIndex] = useState(0);
   const sizes = useWindowSize();
 

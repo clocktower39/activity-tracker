@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getActivities } from "../../Redux/actions";
 import { Navigate } from "react-router";
 import {
   Button,
@@ -18,6 +17,7 @@ import GoalCircularProgress from "./GoalCircularProgress";
 import Categories from "./EditCategories";
 import NewGoal from "./NewGoal";
 import dayjs from "dayjs";
+import { applyCachedActivity, getActivities, setSelectedDate as setSelectedDateAction } from "../../Redux/actions";
 
 // ----- Styles (MUI sx objects) -------------------------------------------------
 const sx = {
@@ -45,42 +45,49 @@ const sx = {
 
 // Utility: best‑effort match for off‑by‑one UTC shifts in legacy data
 const matchesSelectedDate = (isoOrDate, selectedYYYYMMDD) => {
-  const left = dayjs(isoOrDate).utc().format('YYYY-MM-DD');
-  const right = dayjs(selectedYYYYMMDD).utc().format('YYYY-MM-DD');
+  const left = dayjs.utc(isoOrDate).format('YYYY-MM-DD');
+  const right = dayjs.utc(selectedYYYYMMDD, "YYYY-MM-DD").format('YYYY-MM-DD');
   return left === right;
 };
 
 export default function LogContainer() {
   const dispatch = useDispatch();
-
   // ----- Redux state -----
   const goals = useSelector((state) => state.goals || []);
   const user = useSelector((state) => state.user);
   const categories = useSelector((state) => state.categories || []);
+  const activityByDate = useSelector((state) => state.activityByDate || {});
+  const activeDate = useSelector((state) => state.activeDate);
 
   // ----- Local UI state -----
   const [showAchieved, setShowAchieved] = useState(true);
   const [showCategoriesDialog, setShowCategoriesDialog] = useState(false);
   const [showNewGoalDialog, setShowNewGoalDialog] = useState(false);
   const [sortByCategory, setSortByCategory] = useState(true);
-  const [loading, setLoading] = useState(true);
 
   // Default date = today (YYYY-MM-DD)
-  const [selectedDate, setSelectedDate] = useState(() => dayjs().format("YYYY-MM-DD"));
+  const [selectedDate, setSelectedDateValue] = useState(() => dayjs().format("YYYY-MM-DD"));
 
-  // Fetch activities when date changes (keeps the original +1 day behavior for legacy UTC)
   useEffect(() => {
-    dispatch(getActivities(selectedDate));
-  }, [dispatch, selectedDate]);
+    const dateKey = dayjs.utc(selectedDate, "YYYY-MM-DD").format("YYYY-MM-DD");
+    dispatch(setSelectedDateAction(dateKey));
+    if (activityByDate[dateKey]) {
+      if (activeDate !== dateKey) {
+        dispatch(applyCachedActivity(dateKey));
+      }
+      return;
+    }
+    dispatch(getActivities(dateKey));
+  }, [dispatch, selectedDate, activityByDate, activeDate]);
 
   // ----- Handlers -----
   const handleSelectedDateChange = useCallback((e) => {
     const value = e?.target?.value;
-    if (value) setSelectedDate(value);
+    if (value) setSelectedDateValue(value);
   }, []);
 
   const changeDate = useCallback((deltaDays) => {
-    setSelectedDate((prev) => dayjs(prev).add(deltaDays, "day").format("YYYY-MM-DD"));
+    setSelectedDateValue((prev) => dayjs(prev).add(deltaDays, "day").format("YYYY-MM-DD"));
   }, []);
 
   const toggleSort = useCallback(() => setSortByCategory((p) => !p), []);
@@ -124,7 +131,7 @@ export default function LogContainer() {
       if (!t || !t.target) return 0;
       return Math.min(100, Math.max(0, (t.achieved / t.target) * 100));
     },
-    [categoryTotals, selectedDate]
+    [categoryTotals]
   );
 
   const allProgress = useMemo(() => {
@@ -145,6 +152,16 @@ export default function LogContainer() {
     () => [...visibleGoals].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
     [visibleGoals]
   );
+
+  const goalsByCategorySorted = useMemo(() => {
+    const map = new Map();
+    goalsSortedByOrder.forEach((goal) => {
+      const key = goal.category || "Uncategorized";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(goal);
+    });
+    return map;
+  }, [goalsSortedByOrder]);
 
   const goalsSortedByTask = useMemo(
     () => [...visibleGoals].sort((a, b) => (a.task || "").localeCompare(b.task || "")),
@@ -206,7 +223,7 @@ export default function LogContainer() {
           // Grouped by category
           sortedCategories.map((cat) => {
             const percent = getCategoryProgress(cat.category);
-            const goalsInCat = goalsSortedByOrder.filter((g) => g.category === cat.category);
+            const goalsInCat = goalsByCategorySorted.get(cat.category) || [];
             if (goalsInCat.length === 0) return null;
             return (
               <Paper variant="outlined" sx={sx.paper} key={`cat-${cat.category}`}>

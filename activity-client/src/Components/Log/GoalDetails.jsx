@@ -15,8 +15,8 @@ export default function GoalDetails({ goal, stats, openDialog, setOpenDialog, ad
     const [toggleEditTaskView, setToggleEditTaskView] = useState(false);
 
     const onDialogClose = (e) => setOpenDialog(false);
-    const [startDate, setStartDate] = useState(dayjs(selectedDate).subtract(7, 'day').format('YYYY-MM-DD'));
-    const [endDate, setEndDate] = useState(dayjs(selectedDate).format('YYYY-MM-DD'));
+    const [startDate, setStartDate] = useState(dayjs.utc(selectedDate, "YYYY-MM-DD").subtract(7, 'day').format('YYYY-MM-DD'));
+    const [endDate, setEndDate] = useState(dayjs.utc(selectedDate, "YYYY-MM-DD").format('YYYY-MM-DD'));
 
 
     return (

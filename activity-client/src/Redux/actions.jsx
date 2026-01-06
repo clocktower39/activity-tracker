@@ -13,6 +13,9 @@ export const LOGOUT_USER = "LOGOUT_USER";
 export const SIGNUP_USER = "SIGNUP_USER";
 export const DELETE_GOAL = "DELETE_GOAL";
 export const ERROR = "ERROR";
+export const SET_ACTIVITY_LOADING = "SET_ACTIVITY_LOADING";
+export const APPLY_CACHED_ACTIVITY = "APPLY_CACHED_ACTIVITY";
+export const SET_SELECTED_DATE = "SET_SELECTED_DATE";
 
 // dev server
 // const currentIP = window.location.href.split(":")[1];
@@ -34,7 +37,7 @@ export function updateActivityProgress(goalId, achieved, date) {
       return Promise.reject(new Error("Goal not found"));
     }
 
-    const formattedDate = dayjs(date).utc().format("YYYY-MM-DD");
+    const formattedDate = dayjs.utc(date, "YYYY-MM-DD").format("YYYY-MM-DD");
 
     // Check if the entry exists in the goal history
     const existingEntry = goal.history.find(
@@ -68,7 +71,7 @@ export function updateActivityProgress(goalId, achieved, date) {
     } else {
       // Add a new entry
       const newHistoryItem = {
-        date: dayjs(date).utc().toDate(),
+        date: dayjs.utc(date, "YYYY-MM-DD").toDate(),
         targetPerDuration: goal.defaultTarget,
         achieved,
       };
@@ -134,7 +137,18 @@ export function getActivities(selectedDate) {
   return async (dispatch, getState) => {
     const newState = { ...getState() };
     const bearer = `Bearer ${localStorage.getItem("JWT_AUTH_TOKEN")}`;
-    const dateUtc = dayjs(selectedDate, "YYYY-MM-DD").utc().format("YYYY-MM-DD");
+    const dateUtc = dayjs.utc(selectedDate, "YYYY-MM-DD").format("YYYY-MM-DD");
+    const cached = newState.activityByDate?.[dateUtc];
+    const loading = newState.activityLoadingByDate?.[dateUtc];
+
+    if (cached) {
+      dispatch({ type: APPLY_CACHED_ACTIVITY, selectedDate: dateUtc });
+      return;
+    }
+    if (loading) return;
+
+    dispatch({ type: SET_ACTIVITY_LOADING, selectedDate: dateUtc, loading: true });
+
     const data = await fetch(`${serverURL}/`, {
       method: "post",
       dataType: "json",
@@ -145,14 +159,16 @@ export function getActivities(selectedDate) {
       },
     }).then((res) => res.json());
 
-    return dispatch({
+    dispatch({
       type: UPDATE_ACTIVITY,
+      selectedDate: dateUtc,
       newState: {
         ...newState,
         goals: data.goals,
         categories: data.categories,
       },
     });
+    dispatch({ type: SET_ACTIVITY_LOADING, selectedDate: dateUtc, loading: false });
   };
 }
 
@@ -358,6 +374,20 @@ export function logoutUser() {
     return dispatch({
       type: LOGOUT_USER,
     });
+  };
+}
+
+export function setSelectedDate(selectedDate) {
+  return {
+    type: SET_SELECTED_DATE,
+    selectedDate,
+  };
+}
+
+export function applyCachedActivity(selectedDate) {
+  return {
+    type: APPLY_CACHED_ACTIVITY,
+    selectedDate,
   };
 }
 
