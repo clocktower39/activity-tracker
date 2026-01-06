@@ -13,40 +13,52 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
 export const renderChart = (goal, width, height, startDate, endDate) => {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const sortedExistingHistory = goal.history
-    .sort((a, b) => dayjs.utc(a.date).isAfter(dayjs.utc(b.date)) ? 1 : -1)
-    .filter(day => dayjs.utc(day.date).isSameOrAfter(dayjs.utc(startDate, "YYYY-MM-DD"))
-      && dayjs.utc(day.date).isSameOrBefore(dayjs.utc(endDate, "YYYY-MM-DD")))
-    .map(day => {
-      day.dateDay = days[dayjs.utc(day.date).day()];
+    .sort((a, b) => (dayjs.utc(a.date).isAfter(dayjs.utc(b.date)) ? 1 : -1))
+    .filter((day) =>
+      dayjs.utc(day.date).isSameOrAfter(dayjs.utc(startDate, "YYYY-MM-DD")) &&
+      dayjs.utc(day.date).isSameOrBefore(dayjs.utc(endDate, "YYYY-MM-DD"))
+    )
+    .map((day) => {
+      const localDate = dayjs.utc(day.date).local();
+      day.dateDay = localDate.format("ddd");
+      day.dateLabel = localDate.format("MMM D, YYYY");
       return day;
     });
 
     const fillMissingDays = (history, startDate, endDate) => {
       const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const dateSet = new Set(history.map(day => dayjs.utc(day.date).format('YYYY-MM-DD')));
+      const dateSet = new Set(history.map((day) => dayjs.utc(day.date).format("YYYY-MM-DD")));
       const filledHistory = [];
     
       // Loop through each day in the date range
-      for (let date = dayjs.utc(startDate, "YYYY-MM-DD"); date.isSameOrBefore(dayjs.utc(endDate, "YYYY-MM-DD")); date = date.add(1, 'day')) {
-        const isoDate = date.format('YYYY-MM-DD');
+      for (
+        let date = dayjs.utc(startDate, "YYYY-MM-DD");
+        date.isSameOrBefore(dayjs.utc(endDate, "YYYY-MM-DD"));
+        date = date.add(1, "day")
+      ) {
+        const isoDate = date.format("YYYY-MM-DD");
     
         // If the date exists in the history, add it to the result
         if (dateSet.has(isoDate)) {
-          const existingDay = history.find(day => dayjs.utc(day.date).format('YYYY-MM-DD') === isoDate);
+          const existingDay = history.find(
+            (day) => dayjs.utc(day.date).format("YYYY-MM-DD") === isoDate
+          );
           filledHistory.push({
             ...existingDay,
-            dateDay: daysOfWeek[dayjs.utc(existingDay.date).day()],
+            dateDay: dayjs.utc(existingDay.date).local().format("ddd"),
+            dateLabel: dayjs.utc(existingDay.date).local().format("MMM D, YYYY"),
           });
         } else {
           // If the date is missing, add a filler entry
+          const localDate = date.local();
           filledHistory.push({
             date: isoDate,
             targetPerDuration: 1,
             achieved: 0,
-            dateDay: daysOfWeek[date.day()],
+            dateDay: localDate.format("ddd"),
+            dateLabel: localDate.format("MMM D, YYYY"),
           });
         }
       }
@@ -57,9 +69,10 @@ export const renderChart = (goal, width, height, startDate, endDate) => {
     const history = fillMissingDays(sortedExistingHistory, startDate, endDate);
 
   const RenderToolTip = ({ payload }) => {
+    const label = payload?.[0]?.payload?.dateLabel;
     return (
       <div style={{ padding: '5px', borderRadius: '15px', backgroundColor: '#000', opacity: '.75' }}>
-        <p style={{ color: 'white' }}>{payload[0] && payload[0].payload.date}</p>
+        <p style={{ color: 'white' }}>{label || (payload?.[0]?.payload?.date ?? "")}</p>
         <p style={{ color: 'white' }}>Achieved: {payload[0] && payload[0].payload.achieved}</p>
       </div>
     );

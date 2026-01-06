@@ -28,7 +28,7 @@ export default function GoalDetails({ goal, stats, openDialog, setOpenDialog, ad
             >
                 <DialogTitle sx={classes.DialogTitle}>
                     <Grid container size={12} sx={{ justifyContent: 'space-between', alignItems: 'center' }} >
-                        <Grid container size={{ xs: 12, sm: 2, }} sx={classes.jCaICenter} ><Typography variant="subtitle1">{selectedDate}</Typography></Grid>
+                        <Grid container size={{ xs: 12, sm: 2, }} sx={classes.jCaICenter} ><Typography variant="subtitle1">{dayjs(selectedDate, "YYYY-MM-DD").format("MMM D, YYYY")}</Typography></Grid>
                         <Grid container size={{ xs: 12, sm: 8, }} sx={classes.jCaICenter} ><Typography variant="h4">{goal.task}</Typography></Grid>
                         <Grid container size={{ xs: 12, sm: 2, }} sx={classes.jCaICenter} ><IconButton onClick={() => setToggleEditTaskView(true)} ><Edit /></IconButton></Grid>
                     </Grid>
