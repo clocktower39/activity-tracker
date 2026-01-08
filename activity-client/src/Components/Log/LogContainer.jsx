@@ -18,6 +18,7 @@ import Categories from "./EditCategories";
 import NewGoal from "./NewGoal";
 import dayjs from "dayjs";
 import { applyCachedActivity, getActivities, setSelectedDate as setSelectedDateAction } from "../../Redux/actions";
+import { getPeriodKey } from "../../utils/intervals";
 
 // ----- Styles (MUI sx objects) -------------------------------------------------
 const sx = {
@@ -44,9 +45,9 @@ const sx = {
 };
 
 // Utility: best‑effort match for off‑by‑one UTC shifts in legacy data
-const matchesSelectedDate = (isoOrDate, selectedYYYYMMDD) => {
-  const left = dayjs.utc(isoOrDate).format('YYYY-MM-DD');
-  const right = dayjs.utc(selectedYYYYMMDD, "YYYY-MM-DD").format('YYYY-MM-DD');
+const matchesSelectedDate = (interval, isoOrDate, selectedYYYYMMDD) => {
+  const left = getPeriodKey(interval, isoOrDate);
+  const right = getPeriodKey(interval, selectedYYYYMMDD);
   return left === right;
 };
 
@@ -98,9 +99,10 @@ export default function LogContainer() {
   const perGoalStatsToday = useMemo(() => {
     return visibleGoals.map((goal) => {
       // find match for selected day in this goal's history
-      const match = (goal.history || []).find((h) => matchesSelectedDate(h.date, selectedDate));
+      const match = (goal.history || []).find((h) => matchesSelectedDate(goal.interval, h.date, selectedDate));
+      const periodKey = getPeriodKey(goal.interval, selectedDate);
       const fallback = {
-        date: selectedDate,
+        date: periodKey,
         targetPerDuration: goal.defaultTarget ?? 0,
         achieved: 0,
       };

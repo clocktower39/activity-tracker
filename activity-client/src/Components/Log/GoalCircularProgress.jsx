@@ -9,9 +9,9 @@ import {
   Typography,
   circularProgressClasses,
 } from "@mui/material";
-import dayjs from "dayjs";
 import { updateActivityProgress } from "../../Redux/actions";
 import GoalDetails from "./GoalDetails";
+import { getPeriodKey } from "../../utils/intervals";
 
 const classes = {
   root: {},
@@ -27,8 +27,8 @@ const classes = {
 };
 
 // Strict UTC day equality
-const isSameUtcDay = (d, yyyyMmDd) =>
-  dayjs(d).utc().format("YYYY-MM-DD") === dayjs(yyyyMmDd).utc().format("YYYY-MM-DD");
+const isSamePeriod = (interval, date, selectedDate) =>
+  getPeriodKey(interval, date) === getPeriodKey(interval, selectedDate);
 
 export default function GoalCircularProgress(props) {
   const dispatch = useDispatch();
@@ -45,15 +45,15 @@ export default function GoalCircularProgress(props) {
   
   // Find current day stats (UTC)
   const currentDayStats = useMemo(() => {
-    const match = (localHistory || []).find((h) => isSameUtcDay(h.date, selectedDate));
+    const match = (localHistory || []).find((h) => isSamePeriod(goal.interval, h.date, selectedDate));
     return (
       match || {
-        date: selectedDate, // string 'YYYY-MM-DD' is fine for local display; server will send back normalized item
+        date: getPeriodKey(goal.interval, selectedDate),
         targetPerDuration: Number(goal.defaultTarget) || 0,
         achieved: 0,
       }
     );
-  }, [localHistory, selectedDate, goal.defaultTarget]);
+  }, [localHistory, selectedDate, goal.defaultTarget, goal.interval]);
 
   // Progress percent
   const progressPercent = useMemo(() => {
@@ -68,7 +68,7 @@ export default function GoalCircularProgress(props) {
     setLocalHistory((prevHistory) => {
       const updatedHistory = [...prevHistory];
       const existingEntryIndex = updatedHistory.findIndex(
-        (day) => isSameUtcDay(day.date, selectedDate)
+        (day) => isSamePeriod(goal.interval, day.date, selectedDate)
       );
 
       if (existingEntryIndex !== -1) {
@@ -80,7 +80,7 @@ export default function GoalCircularProgress(props) {
       } else {
         // Add new entry
         updatedHistory.push({
-          date: selectedDate,
+          date: getPeriodKey(goal.interval, selectedDate),
           targetPerDuration: Number(goal.defaultTarget),
           achieved: newAchieved,
         });
@@ -94,7 +94,7 @@ export default function GoalCircularProgress(props) {
       setLocalHistory((prevHistory) => {
         const updatedHistory = [...prevHistory];
         const existingEntryIndex = updatedHistory.findIndex(
-          (day) => dayjs.utc(day.date).format("YYYY-MM-DD") === selectedDate
+          (day) => isSamePeriod(goal.interval, day.date, selectedDate)
         );
   
         if (existingEntryIndex !== -1) {

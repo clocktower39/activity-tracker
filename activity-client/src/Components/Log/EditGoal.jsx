@@ -13,11 +13,14 @@ import {
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { EditActivity, deleteGoal } from "../../Redux/actions";
+import { INTERVAL_OPTIONS, normalizeInterval } from "../../utils/intervals";
 
 export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
   const dispatch = useDispatch();
   const [task, setTask] = useState(goal.task);
-  const [interval, setInterval] = useState(goal.interval);
+  const [interval, setInterval] = useState(
+    INTERVAL_OPTIONS.find((option) => option.value === normalizeInterval(goal.interval)) || null
+  );
   const [hidden, setHidden] = useState(goal.hidden || false);
   const [defaultTarget, setDefaultTarget] = useState(goal.defaultTarget);
   const [category, setCategory] = useState(goal.category);
@@ -34,6 +37,7 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
         EditActivity(goal._id, {
           task,
           category,
+          interval: interval?.value,
           defaultTarget,
           order,
           hidden,
@@ -43,8 +47,6 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
   };
 
   const confirmedDeleteGoal = () => dispatch(deleteGoal(goal._id));
-
-  const intervalOptions = ["Daily", "Weekly", "Monthly", "Yearly"];
 
   return (
     <Grid container>
@@ -91,8 +93,10 @@ export default function EditGoal({ goal, setToggleEditTaskView, categories }) {
             <Autocomplete
               fullWidth
               value={interval}
-              options={intervalOptions}
-              onChange={(e, getTagProps) => setInterval(getTagProps)}
+              options={INTERVAL_OPTIONS}
+              getOptionLabel={(option) => option.label}
+              isOptionEqualToValue={(option, value) => option.value === value.value}
+              onChange={(e, option) => setInterval(option)}
               renderInput={(params) => <TextField {...params} label="Interval" />}
             />
           </Grid>

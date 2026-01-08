@@ -2,6 +2,7 @@ import { jwtDecode as jwt } from "jwt-decode";
 import dayjs from "dayjs";
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import utc from "dayjs/plugin/utc";
+import { getPeriodKey, normalizeInterval } from "../utils/intervals";
 
 dayjs.extend(utc);
 dayjs.extend(advancedFormat);
@@ -18,11 +19,11 @@ export const APPLY_CACHED_ACTIVITY = "APPLY_CACHED_ACTIVITY";
 export const SET_SELECTED_DATE = "SET_SELECTED_DATE";
 
 // dev server
-// const currentIP = window.location.href.split(":")[1];
-// const serverURL = `http:${currentIP}:8000`;
+const currentIP = window.location.href.split(":")[1];
+const serverURL = `http:${currentIP}:8000`;
 
 // live server
-const serverURL = "https://myactivitytracker.herokuapp.com";
+// const serverURL = "https://myactivitytracker.herokuapp.com";
 
 export function updateActivityProgress(goalId, achieved, date) {
   return async (dispatch, getState) => {
@@ -37,7 +38,7 @@ export function updateActivityProgress(goalId, achieved, date) {
       return Promise.reject(new Error("Goal not found"));
     }
 
-    const formattedDate = dayjs.utc(date, "YYYY-MM-DD").format("YYYY-MM-DD");
+    const formattedDate = getPeriodKey(goal.interval, date);
 
     // Check if the entry exists in the goal history
     const existingEntry = goal.history.find(
@@ -71,7 +72,7 @@ export function updateActivityProgress(goalId, achieved, date) {
     } else {
       // Add a new entry
       const newHistoryItem = {
-        date: dayjs.utc(date, "YYYY-MM-DD").toDate(),
+        date: dayjs.utc(formattedDate, "YYYY-MM-DD").toDate(),
         targetPerDuration: goal.defaultTarget,
         achieved,
       };
@@ -180,6 +181,7 @@ export function EditActivity(goalId, newTarget) {
       if (goal._id === goalId) {
         goal.task = newTarget.task;
         goal.category = newTarget.category;
+        goal.interval = normalizeInterval(newTarget.interval || goal.interval);
         goal.defaultTarget = newTarget.defaultTarget;
         goal.order = newTarget.order;
         goal.hidden = newTarget.hidden;
@@ -211,8 +213,11 @@ export function EditActivity(goalId, newTarget) {
 export function AddNewActivity(newActivity) {
   return async (dispatch, getState) => {
     const newState = { ...getState() };
-    newActivity.interval = "daily";
-    newActivity.history = [];
+    const payload = {
+      ...newActivity,
+      interval: normalizeInterval(newActivity.interval),
+    };
+    const newGoal = { ...payload, history: [] };
     const bearer = `Bearer ${localStorage.getItem("JWT_AUTH_TOKEN")}`;
     fetch(`${serverURL}/addGoal`, {
       method: "POST", // *GET, POST, PUT, DELETE, etc.
@@ -225,9 +230,9 @@ export function AddNewActivity(newActivity) {
         // 'Content-Type': 'application/x-www-form-urlencoded',
       },
       referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-      body: JSON.stringify(newActivity), // body data type must match "Content-Type" header
+      body: JSON.stringify(payload), // body data type must match "Content-Type" header
     });
-    newState.goals.push(newActivity);
+    newState.goals.push(newGoal);
     return dispatch({
       type: UPDATE_ACTIVITY,
       newState,

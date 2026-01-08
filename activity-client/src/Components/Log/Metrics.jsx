@@ -7,66 +7,66 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import { addPeriod, getPeriodKey, getPeriodLabels, getPeriodStart, normalizeInterval } from "../../utils/intervals";
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
 export const renderChart = (goal, width, height, startDate, endDate) => {
+  if (!goal) return null;
+  const interval = normalizeInterval(goal.interval);
+  const rangeStart = getPeriodStart(interval, startDate);
+  const rangeEnd = getPeriodStart(interval, endDate);
 
-  const sortedExistingHistory = goal.history
+  const sortedExistingHistory = (goal.history || [])
+    .map((day) => ({ ...day }))
     .sort((a, b) => (dayjs.utc(a.date).isAfter(dayjs.utc(b.date)) ? 1 : -1))
     .filter((day) =>
-      dayjs.utc(day.date).isSameOrAfter(dayjs.utc(startDate, "YYYY-MM-DD")) &&
-      dayjs.utc(day.date).isSameOrBefore(dayjs.utc(endDate, "YYYY-MM-DD"))
+      dayjs.utc(getPeriodKey(interval, day.date)).isSameOrAfter(rangeStart) &&
+      dayjs.utc(getPeriodKey(interval, day.date)).isSameOrBefore(rangeEnd)
     )
     .map((day) => {
-      const localDate = dayjs.utc(day.date).local();
-      day.dateDay = localDate.format("ddd");
-      day.dateLabel = localDate.format("MMM D, YYYY");
-      return day;
+      const labels = getPeriodLabels(interval, day.date);
+      return {
+        ...day,
+        dateDay: labels.short,
+        dateLabel: labels.long,
+      };
     });
 
-    const fillMissingDays = (history, startDate, endDate) => {
-      const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const dateSet = new Set(history.map((day) => dayjs.utc(day.date).format("YYYY-MM-DD")));
-      const filledHistory = [];
-    
-      // Loop through each day in the date range
-      for (
-        let date = dayjs.utc(startDate, "YYYY-MM-DD");
-        date.isSameOrBefore(dayjs.utc(endDate, "YYYY-MM-DD"));
-        date = date.add(1, "day")
-      ) {
-        const isoDate = date.format("YYYY-MM-DD");
-    
-        // If the date exists in the history, add it to the result
-        if (dateSet.has(isoDate)) {
-          const existingDay = history.find(
-            (day) => dayjs.utc(day.date).format("YYYY-MM-DD") === isoDate
-          );
-          filledHistory.push({
-            ...existingDay,
-            dateDay: dayjs.utc(existingDay.date).local().format("ddd"),
-            dateLabel: dayjs.utc(existingDay.date).local().format("MMM D, YYYY"),
-          });
-        } else {
-          // If the date is missing, add a filler entry
-          const localDate = date.local();
-          filledHistory.push({
-            date: isoDate,
-            targetPerDuration: 1,
-            achieved: 0,
-            dateDay: localDate.format("ddd"),
-            dateLabel: localDate.format("MMM D, YYYY"),
-          });
-        }
+  const fillMissingPeriods = (history, start, end) => {
+    if (interval === "none") return history;
+    const dateSet = new Set(history.map((day) => getPeriodKey(interval, day.date)));
+    const filledHistory = [];
+
+    for (let date = start; date.isSameOrBefore(end); date = addPeriod(interval, date)) {
+      const periodKey = date.format("YYYY-MM-DD");
+
+      if (dateSet.has(periodKey)) {
+        const existingDay = history.find((day) => getPeriodKey(interval, day.date) === periodKey);
+        const labels = getPeriodLabels(interval, existingDay.date);
+        filledHistory.push({
+          ...existingDay,
+          dateDay: labels.short,
+          dateLabel: labels.long,
+        });
+      } else {
+        const labels = getPeriodLabels(interval, date);
+        filledHistory.push({
+          date: periodKey,
+          targetPerDuration: 1,
+          achieved: 0,
+          dateDay: labels.short,
+          dateLabel: labels.long,
+        });
       }
-    
-      return filledHistory;
-    };
-    
-    const history = fillMissingDays(sortedExistingHistory, startDate, endDate);
+    }
+
+    return filledHistory;
+  };
+
+  const history = fillMissingPeriods(sortedExistingHistory, rangeStart, rangeEnd);
 
   const RenderToolTip = ({ payload }) => {
     const label = payload?.[0]?.payload?.dateLabel;
