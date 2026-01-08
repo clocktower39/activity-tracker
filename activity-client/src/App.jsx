@@ -11,6 +11,7 @@ import Settings from "./Components/Settings/Settings";
 import AccountSettings from "./Components/Settings/AccountSettings";
 import ThemeSettings from "./Components/Settings/ThemeSettings";
 import HiddenSettings from "./Components/Settings/HiddenSettings";
+import NotificationsSettings from "./Components/Settings/NotificationsSettings";
 import NotFoundPage from "./Components/NotFoundPage";
 import { theme } from "./theme";
 import "./App.css";
@@ -40,6 +41,7 @@ function App() {
             <Route exact path="/settings/*/*" element={<Settings />} >
               <Route index={true} exact path="" element={<AccountSettings />} />
               <Route index={true} exact path="theme" element={<ThemeSettings />} />
+              <Route index={true} exact path="notifications" element={<NotificationsSettings />} />
               <Route index={true} exact path="hidden" element={<HiddenSettings />} />
             </Route>
           </Route>
