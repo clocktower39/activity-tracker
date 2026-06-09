@@ -19,11 +19,11 @@ export const APPLY_CACHED_ACTIVITY = "APPLY_CACHED_ACTIVITY";
 export const SET_SELECTED_DATE = "SET_SELECTED_DATE";
 
 // dev server
-const currentIP = window.location.href.split(":")[1];
-const serverURL = `http:${currentIP}:8000`;
+// const currentIP = window.location.href.split(":")[1];
+// const serverURL = `http:${currentIP}:8000`;
 
 // live server
-// const serverURL = "https://myactivitytracker.herokuapp.com";
+const serverURL = "https://myactivitytracker.herokuapp.com";
 
 export function updateActivityProgress(goalId, achieved, date) {
   return async (dispatch, getState) => {
