@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "impeccable": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/pbakaus/impeccable.git"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "impeccable@impeccable": true
+  }
+}
