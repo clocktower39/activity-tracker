@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Box, Button, Container, TextField, Typography } from "@mui/material";
 import EmptyState from "../components/EmptyState";
 import Stave from "../components/Stave";
+import GoalPeriodSheet from "../components/GoalPeriodSheet";
 import {
   fetchMatrix,
   fetchStreaks,
@@ -77,6 +78,7 @@ export default function ReviewView() {
   const goals = useSelector(selectVisibleGoals);
   const recordRange = useSelector(selectRecordRange);
   const [windowId, setWindowId] = useState("1y");
+  const [openGoal, setOpenGoal] = useState(null);
 
   const active = WINDOWS.find((w) => w.id === windowId) || WINDOWS[2];
   const isCustom = windowId === "custom";
@@ -426,6 +428,7 @@ export default function ReviewView() {
             columns={staveColumns}
             interval={staveIntervalFor(staveBucket)}
             cells={staveCells}
+            onOpenGoal={setOpenGoal}
           />
         )}
 
@@ -507,6 +510,18 @@ export default function ReviewView() {
           ))}
         </Box>
       </Container>
+
+      <GoalPeriodSheet
+        goal={openGoal}
+        pageInterval={staveBucket === "year" ? "yearly" : "monthly"}
+        periodKey={range.from}
+        columns={staveColumns}
+        granularity={staveIntervalFor(staveBucket)}
+        cells={staveCells}
+        title={`${axisLabel(staveBucket, range.from)} – ${axisLabel(staveBucket, range.to)}`}
+        spanNoun="in this range"
+        onClose={() => setOpenGoal(null)}
+      />
     </>
   );
 }

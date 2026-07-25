@@ -60,7 +60,8 @@ there is no cookie or CSRF surface.
 | `src/components/Ring.jsx` | The signature interaction |
 | `src/components/Stave.jsx` | Goals × periods matrix (a reading surface) |
 | `src/components/PeriodBars.jsx` | Bars against the target line |
-| `src/components/GoalSheet.jsx` | Detail: adjust, note, recent run |
+| `src/components/GoalSheet.jsx` | One goal in one period: adjust, note, recent run |
+| `src/components/GoalPeriodSheet.jsx` | One goal across a whole period (week/month/year) |
 | `src/views/TodayView.jsx` | Rings for one day |
 | `src/views/PeriodView.jsx` | Week / Month / Year, one component |
 | `src/views/ReviewView.jsx` | Aggregates and streaks |
@@ -243,6 +244,30 @@ This is an installed PWA people leave running, so a date captured at mount goes
 stale at local midnight; it is re-checked on a timer and whenever the tab returns
 to the foreground, and the Today view follows the rollover if the user is still
 sitting on today.
+
+### 6.2 Which sheet opens
+
+A ring is one period, so tapping one opens `GoalSheet` — the count, a note, and
+the recent run. A stave row is a goal seen *across* a period, which is a
+different question, so its label opens `GoalPeriodSheet`.
+
+Passing the page's `periodKey` to the daily sheet was the original bug: on the
+month page it opened the goal at the 1st of the month, which is almost never the
+thing that was clicked.
+
+A `GoalPeriodSheet` row is directly editable when the goal's own cadence lines up
+one-to-one with the row (days on the week and month pages; months on the year
+page for a monthly goal). Where the row is an aggregate of finer periods — a
+daily goal seen by month — there is no single number to write back to, so it
+reads instead and offers a link into the page that can edit it.
+
+**Targets in an aggregate are expected, not recorded.** `targetPerDuration` only
+exists on rows that exist, so summing it describes the periods the user engaged
+with rather than the period as a whole; a month showed as `0/6` because two stray
+rows existed. An aggregated row instead reports (the goal's periods in the span ×
+its target), which is what the unaggregated rows already do by falling back to
+`defaultTarget`. The year page header was corrected the same way — it read 94%
+while its own goal sheets read 8%.
 
 ## 7. Client state
 

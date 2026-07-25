@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Box, Container, Typography } from "@mui/material";
+import { useNavigate, useSearchParams } from "react-router";
 import TempoLine from "../components/TempoLine";
 import Ring from "../components/Ring";
 import GoalSheet from "../components/GoalSheet";
+import GoalPeriodSheet from "../components/GoalPeriodSheet";
 import Stave from "../components/Stave";
 import EmptyState from "../components/EmptyState";
 import { selectGoalsStatus, selectVisibleGoals } from "../features/goals/goalsSlice";
@@ -24,7 +26,6 @@ import {
   getPeriodStart,
   isFutureKey,
   periodLabel,
-  todayKey,
 } from "../lib/periods";
 
 const NOUN = { weekly: "week", monthly: "month", yearly: "year" };
@@ -48,8 +49,21 @@ export default function PeriodView({ interval }) {
   const pending = useSelector((state) => state.history.pending);
 
   const today = useTodayKey();
-  const [anchor, setAnchor] = useState(todayKey);
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // The anchor lives in the URL so a period can be linked to, the back button
+  // works, and the year sheet can hand off into the month page.
+  const anchor = searchParams.get("d") || today;
+  const setAnchor = useCallback(
+    (next) => setSearchParams(next === today ? {} : { d: next }, { replace: true }),
+    [setSearchParams, today]
+  );
+
+  // Clicking a ring opens the goal for this one period; clicking a stave row
+  // opens it across the whole period, which is a different question.
   const [openGoal, setOpenGoal] = useState(null);
+  const [openStaveGoal, setOpenStaveGoal] = useState(null);
 
   const periodStart = getPeriodStart(interval, anchor);
   const periodKey = periodStart.format("YYYY-MM-DD");
@@ -127,9 +141,19 @@ export default function PeriodView({ interval }) {
     });
 
     if (isYear) {
+      // Achieved comes from the rollup, but the target must be what the goals
+      // actually asked for across the year, not the sum over the periods that
+      // happen to have a row. Weeks and months below already work this way; the
+      // year reading 94% while its own goal sheets read 8% was this mismatch.
+      const achievedByGoal = new Map();
       (matrixRows || []).forEach((row) => {
-        achieved += row.achieved;
-        target += row.target;
+        const key = String(row.goalId);
+        achievedByGoal.set(key, (achievedByGoal.get(key) || 0) + row.achieved);
+      });
+      staveGoals.forEach((goal) => {
+        achieved += achievedByGoal.get(String(goal._id)) || 0;
+        const periods = eachPeriod(goal.interval, bounds.from, bounds.to, 400).length;
+        target += periods * (Number(goal.defaultTarget) || 0);
       });
     } else {
       staveGoals.forEach((goal) => {
@@ -141,14 +165,13 @@ export default function PeriodView({ interval }) {
       });
     }
     return { achieved, target };
-  }, [cadenceGoals, staveGoals, entries, periodKey, columns, isYear, matrixRows]);
+  }, [cadenceGoals, staveGoals, entries, periodKey, columns, isYear, matrixRows, bounds]);
 
+  // setAnchor writes a URL param, so it takes a value rather than an updater.
   const shift = useCallback(
     (count) =>
-      setAnchor((prev) =>
-        addPeriods(interval, getPeriodStart(interval, prev), count).format("YYYY-MM-DD")
-      ),
-    [interval]
+      setAnchor(addPeriods(interval, getPeriodStart(interval, anchor), count).format("YYYY-MM-DD")),
+    [interval, anchor, setAnchor]
   );
 
   const isCurrent = periodKey === getPeriodKey(interval, today);
@@ -224,12 +247,31 @@ export default function PeriodView({ interval }) {
             columns={columns}
             interval={innerInterval}
             cells={matrixCells}
-            onOpenGoal={setOpenGoal}
+            onOpenGoal={setOpenStaveGoal}
           />
         )}
       </Container>
 
+      {/* A ring is one period, so it gets the single-period sheet. */}
       <GoalSheet goal={openGoal} date={periodKey} onClose={() => setOpenGoal(null)} />
+
+      <GoalPeriodSheet
+        goal={openStaveGoal}
+        pageInterval={interval}
+        periodKey={periodKey}
+        columns={columns}
+        granularity={innerInterval}
+        cells={matrixCells}
+        onClose={() => setOpenStaveGoal(null)}
+        onDrillDown={
+          isYear
+            ? (monthKey) => {
+                setOpenStaveGoal(null);
+                navigate(`/month?d=${monthKey}`);
+              }
+            : undefined
+        }
+      />
     </>
   );
 }
