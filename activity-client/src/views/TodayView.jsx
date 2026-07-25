@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useSearchParams } from "react-router";
 import { Box, Button, Container, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import TempoLine from "../components/TempoLine";
@@ -9,7 +10,7 @@ import GoalFormDialog from "../components/GoalFormDialog";
 import EmptyState from "../components/EmptyState";
 import { selectGoalsStatus, selectGroupedGoals } from "../features/goals/goalsSlice";
 import { fetchDate, selectDateStatus } from "../features/history/historySlice";
-import { dayjs, entryKey, isFutureKey, periodLabel, todayKey } from "../lib/periods";
+import { dayjs, entryKey, isFutureKey, periodLabel } from "../lib/periods";
 import { useAutoFetch } from "../hooks/useAutoFetch";
 import { useTodayKey } from "../hooks/useTodayKey";
 
@@ -19,19 +20,23 @@ export default function TodayView() {
   const goalsStatus = useSelector(selectGoalsStatus);
 
   const today = useTodayKey();
-  const [date, setDate] = useState(todayKey);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // The date lives in the URL, as it does on the other cadences: a day becomes
+  // linkable, the back button walks through the days you looked at, and a plain
+  // "/" is always today. That last part is why the wordmark can return here.
+  //
+  // It also removes the midnight bookkeeping this used to need. With no `d` the
+  // date is derived from the live local date, so it follows the rollover on its
+  // own; with a `d` the user picked that day and stays on it.
+  const date = searchParams.get("d") || today;
+  const setDate = useCallback(
+    (next) => setSearchParams(next === today ? {} : { d: next }, { replace: true }),
+    [setSearchParams, today]
+  );
+
   const [openGoal, setOpenGoal] = useState(null);
   const [showNewGoal, setShowNewGoal] = useState(false);
-
-  // If the app is sitting on today when local midnight passes, follow the date
-  // forward. If the user has navigated elsewhere, leave them where they are.
-  const previousToday = useRef(today);
-  useEffect(() => {
-    if (previousToday.current !== today) {
-      setDate((current) => (current === previousToday.current ? today : current));
-      previousToday.current = today;
-    }
-  }, [today]);
 
   const dateStatus = useSelector(selectDateStatus(date));
   const entries = useSelector((state) => state.history.entries);
@@ -39,9 +44,11 @@ export default function TodayView() {
   // Cached: revisiting a date the session has already seen costs no request.
   useAutoFetch(() => dispatch(fetchDate(date)), [date]);
 
-  const shift = useCallback((days) => {
-    setDate((prev) => dayjs.utc(prev).add(days, "day").format("YYYY-MM-DD"));
-  }, []);
+  // setDate writes a URL param, so it takes a value rather than an updater.
+  const shift = useCallback(
+    (days) => setDate(dayjs.utc(date).add(days, "day").format("YYYY-MM-DD")),
+    [date, setDate]
+  );
 
   const totals = useMemo(() => {
     let achieved = 0;

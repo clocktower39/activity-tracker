@@ -48,21 +48,42 @@ export default function AppShell() {
           borderColor: "divider",
         }}
       >
-        <Container maxWidth="md" sx={{ display: "flex", alignItems: "center", gap: 3, py: 3 }}>
+        <Container maxWidth="md" sx={{ display: "flex", alignItems: "center", gap: 1, py: 2 }}>
+          {/* The wordmark is the way home, as it is on most sites. It points at
+              "/" with no date param, which is always today. */}
           <Typography
+            component={NavLink}
+            to="/"
+            end
             variant="overline"
-            sx={{ color: "chart.vermilion", flexGrow: 1, letterSpacing: "0.14em" }}
+            aria-label="Activity Tracker — go to today"
+            sx={{
+              color: "chart.vermilion",
+              letterSpacing: "0.14em",
+              textDecoration: "none",
+              // 44px is the floor in DESIGN.md; inline-flex keeps the hit area
+              // on the wordmark rather than the whole header row.
+              display: "inline-flex",
+              alignItems: "center",
+              minHeight: 44,
+              "&:hover": { color: "chart.brass" },
+            }}
           >
             Activity Tracker
           </Typography>
+
+          {/* Spacer, so the link's hit area and focus ring stay on the wordmark
+              rather than stretching across the whole header. */}
+          <Box sx={{ flexGrow: 1 }} />
 
           <Tooltip title="Review">
             <IconButton
               component={NavLink}
               to="/review"
               aria-label="Review streaks and totals"
-              size="small"
               sx={{
+                width: 44,
+                height: 44,
                 color: location.pathname === "/review" ? "chart.vermilion" : "text.secondary",
               }}
             >
@@ -74,8 +95,9 @@ export default function AppShell() {
               component={NavLink}
               to="/settings"
               aria-label="Settings"
-              size="small"
               sx={{
+                width: 44,
+                height: 44,
                 color: location.pathname.startsWith("/settings")
                   ? "chart.vermilion"
                   : "text.secondary",
