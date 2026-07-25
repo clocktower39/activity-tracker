@@ -26,6 +26,17 @@ export default defineConfig(({ mode }) => {
     base,
 
     server: {
+      /**
+       * Dual-stack. On a machine whose /etc/hosts maps `localhost` to ::1 —
+       * which is the default on most Linux distributions — binding 127.0.0.1
+       * or 0.0.0.0 leaves nothing listening on IPv6, so Firefox resolves
+       * localhost to ::1 and cannot open the HMR WebSocket. "::" accepts both
+       * families, so localhost, 127.0.0.1 and the LAN address all work, which
+       * also makes the dev server reachable from a phone for a PWA that is
+       * mostly used on one.
+       */
+      host: "::",
+
       // Same-origin in development too, so the browser never makes a
       // cross-origin request and CORS is not part of the local setup either.
       proxy: {
