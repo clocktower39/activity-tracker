@@ -39,8 +39,9 @@ function Ring({
   const theme = useTheme();
   const chart = theme.palette.chart;
   const roomy = useMediaQuery(theme.breakpoints.up("sm"));
-  // 84px on a phone keeps four across; desktop has room for a larger dial.
-  const size = sizeOverride ?? (roomy ? 96 : 84);
+  // 64px fits four across a 390px phone with room for the label; desktop has
+  // space for a larger dial. Still far above the 44px touch floor.
+  const size = sizeOverride ?? (roomy ? 96 : 64);
 
   const mode = goal.trackingMode === "more" ? "more" : "target";
   const state = progressState(achieved, target, mode);
@@ -198,7 +199,7 @@ function Ring({
             sx={{
               fontFamily: (t) => t.typography.h1.fontFamily,
               fontVariantNumeric: "tabular-nums",
-              fontSize: size * 0.3,
+              fontSize: Math.max(22, size * 0.3),
               lineHeight: 1,
               fontWeight: 500,
               color: state === "empty" ? chart.inkMuted : chart.ink,
@@ -215,7 +216,7 @@ function Ring({
                 fontFamily: "Georgia, 'Times New Roman', serif",
                 fontStyle: "italic",
                 fontWeight: 700,
-                fontSize: size * 0.16,
+                fontSize: Math.max(12, size * 0.16),
                 lineHeight: 1,
                 color: chart.ultramarine,
                 mt: 0.25,
@@ -228,7 +229,7 @@ function Ring({
               component="span"
               sx={{
                 fontFamily: (t) => t.typography.overline.fontFamily,
-                fontSize: size * 0.12,
+                fontSize: Math.max(10, size * 0.12),
                 lineHeight: 1,
                 letterSpacing: "0.06em",
                 color: chart.inkMuted,

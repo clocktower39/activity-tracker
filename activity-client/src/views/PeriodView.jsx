@@ -213,10 +213,10 @@ export default function PeriodView({ interval }) {
               sx={{
                 display: "grid",
                 gridTemplateColumns: {
-                  xs: "repeat(auto-fill, minmax(100px, 1fr))",
+                  xs: "repeat(auto-fill, minmax(76px, 1fr))",
                   sm: "repeat(auto-fill, minmax(124px, 1fr))",
                 },
-                gap: 6,
+                gap: { xs: 4, sm: 6 },
                 justifyItems: "center",
               }}
             >

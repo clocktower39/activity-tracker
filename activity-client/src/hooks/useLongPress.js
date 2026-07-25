@@ -1,17 +1,23 @@
 import { useCallback, useEffect, useRef } from "react";
 
 /**
- * Distinguishes a tap from a long press on both touch and mouse.
+ * Distinguishes a tap from a long press.
  *
- * Fixes three defects in the version this replaces: the fired/not-fired flag is
- * a ref rather than state (so a long press cannot also fire the tap), dragging
- * cancels instead of registering a tap on release, and a pending timer is always
- * cleared on unmount rather than firing into a dead component.
+ * Built on Pointer Events, which is the whole point: mouse, touch and pen all
+ * arrive through one stream. Listening to touch* and mouse* together — as this
+ * did — double-counts every tap on a phone, because after `touchend` the browser
+ * synthesises a compatibility `mousedown`/`mouseup` pair and the handler runs a
+ * second time. That silently recorded two increments per tap.
+ *
+ * The rest of the behaviour it already had, kept: the fired flag is a ref so a
+ * long press cannot also fire the tap, dragging cancels instead of registering,
+ * and a pending timer is always cleared on unmount.
  */
 export const useLongPress = ({ onPress, onLongPress, delay = 450, moveTolerance = 10 }) => {
   const timer = useRef(null);
   const longPressFired = useRef(false);
   const origin = useRef(null);
+  const activeId = useRef(null);
 
   const clear = useCallback(() => {
     if (timer.current) {
@@ -24,12 +30,21 @@ export const useLongPress = ({ onPress, onLongPress, delay = 450, moveTolerance 
 
   const start = useCallback(
     (event) => {
-      // Ignore secondary mouse buttons.
-      if (event.type === "mousedown" && event.button !== 0) return;
+      // Secondary buttons and a second finger mid-gesture are not presses.
+      if (event.button !== undefined && event.button !== 0) return;
+      if (activeId.current !== null) return;
 
+      activeId.current = event.pointerId;
       longPressFired.current = false;
-      const point = event.touches?.[0] ?? event;
-      origin.current = { x: point.clientX, y: point.clientY };
+      origin.current = { x: event.clientX, y: event.clientY };
+
+      // Keep receiving events even if the finger drifts off the ring, so a tap
+      // that wanders a few pixels still completes on this element.
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // Capture is an optimisation; the gesture works without it.
+      }
 
       clear();
       timer.current = setTimeout(() => {
@@ -43,10 +58,9 @@ export const useLongPress = ({ onPress, onLongPress, delay = 450, moveTolerance 
 
   const move = useCallback(
     (event) => {
-      if (!timer.current || !origin.current) return;
-      const point = event.touches?.[0] ?? event;
-      const dx = Math.abs(point.clientX - origin.current.x);
-      const dy = Math.abs(point.clientY - origin.current.y);
+      if (event.pointerId !== activeId.current || !timer.current || !origin.current) return;
+      const dx = Math.abs(event.clientX - origin.current.x);
+      const dy = Math.abs(event.clientY - origin.current.y);
       // The user is scrolling, not pressing.
       if (dx > moveTolerance || dy > moveTolerance) {
         clear();
@@ -58,32 +72,42 @@ export const useLongPress = ({ onPress, onLongPress, delay = 450, moveTolerance 
 
   const end = useCallback(
     (event) => {
+      if (event.pointerId !== activeId.current) return;
       const hadTimer = Boolean(timer.current);
       clear();
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {
+        // Already released, or never captured.
+      }
       if (!longPressFired.current && hadTimer) onPress?.(event);
       longPressFired.current = false;
       origin.current = null;
+      activeId.current = null;
     },
     [clear, onPress]
   );
 
-  const cancel = useCallback(() => {
-    clear();
-    longPressFired.current = false;
-    origin.current = null;
-  }, [clear]);
+  const cancel = useCallback(
+    (event) => {
+      if (event && event.pointerId !== activeId.current) return;
+      clear();
+      longPressFired.current = false;
+      origin.current = null;
+      activeId.current = null;
+    },
+    [clear]
+  );
 
   return {
-    onMouseDown: start,
-    onMouseMove: move,
-    onMouseUp: end,
-    onMouseLeave: cancel,
-    onTouchStart: start,
-    onTouchMove: move,
-    onTouchEnd: end,
-    onTouchCancel: cancel,
-    // Suppress the Android long-press context menu without killing text select
-    // elsewhere on the page.
+    onPointerDown: start,
+    onPointerMove: move,
+    onPointerUp: end,
+    // Fired when the browser takes the gesture over for scrolling, which is
+    // exactly when the press should stop counting.
+    onPointerCancel: cancel,
+    // Suppress the Android long-press context menu without killing text
+    // selection elsewhere on the page.
     onContextMenu: (event) => event.preventDefault(),
   };
 };

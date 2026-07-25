@@ -68,10 +68,10 @@ function GoalRow({ category, goals, date, loading, onOpenGoal }) {
         sx={{
           display: "grid",
           gridTemplateColumns: {
-            xs: "repeat(auto-fill, minmax(100px, 1fr))",
+            xs: "repeat(auto-fill, minmax(76px, 1fr))",
             sm: "repeat(auto-fill, minmax(124px, 1fr))",
           },
-          gap: 6,
+          gap: { xs: 4, sm: 6 },
           justifyItems: "center",
           opacity: loading ? 0.5 : 1,
           transition: "opacity 160ms linear",

@@ -23,7 +23,7 @@ second mental model.
 
 **FIRST VIEWPORT.** A tempo line naming the date and the day's completion at the
 top-left, set in tabular figures at display scale. Beneath it, goals grouped by
-category, each category introduced by a rule and a name, each goal a ring at 84px
+category, each category introduced by a rule and a name, each goal a ring at 64px
 (96px from `sm` up) with its count inside and its task name beneath. The primary
 action is the ring itself — no separate button. Cadence switcher sits bottom, in
 thumb reach.
@@ -120,7 +120,10 @@ screen. It lays out months instead, against a server-side goal × month rollup.
   on focus, with a small-caps tempo-mark label. There are no outlined boxes.
 - **Spacing scale** 4 / 8 / 12 / 16 / 24 / 32 / 48. More space above a heading than
   below it, always.
-- Touch targets never below 44px. The ring is 72px on mobile.
+- Touch targets never below 44px. The ring is 64px on a phone — four across a
+  390px screen, so a full category is visible without scrolling — and 96px from
+  `sm` up. Text inside the ring is sized from the ring but floored, so shrinking
+  the dial never takes the count or the `/target` below legibility.
 
 ## The ring
 
@@ -146,6 +149,9 @@ flat fill would have left them as the only distinction.
 - Tap increments. Every other action (decrement, note, edit, history) lives in the
   goal's detail sheet, reachable by long-press **and** by keyboard (Enter opens the
   sheet, Space increments) so the gesture is never the only route.
+- **The gesture is built on Pointer Events**, not on touch and mouse handlers
+  side by side. Listening to both double-counts every tap on a phone, because the
+  browser synthesises a compatibility mouse pair after `touchend`.
 
 ## Motion
 
