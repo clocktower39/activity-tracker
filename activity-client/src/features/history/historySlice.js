@@ -146,6 +146,9 @@ const initialState = {
   ranges: {},
   summaries: {},
   matrices: {},
+  // Keyed like `summaries`. A range the server refuses (too many buckets) must
+  // say so rather than render as an empty chart.
+  statsErrors: {},
   streaks: {},
   pending: {},
   errors: {},
@@ -193,8 +196,18 @@ const historySlice = createSlice({
         else state.ranges[key] = "error";
       })
 
+      .addCase(fetchSummary.pending, (state, action) => {
+        delete state.statsErrors[
+          `${action.meta.arg.bucket}|${action.meta.arg.from}|${action.meta.arg.to}`
+        ];
+      })
       .addCase(fetchSummary.fulfilled, (state, action) => {
         state.summaries[action.payload.key] = action.payload.buckets;
+      })
+      .addCase(fetchSummary.rejected, (state, action) => {
+        const { bucket, from, to } = action.meta.arg;
+        state.statsErrors[`${bucket}|${from}|${to}`] =
+          action.error?.message || "Couldn't load that range";
       })
       .addCase(fetchMatrix.fulfilled, (state, action) => {
         state.matrices[action.payload.key] = action.payload.cells;
@@ -283,6 +296,9 @@ export const selectSummary = (bucket, from, to) => (state) =>
 
 export const selectMatrix = (bucket, from, to) => (state) =>
   state.history.matrices[`${bucket}|${from}|${to}`] || null;
+
+export const selectStatsError = (bucket, from, to) => (state) =>
+  state.history.statsErrors[`${bucket}|${from}|${to}`] || null;
 
 export const selectStreaks = (days) => (state) => state.history.streaks[String(days)] || null;
 

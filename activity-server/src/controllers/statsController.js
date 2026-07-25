@@ -31,6 +31,26 @@ const parseRange = (req) => {
   return { fromDate, toDate };
 };
 
+/**
+ * Start of the bucket containing `date`, matching $dateTrunc's own boundaries
+ * (weeks start Monday). Used to clamp results: the row-matching window is
+ * deliberately widened to the start of the year so a yearly goal overlapping
+ * the range is found, but a bucket earlier than the range the caller asked for
+ * must not appear in the output.
+ */
+const truncate = (date, bucket) => {
+  switch (bucket) {
+    case "week":
+      return date.startOf("isoWeek");
+    case "month":
+      return date.startOf("month");
+    case "year":
+      return date.startOf("year");
+    default:
+      return date.startOf("day");
+  }
+};
+
 const assertBucketCount = (fromDate, toDate, bucket) => {
   const days = toDate.diff(fromDate, "day") + 1;
   const estimated = Math.ceil(days / BUCKET_DAYS[bucket]);
@@ -77,6 +97,8 @@ const summary = asyncHandler(async (req, res) => {
         },
       },
     },
+    // Keep the output inside the range the caller asked for.
+    { $match: { _id: { $gte: truncate(fromDate, bucket).toDate() } } },
     { $sort: { _id: 1 } },
     {
       $project: {
@@ -131,6 +153,7 @@ const matrix = asyncHandler(async (req, res) => {
         },
       },
     },
+    { $match: { "_id.bucket": { $gte: truncate(fromDate, bucket).toDate() } } },
     {
       $project: {
         _id: 0,

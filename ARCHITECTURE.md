@@ -133,6 +133,13 @@ This is what makes "all time" viable: the Review view spans the account's entire
 record — `recordRange.first` from `/bootstrap` to today — and picks its bucket
 from the span (day ≤ 45 d, week ≤ 200 d, month ≤ 6 y, year beyond). Five years of
 monthly totals is under 2 KB; the underlying rows would be tens of thousands.
+A custom range picks its bucket the same way, so an arbitrary span is bounded by
+the same rule rather than by a second set of limits.
+
+Note that the row-matching window is deliberately widened to the start of the
+`from` year so a yearly-interval row overlapping the range is still found. The
+aggregation then clamps its output back to the caller's range — without that,
+asking for 25 Jan onward returned a first bucket dated the preceding December.
 
 ## 5. Data model
 
