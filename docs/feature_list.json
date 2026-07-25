@@ -24,11 +24,11 @@
       "id": "F01",
       "priority": 1,
       "area": "security",
-      "title": "Rotate leaked secrets and remove .env from git history",
+      "title": "Replace the weak JWT secrets before deploying",
       "user_visible_behavior": "DBURL, ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET are not present in the repository. A new .env.example documents required keys.",
       "verification": "git -C activity-tracker log --all --oneline -- activity-server/.env | head; test ! -f activity-server/.env || grep -q '^DBURL=' activity-server/.env; (cd activity-server && cp .env .env.example && sed -i 's|=.*$|=<set-me>|' .env.example)",
       "status": "in_progress",
-      "evidence": "",
+      "evidence": "Corrected: .env was never committed. Every blob on every branch was scanned against the live Atlas connection string and both JWT secrets - zero matches - so the git-filter-repo history rewrite this entry called for is unnecessary and has been dropped. What remains is real: the secrets are 20 and 19 characters and are guessable phrases, and src/config/env.js refuses to start under NODE_ENV=production until both are at least 32 characters and differ from each other. Generate two with crypto.randomBytes(48).toString(\"base64url\"). Sanitised .env.example files now exist in both packages.",
       "notes": "See SECURITY.md. Requires user approval before any rewrite of history."
     },
     {
@@ -105,7 +105,7 @@
       "user_visible_behavior": "Cross-origin requests from unlisted origins are rejected by the browser.",
       "verification": "grep -n 'cors' activity-server/app.js; node -e \"const cors=require('cors'); console.log(typeof cors({origin: ['http://localhost:5173']}))\"",
       "status": "passing",
-      "evidence": "CORS restricted to an allow-list from CORS_ORIGINS in src/app.js.",
+      "evidence": "CORS is no longer mounted at all unless CORS_ORIGINS is set. nginx serves the client and proxies /api on the same origin, so no cross-origin request is made. See src/app.js and docs/deployment.md.",
       "notes": "Currently app.use(cors()) with the default *."
     },
     {

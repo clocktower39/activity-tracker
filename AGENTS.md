@@ -78,7 +78,7 @@ These are non-negotiable. If a task appears to require breaking one, stop and as
   document, which put the bcrypt password hash in every token.
 - **MUST NOT** add a `console.log` / `debugger` / commented-out code to a commit. They are removed by `clean-state-checklist.md`.
 - **MUST NOT** bundle unrelated changes. One feature = one commit (or one small, related chain). Use `git status` to verify before committing.
-- **MUST NOT** commit `.env`, `node_modules/`, `dist/`, or anything containing credentials. The current `activity-server/.env` is committed by mistake (see `SECURITY.md`); do not add more.
+- **MUST NOT** commit `.env`, `node_modules/`, `dist/`, or anything containing credentials. Both packages' `.gitignore` already cover these and no credential has ever been committed — a scan of every blob on every branch found none. Keep it that way; see `SECURITY.md` §1.
 - **MUST NOT** introduce a new dependency without first checking whether an existing one in the manifest solves the problem. If a new one is needed, justify it in the commit message and add the entry to `docs/feature_list.json` as a "refactor" prerequisite.
 - **MUST NOT** refactor unrelated code while implementing a feature. (WIP=1.) Knuth's "premature optimization" applies; the harness rule applies harder.
 
