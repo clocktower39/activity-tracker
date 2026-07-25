@@ -6,10 +6,17 @@
 
 A MERN-stack personal activity / habit tracker. Two packages:
 
-- `activity-server/` — Node 16 + Express 5 + Mongoose 9 API on port 8000. JWT auth (access 180 m, refresh 90 d). MongoDB via `DBURL` in `.env`.
-- `activity-tracker-app/` — React 19 + Vite 7 + Redux 5 + MUI 7 PWA. Targets the `/activity-tracker/` base path and hard-codes the production API URL `https://myactivitytracker.herokuapp.com` in `src/Redux/actions.jsx`.
+- `activity-server/` — Node 20+ / Express 5 / Mongoose 9 API on port 8000. Entry
+  point is `server.js`; all code lives under `src/`. Routes are under `/api`.
+  JWT auth (access 180 m, refresh 90 d, rotating). MongoDB via `DBURL` in `.env`.
+- `activity-client/` — React 19 + Vite 7 + Redux Toolkit 2 + MUI 7 PWA. Serves
+  from the `/activity-tracker/` base path and reads the API URL from
+  `VITE_API_URL`.
 
-Read `ARCHITECTURE.md` for the module map and request flows. Read it on the first session; skim it on later ones.
+Read `ARCHITECTURE.md` for the module map, the API table, and the data-loading
+contract — **especially §3, which explains the defect this codebase was rebuilt
+to fix.** Read `PRODUCT.md` before changing behaviour and `DESIGN.md` before
+changing anything visual.
 
 ## 2. Clock-in / clock-out (every session, no exceptions)
 
@@ -33,10 +40,26 @@ If you cannot complete the checklist, do **not** commit feature code. Either fin
 
 These are non-negotiable. If a task appears to require breaking one, stop and ask the user.
 
-- **MUST** keep UTC for every period calculation. Use `dayjs.utc()`. `periodStart` in `GoalHistory` is UTC; mixing local time will produce off-by-one day bugs in weekly/monthly rollups.
-- **MUST** gate every authenticated endpoint with `verifyAccessToken` middleware. Public endpoints: `POST /login`, `POST /signup`, `POST /refresh-tokens`. Nothing else.
+- **MUST NOT** write on a read path. `GET` handlers never create, update or
+  upsert a `GoalHistory` row. The previous version upserted a placeholder for
+  every goal on every page view and grew 27k empty documents doing it. A missing
+  row means zero, not "not loaded".
+- **MUST** bound every history query by an indexed period range, and aggregate
+  rollups in MongoDB rather than shipping rows to the browser. An endpoint whose
+  response grows with the account's lifetime is a bug, however fast it is today.
+- **MUST** use `$inc` for progress increments, never read-modify-write. Two taps
+  in quick succession must both land.
+- **MUST** keep UTC for every period calculation, with ISO weeks starting Monday.
+  `activity-server/src/lib/periods.js` and `activity-client/src/lib/periods.js`
+  are mirrors — change both or neither.
+- **MUST** gate every authenticated endpoint with `requireAuth`. Public
+  endpoints: `POST /api/auth/signup`, `/api/auth/login`, `/api/auth/refresh`.
+  Nothing else.
 - **MUST** keep `GoalHistory` writes idempotent on the unique key `(goalId, interval, periodStart)`. Use `findOneAndUpdate` with `upsert: true` and `$setOnInsert` for default fields.
 - **MUST NOT** trust the client `accountId`. It is always derived from `res.locals.user._id` after token verification.
+- **MUST NOT** put a document in a JWT payload. Tokens carry identifiers only
+  (`sub`, `email`, `tokenVersion`, `type`). The v1 code signed the whole user
+  document, which put the bcrypt password hash in every token.
 - **MUST NOT** add a `console.log` / `debugger` / commented-out code to a commit. They are removed by `clean-state-checklist.md`.
 - **MUST NOT** bundle unrelated changes. One feature = one commit (or one small, related chain). Use `git status` to verify before committing.
 - **MUST NOT** commit `.env`, `node_modules/`, `dist/`, or anything containing credentials. The current `activity-server/.env` is committed by mistake (see `SECURITY.md`); do not add more.
@@ -74,16 +97,22 @@ If at clock-in you find:
 - a build that doesn't start → treat as **environment** failure; fix baseline before anything else.
 - a `feature_list.json` with zero or many `in_progress` → reconcile to a single entry; record what you found in `PROGRESS.md`.
 - a `PROGRESS.md` older than the last commit → read the diff between the last commit and HEAD, summarize what's actually on disk, and rewrite the file before continuing.
-- a `GoalHistory` collection missing the unique index → run `node activity-server/scripts/migrate-goal-history.js` once and commit the resulting indexes.
+- a `GoalHistory` collection missing the unique index, a `Category.accountId`
+  stored as a String, or legacy embedded `Goal.history` arrays → run
+  `node activity-server/scripts/maintenance.js` to see a report, then re-run with
+  `--apply`. It is idempotent and dry-run by default.
 
 ## 7. Topic docs (read on demand)
 
 | When you are…                                    | Read                                            |
 |--------------------------------------------------|-------------------------------------------------|
-| Adding a new API endpoint                        | `ARCHITECTURE.md` §3 (Request flow)             |
-| Touching the data model                          | `ARCHITECTURE.md` §4 (Data model)               |
-| Working on auth / tokens                         | `ARCHITECTURE.md` §5 (Security model)           |
-| Frontend state / Redux                           | `ARCHITECTURE.md` §6 (Client architecture)      |
+| Touching **any** read path                       | `ARCHITECTURE.md` §3 (Data-loading contract)    |
+| Adding a new API endpoint                        | `ARCHITECTURE.md` §4 (API)                      |
+| Touching the data model                          | `ARCHITECTURE.md` §5 (Data model)               |
+| Working on auth / tokens                         | `ARCHITECTURE.md` §6 (Invariants)               |
+| Frontend state                                   | `ARCHITECTURE.md` §7 (Client state)             |
+| Changing anything visual                         | `DESIGN.md`                                     |
+| Changing product behaviour                       | `PRODUCT.md`                                    |
 | Reviewing your own output                        | `docs/evaluator-rubric.md`                      |
 | Updating per-module health                       | `docs/quality-document.md`                      |
 | Closing a session                                | `docs/clean-state-checklist.md`                 |

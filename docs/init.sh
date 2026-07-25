@@ -14,7 +14,7 @@ cd "$REPO_ROOT"
 # ---- Configuration ----
 # Edit these three if your stack changes.
 SERVER_INSTALL_CMD="yarn install"
-SERVER_VERIFY_CMD="node -e \"require('./app.js')\" 2>&1 | head -5"
+SERVER_VERIFY_CMD="yarn verify 2>&1 | head -5"
 CLIENT_INSTALL_CMD="yarn install"
 CLIENT_VERIFY_CMD="yarn lint"
 
@@ -44,22 +44,22 @@ else
 fi
 
 # ---- 3. Client ----
-if [[ -d activity-tracker-app ]]; then
-  say "Installing client dependencies (activity-tracker-app)"
-  (cd activity-tracker-app && ${CLIENT_INSTALL_CMD})
+if [[ -d activity-client ]]; then
+  say "Installing client dependencies (activity-client)"
+  (cd activity-client && ${CLIENT_INSTALL_CMD})
   say "Running client linter"
-  (cd activity-tracker-app && ${CLIENT_VERIFY_CMD}) || warn "Client lint reported issues"
+  (cd activity-client && ${CLIENT_VERIFY_CMD}) || warn "Client lint reported issues"
 else
-  warn "activity-tracker-app/ missing — skipped"
+  warn "activity-client/ missing — skipped"
 fi
 
 # ---- 4. Next step ----
 say "Done. Start the app:"
 printf '  cd activity-server      && %s\n' "$SERVER_START_CMD"
-printf '  cd activity-tracker-app && %s\n' "$CLIENT_START_CMD"
+printf '  cd activity-client && %s\n' "$CLIENT_START_CMD"
 if [[ "$RUN_START_COMMAND" == "1" ]]; then
   say "RUN_START_COMMAND=1 — launching both dev servers in background"
   (cd activity-server      && ${SERVER_START_CMD}) &
-  (cd activity-tracker-app && ${CLIENT_START_CMD})  &
+  (cd activity-client && ${CLIENT_START_CMD})  &
   wait
 fi

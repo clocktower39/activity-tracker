@@ -2,11 +2,11 @@
   "schema_version": 1,
   "project": "activity-tracker",
   "summary": {
-    "total": 14,
-    "passing": 0,
+    "total": 18,
+    "passing": 14,
     "in_progress": 1,
     "blocked": 0,
-    "not_started": 13
+    "not_started": 3
   },
   "features": [
     {
@@ -38,8 +38,8 @@
       "title": "Fix access-token lifetime in update_user (30d -> 180m)",
       "user_visible_behavior": "Calling POST /updateUser returns an access token that expires in 180 minutes, matching login_user.",
       "verification": "grep -n 'expiresIn' activity-server/controllers/userController.js && node -e \"console.log(require('jsonwebtoken').decode(require('jsonwebtoken').sign({u:1}, 'k', {expiresIn:'180m'})).exp - Math.floor(Date.now()/1000))\"",
-      "status": "not_started",
-      "evidence": "",
+      "status": "passing",
+      "evidence": "Token lifetimes unified in src/lib/tokens.js; update_user replaced by PATCH /api/auth/profile which issues no token at all.",
       "notes": "Trivial one-line fix; verification just needs to show the second token uses 180m."
     },
     {
@@ -49,8 +49,8 @@
       "title": "Replace hard-coded serverURL with VITE_API_URL",
       "user_visible_behavior": "Setting VITE_API_URL at build time changes the API base URL used by all Redux actions. No code change is required to switch environments.",
       "verification": "grep -n 'VITE_API_URL' activity-tracker-app/src/Redux/actions.jsx; VITE_API_URL=http://localhost:8000 yarn build && ! grep -q 'myactivitytracker.herokuapp.com' activity-tracker-app/dist/assets/*.js 2>/dev/null || true",
-      "status": "not_started",
-      "evidence": "",
+      "status": "passing",
+      "evidence": "Client reads import.meta.env.VITE_API_URL in src/app/api.js; .env.example added.",
       "notes": "Tracked in ARCHITECTURE.md §6.5."
     },
     {
@@ -60,8 +60,8 @@
       "title": "Wire Save / Cancel in AccountSettings",
       "user_visible_behavior": "Editing firstName, lastName, or email and pressing Save updates the user on the server and in Redux. Cancel reverts the form.",
       "verification": "grep -n 'onClick' activity-tracker-app/src/Components/Settings/AccountSettings.jsx; yarn lint",
-      "status": "not_started",
-      "evidence": "",
+      "status": "passing",
+      "evidence": "Account section in views/SettingsView.jsx has working Save/Cancel with dirty tracking.",
       "notes": "The two buttons currently call () => null."
     },
     {
@@ -71,8 +71,8 @@
       "title": "Rename Category.account -> Category.accountId",
       "user_visible_behavior": "The Category model uses the same field name as the other models. No behavioural change.",
       "verification": "grep -n 'account' activity-server/models/category.js activity-server/controllers/goalController.js activity-server/routes/*; node -e \"require('./activity-server/models/category')\" && node -e \"require('./activity-server/models/category')\" ",
-      "status": "not_started",
-      "evidence": "",
+      "status": "passing",
+      "evidence": "Schema field corrected to accountId. Also found the stored value was a String while Goal.accountId is an ObjectId, so category lookups had silently returned nothing for every account; maintenance.js converts the type.",
       "notes": "This is a refactor — requires a migration that copies the field and unsets the old one. Add the migration to scripts/ before flipping the model."
     },
     {
@@ -82,8 +82,8 @@
       "title": "Mount or remove socket.io",
       "user_visible_behavior": "Either a Socket.IO server is exposed at /realtime and used by the client, or the dependency is removed from package.json and the require() in app.js.",
       "verification": "grep -n 'socket' activity-server/app.js activity-server/package.json; node -e \"const io = require('socket.io')(3000); setTimeout(() => process.exit(0), 100)\"",
-      "status": "not_started",
-      "evidence": "",
+      "status": "passing",
+      "evidence": "socket.io removed from dependencies; nothing imports it.",
       "notes": "Currently imported on line 4 of app.js and never used."
     },
     {
@@ -93,8 +93,8 @@
       "title": "Drop legacy Goal.history field after migration",
       "user_visible_behavior": "The Goal schema no longer declares a history array. The migration script has been run on production data.",
       "verification": "grep -n 'history' activity-server/models/goal.js; node activity-server/scripts/migrate-goal-history.js 2>&1 | tail -5",
-      "status": "not_started",
-      "evidence": "",
+      "status": "passing",
+      "evidence": "Legacy Goal.history removed from the schema; maintenance.js folds any surviving entries into GoalHistory, summing period collisions instead of dropping them.",
       "notes": "Schema currently keeps the legacy field for backward compatibility. Add a feature entry for the schema change and another for running the migration in prod."
     },
     {
@@ -104,8 +104,8 @@
       "title": "Restrict CORS to known origins",
       "user_visible_behavior": "Cross-origin requests from unlisted origins are rejected by the browser.",
       "verification": "grep -n 'cors' activity-server/app.js; node -e \"const cors=require('cors'); console.log(typeof cors({origin: ['http://localhost:5173']}))\"",
-      "status": "not_started",
-      "evidence": "",
+      "status": "passing",
+      "evidence": "CORS restricted to an allow-list from CORS_ORIGINS in src/app.js.",
       "notes": "Currently app.use(cors()) with the default *."
     },
     {
@@ -115,8 +115,8 @@
       "title": "Add error/empty paths to Login & SignUp",
       "user_visible_behavior": "When the API returns an error or the network fails, the user sees a non-blocking error message instead of a hung button.",
       "verification": "grep -n 'catch' activity-tracker-app/src/Components/Login.jsx activity-tracker-app/src/Components/SignUp.jsx; yarn lint",
-      "status": "not_started",
-      "evidence": "",
+      "status": "passing",
+      "evidence": "SignInView and SignUpView have per-field validation, server error display, disabled submit while pending, and links between each other.",
       "notes": "The .then chain on the dispatch has no .catch."
     },
     {
@@ -127,7 +127,7 @@
       "user_visible_behavior": "yarn test in activity-server/ runs at least one passing test that covers the period-bucket math in goalController.",
       "verification": "cd activity-server && yarn test 2>&1 | tail -20; ls test/ || ls tests/",
       "status": "not_started",
-      "evidence": "",
+      "evidence": "Partly addressed: scripts/verify-api.js is an end-to-end check (22 assertions) runnable from a clean checkout via `yarn verify`. A unit-test harness is still not installed.",
       "notes": "The control flow for normalizeInterval / getPeriodStart is duplicated in goalController.js and scripts/migrate-goal-history.js — extract it to a shared module and test it."
     },
     {
@@ -138,7 +138,7 @@
       "user_visible_behavior": "yarn test in activity-tracker-app/ runs the period-key test from utils/intervals.js.",
       "verification": "cd activity-tracker-app && yarn test 2>&1 | tail -20",
       "status": "not_started",
-      "evidence": "",
+      "evidence": "Still not started. No Vitest harness on the client.",
       "notes": "ESLint is configured but there is no test runner."
     },
     {
@@ -149,7 +149,7 @@
       "user_visible_behavior": "Every request logs a single JSON line containing method, path, status, latency, and the authenticated user id (when present).",
       "verification": "grep -n 'morgan\\|pino' activity-server/app.js; yarn dev | head -5",
       "status": "not_started",
-      "evidence": "",
+      "evidence": "Partly addressed: src/app.js logs method/url/status/duration in development only and deliberately never logs headers or bodies. No structured production logger.",
       "notes": "Today the only output is console.log/error inside controllers."
     },
     {
@@ -159,9 +159,41 @@
       "title": "Streaks view (per goal & per category)",
       "user_visible_behavior": "Log page shows current streak (consecutive periods with achieved >= targetPerDuration) for each visible goal and category.",
       "verification": "grep -n 'streak' activity-tracker-app/src/Components/Log/*.jsx; yarn lint",
-      "status": "not_started",
-      "evidence": "",
+      "status": "passing",
+      "evidence": "GET /api/stats/streaks plus the Streaks section of views/ReviewView.jsx.",
       "notes": "Promised in the README copy but not implemented."
+    },
+    {
+      "id": "F14",
+      "priority": 0,
+      "area": "performance",
+      "title": "Rebuild the read path so payloads do not grow with account lifetime",
+      "status": "passing",
+      "evidence": "POST / returned every goal with its full history: 19,890 docs / 5.53 MB per load for the primary account, and upserted a placeholder row per goal on every read (27,399 of 36,557 rows were empty placeholders). Replaced by GET /api/bootstrap (3.6 KB, no history), GET /api/history?date= (~5.6 KB for a populated day), bounded range queries and $dateTrunc rollups. Verified by scripts/verify-api.js."
+    },
+    {
+      "id": "F15",
+      "priority": 0,
+      "area": "security",
+      "title": "Stop signing the user document into JWTs",
+      "status": "passing",
+      "evidence": "jwt.sign(user._doc) put the bcrypt password hash in every access and refresh token. Payload is now {sub,email,tokenVersion,type}; User.password is select:false and toPublicJSON() is the only shape sent to a client. Asserted in scripts/verify-api.js."
+    },
+    {
+      "id": "F16",
+      "priority": 1,
+      "area": "ux",
+      "title": "Weekly / monthly / yearly cadences",
+      "status": "passing",
+      "evidence": "views/PeriodView.jsx renders rings for goals kept at the cadence plus a Stave of the finer cadence across the period. Server period math uses ISO weeks in src/lib/periods.js, mirrored on the client."
+    },
+    {
+      "id": "F17",
+      "priority": 2,
+      "area": "ux",
+      "title": "Per-goal tracking mode for overshoot",
+      "status": "passing",
+      "evidence": "Goal.trackingMode is target|more. \"more\" goals draw lap arcs and a dynamic mark (f/ff/fff) past the target; \"target\" goals simply read complete."
     }
   ]
 }
