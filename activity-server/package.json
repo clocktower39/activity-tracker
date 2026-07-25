@@ -1,23 +1,28 @@
 {
   "name": "activity-server",
-  "version": "1.0.0",
-  "main": "index.js",
+  "version": "2.0.0",
+  "private": true,
+  "main": "server.js",
   "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "body-parser": "^2.2.2",
     "cors": "^2.8.5",
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "express-validation": "^4.1.1",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.1.2",
-    "nodemon": "^3.1.11",
-    "socket.io": "^4.8.3"
+    "mongoose": "^9.1.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
   },
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "verify": "node scripts/verify-api.js",
+    "maintenance": "node scripts/maintenance.js"
   }
 }

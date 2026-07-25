@@ -1,0 +1,6 @@
+
+# Impeccable transient decision-page state
+.impeccable/questions/
+
+# Local data snapshots taken before destructive maintenance
+.backups/

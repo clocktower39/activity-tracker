@@ -5,204 +5,327 @@
 ## 1. System overview
 
 ```
-┌────────────────────────────────┐    HTTPS / JSON     ┌────────────────────────────┐
-│  Browser (PWA)                 │ ──────────────────► │  Express + Mongoose API    │
-│  React 19 + Redux + MUI        │ ◄────────────────── │  Node 16                   │
-│  • Bearer JWT in localStorage  │                     │  • verifyAccessToken mw    │
-│  • Optimistic UI on log tick   │                     │  • Mongoose 9 models       │
-└────────────────────────────────┘                     └──────────────┬─────────────┘
-        ▲                                                            │
-        │  Service Worker / Web Push                                ▼
-        │                                                  ┌──────────────────┐
-        │                                                  │  MongoDB         │
-        │                                                  │  (Atlas)         │
-        ▼                                                  └──────────────────┘
-  Notifications API
+┌──────────────────────────────┐   HTTPS / JSON    ┌────────────────────────────┐
+│  Browser (PWA)               │ ────────────────► │  Express 5 + Mongoose 9    │
+│  React 19 · MUI 7 · RTK      │ ◄──────────────── │  Node 20+                  │
+│  • Bearer JWT in localStorage│                   │  • requireAuth middleware  │
+│  • Optimistic ring updates   │                   │  • All routes under /api   │
+└──────────────────────────────┘                   └─────────────┬──────────────┘
+                                                                 ▼
+                                                        ┌──────────────────┐
+                                                        │  MongoDB (Atlas) │
+                                                        └──────────────────┘
 ```
 
-- **One round-trip model.** The browser talks to the API directly. There is no BFF / proxy layer.
-- **Auth is JWT-based.** Access token (15–180 m, see §5) lives in `localStorage.JWT_AUTH_TOKEN`; refresh token in `JWT_REFRESH_TOKEN`. There is no cookie / CSRF surface because the API does not rely on session cookies.
-- **Realtime is a future direction.** `socket.io` is installed on the server but not yet wired to a route. Treat any `socket` reference in the client as dead code.
+The browser talks to the API directly; there is no BFF. Auth is JWT-based, so
+there is no cookie or CSRF surface.
+
+**The client and the API share an origin.** nginx serves the built client at `/`
+and proxies `/api` to Node on loopback, so the browser never makes a
+cross-origin request: CORS is not mounted at all unless `CORS_ORIGINS` is set,
+and no hostname is compiled into the bundle. `yarn dev` reproduces this with a
+proxy rather than a second origin, so development and production agree.
+
+Three settings carry every deployment difference, and nothing else in the code
+knows where it is running:
+
+| Setting | Meaning |
+|---|---|
+| `VITE_BASE_PATH` | where the client is served from; drives the asset base, the router basename and the PWA scope together |
+| `TRUST_PROXY` | how many proxies sit in front of Node, which decides `req.ip` and therefore who the auth rate limiter counts |
+| `HOST` | the interface Node binds; loopback in production so only nginx can reach it |
+
+See `docs/deployment.md` for the nginx and Cloudflare configuration, including
+the real-client-IP block that the rate limiter depends on.
 
 ## 2. Module map
 
 ### 2.1 Server (`activity-server/`)
 
-| Path                                                | Responsibility                                        |
-|-----------------------------------------------------|-------------------------------------------------------|
-| `app.js`                                            | Express bootstrap, CORS, JSON, error handler          |
-| `routes/goalRoutes.js`                              | All `/` and `/goal*` POST routes, gated by JWT        |
-| `routes/userRoutes.js`                              | `/login`, `/signup`, `/refresh-tokens`, user mutators |
-| `controllers/goalController.js`                     | Business logic for goals + history                    |
-| `controllers/userController.js`                     | Signup, login, token issuance, password change        |
-| `models/goal.js`                                    | `Goal` Mongoose schema                                |
-| `models/goalHistory.js`                             | `GoalHistory` Mongoose schema (idempotent writes)     |
-| `models/category.js`                                | `Category` Mongoose schema (one doc per user)         |
-| `models/user.js`                                    | `User` schema + bcrypt pre-save hook                  |
-| `middleware/auth.js`                                | `verifyAccessToken`, `verifyRefreshToken`             |
-| `scripts/migrate-goal-history.js`                   | One-shot migration, run once when upgrading           |
+| Path | Responsibility |
+|---|---|
+| `server.js` | Connects to Mongo, *then* listens. Graceful shutdown. |
+| `src/app.js` | Express bootstrap: CORS allow-list, JSON, dev logger, error handler |
+| `src/config/env.js` | Validated environment. Fails fast on missing/weak secrets. |
+| `src/db/connect.js` | Mongoose connection |
+| `src/lib/periods.js` | **Period math. Mirrored by the client.** |
+| `src/lib/tokens.js` | JWT signing/verification. Payload is identifiers only. |
+| `src/lib/rebucketWeeks.js` | Moves weekly rows when an account changes `weekStart` |
+| `src/lib/apiError.js` | `ApiError` + `asyncHandler` |
+| `src/middleware/auth.js` | `requireAuth`, `blockDemo` |
+| `src/middleware/errorHandler.js` | The only place an error becomes a response |
+| `src/middleware/rateLimit.js` | In-process fixed-window limiter for auth routes |
+| `src/controllers/authController.js` | Signup, login, refresh, profile, password |
+| `src/controllers/goalController.js` | Bootstrap, goal CRUD, categories |
+| `src/controllers/historyController.js` | Period reads and progress writes |
+| `src/controllers/statsController.js` | Server-side rollups and streaks |
+| `src/routes/index.js` | Route table |
+| `scripts/maintenance.js` | Idempotent data maintenance. Dry-run by default. |
+| `scripts/verify-api.js` | End-to-end API check against a running server |
 
-### 2.2 Client (`activity-tracker-app/`)
+### 2.2 Client (`activity-client/`)
 
-| Path                                          | Responsibility                                            |
-|-----------------------------------------------|-----------------------------------------------------------|
-| `src/main.jsx`                                | Redux Provider + StrictMode root                          |
-| `src/App.jsx`                                 | Theme + Router, picks dark/light from `state.user.themeMode` |
-| `src/Redux/store.jsx`                         | Single store, thunk middleware, devtools                  |
-| `src/Redux/reducer.jsx`                       | Activity-by-date cache + auth state                       |
-| `src/Redux/actions.jsx`                       | Thunks: `loginUser`, `getActivities`, `updateActivityProgress`, … |
-| `src/Redux/states.jsx`                        | Initial state slices                                      |
-| `src/Components/AuthRoute.jsx`                | `<Outlet>` guard; runs `loginJWT` on mount if a refresh token is present |
-| `src/Components/Log/LogContainer.jsx`         | Main log view; grouped-by-category or flat                |
-| `src/Components/Log/GoalCircularProgress.jsx` | Tap = +1 progress, long-press = open details              |
-| `src/Components/Log/GoalDetails.jsx`          | Detail dialog: ± progress, chart, edit                    |
-| `src/Components/Log/EditGoal.jsx`             | Edit / hide / delete goal                                 |
-| `src/Components/Log/NewGoal.jsx`              | Add new goal                                              |
-| `src/Components/Log/EditCategories.jsx`       | Manage category list                                      |
-| `src/Components/Log/Metrics.jsx`              | Recharts bar chart + date range picker                    |
-| `src/Components/Settings/*`                   | Account, theme, notifications, hidden, change password    |
-| `src/Hooks/useLongPress.jsx`                  | Touch / mouse long-press helper                           |
-| `src/Hooks/useWindowSize.jsx`                 | Responsive breakpoint hook                                |
-| `src/utils/intervals.js`                      | `INTERVAL_OPTIONS`, `normalizeInterval`, period math      |
-| `src/utils/notifications.js`                  | Permission flow + daily check-in scheduler                |
+| Path | Responsibility |
+|---|---|
+| `src/app/api.js` | fetch wrapper: auth header, single-flight token refresh, `ApiError` |
+| `src/app/store.js` | RTK store |
+| `src/features/auth/authSlice.js` | Session and profile |
+| `src/features/goals/goalsSlice.js` | Goals + categories, and the grouping selector |
+| `src/features/history/historySlice.js` | **The period cache.** Optimistic writes. |
+| `src/features/ui/uiSlice.js` | Theme mode, transient status messages |
+| `src/design/theme.js` | The Practice Chart world as MUI tokens. See `DESIGN.md`. |
+| `src/lib/periods.js` | **Mirror of the server's period math.** |
+| `src/components/Ring.jsx` | The signature interaction |
+| `src/components/Stave.jsx` | Goals × periods matrix (a reading surface) |
+| `src/components/PeriodBars.jsx` | Bars against the target line |
+| `src/components/GoalSheet.jsx` | One goal in one period: adjust, note, recent run |
+| `src/components/GoalPeriodSheet.jsx` | One goal across a whole period (week/month/year) |
+| `src/views/TodayView.jsx` | Rings for one day |
+| `src/views/PeriodView.jsx` | Week / Month / Year, one component |
+| `src/views/ReviewView.jsx` | Aggregates and streaks |
 
-## 3. Request flow
+## 3. The data-loading contract
 
-A logged-in user opens the app:
+This is the part that was broken and is the reason for the rebuild. Read it
+before touching any read path.
 
-1. `AuthRoute` mounts. If a refresh token is in `localStorage`, it dispatches `loginJWT` to get a fresh access token.
-2. Once `state.user.email` is set, `AuthRoute` dispatches `getActivities(today)`.
-3. `getActivities` POSTs `{ selectedDate: "YYYY-MM-DD" }` to `/`. The server returns the user's goals + categories + the relevant `GoalHistory` slice.
-4. The result is cached in `state.activityByDate[YYYY-MM-DD]`. Subsequent visits to the same date apply the cache; visits to other dates trigger a new fetch.
-5. When the user taps a goal circle, `updateActivityProgress` runs: optimistic local update first, then `POST /newHistoryItem` or `POST /updateHistoryItem`.
+**The old behaviour.** `POST /` returned every goal *with its entire history*,
+on every page load — 19,890 documents and 5.53 MB for the primary account. It
+also ran a `bulkWrite` on that read path which upserted a placeholder row for
+every goal at the selected period, so merely *looking* at a date wrote rows.
+27,399 of 36,557 rows in the collection were empty placeholders created this way.
 
-### 3.1 Write paths (must be idempotent)
+**The rules now:**
 
-```
-tap on goal  ──► updateActivityProgress(goalId, +1, selectedDate)
-                  │
-                  ├─ exists in goal.history? ──► POST /updateHistoryItem  (findOneAndUpdate by _id)
-                  └─ does not exist?           ──► POST /newHistoryItem    (findOneAndUpdate by
-                                                                          (goalId, interval,
-                                                                           periodStart),
-                                                                          upsert:true)
-```
+1. **No write on a read path.** Ever. A `GoalHistory` row exists only because a
+   user recorded something.
+2. **A missing row means zero**, not "not loaded".
+3. **A row that reaches zero with no note is deleted**, not left behind.
+4. **Every history query is bounded** by an indexed period range.
+5. **Rollups are aggregated in Mongo**, not by shipping rows to the browser.
 
-The `newHistoryItem` endpoint is the only correct way to add a new period entry; it enforces the `(goalId, interval, periodStart)` unique key and refuses to clobber an existing row.
+Resulting sizes for the primary account:
 
-## 4. Data model
+| | Old | New |
+|---|---|---|
+| First load | 5.53 MB | 3.6 KB bootstrap + ~5.6 KB for the day |
+| Changing date | 5.53 MB | ~5.6 KB (once; then cached) |
+| A year of totals | n/a | ~800 B |
 
-### 4.1 `User` (`models/user.js`)
+## 4. API
 
-| Field        | Type    | Notes                                          |
-|--------------|---------|------------------------------------------------|
-| `email`      | String  | unique index                                   |
-| `firstName`  | String  | required                                       |
-| `lastName`   | String  | required                                       |
-| `password`   | String  | bcrypt-hashed; `SALT_WORK_FACTOR` from `.env`  |
-| `themeMode`  | String  | `"light" \| "dark" \| "custom"`                |
+All routes are under `/api`. Public: `POST /auth/signup`, `/auth/login`,
+`/auth/refresh`. Everything else requires a valid access token.
 
-### 4.2 `Goal` (`models/goal.js`)
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/health` | Liveness |
+| POST | `/auth/signup` \| `/auth/login` \| `/auth/refresh` | Rate-limited; refresh rotates both tokens |
+| GET | `/auth/me` | |
+| PATCH | `/auth/profile` | Allow-listed fields only |
+| POST | `/auth/change-password` | Bumps `tokenVersion`, invalidating other sessions |
+| GET | `/bootstrap` | Goals + categories + `recordRange` (first/last recorded period). **No history.** |
+| POST/PATCH/DELETE | `/goals`, `/goals/:id` | `PATCH /goals/reorder` is declared before `/goals/:id` |
+| PUT | `/categories` | Whole list |
+| POST | `/categories/rename` | Renames the category on every goal too |
+| GET | `/history?date=` | One row per goal for the period containing that date |
+| GET | `/history/range?from=&to=[&interval=][&goalId=]` | Bounded window |
+| POST | `/history/progress` | `delta` increments atomically; `achieved` sets absolutely |
+| GET | `/stats/summary?from=&to=&bucket=` | `$dateTrunc` rollup, one row per bucket |
+| GET | `/stats/matrix?from=&to=&bucket=` | Goal × bucket rollup, one row per goal per bucket |
+| GET | `/stats/by-goal?from=&to=` | Per-goal totals |
+| GET | `/stats/streaks?days=` | Current and longest. `days=all` walks the whole record. |
 
-| Field           | Type     | Notes                                                        |
-|-----------------|----------|--------------------------------------------------------------|
-| `task`          | String   | required                                                     |
-| `interval`      | String   | enum: `daily / weekly / monthly / yearly / none` (lowercased on set) |
-| `defaultTarget` | Number   | required                                                     |
-| `category`      | String   | required, free-text; matches `Category.categories[].category` |
-| `order`         | Number   | required; user-defined sort key                              |
-| `history`       | Array    | **Deprecated.** Kept in the schema for backward compatibility but no new code should write to it. Use `GoalHistory`. |
-| `accountId`     | ObjectId | required, ref `User`                                         |
-| `hidden`        | Boolean  | default `false`                                              |
+### 4.1 How ranges are bounded
 
-### 4.3 `GoalHistory` (`models/goalHistory.js`)
+Two different limits, because the two kinds of endpoint fail in different ways.
 
-| Field              | Type     | Notes                                                |
-|--------------------|----------|------------------------------------------------------|
-| `goalId`           | ObjectId | ref `Goal`, indexed                                 |
-| `accountId`        | ObjectId | ref `User`, indexed                                 |
-| `interval`         | String   | enum as above                                        |
-| `periodStart`      | Date     | **UTC** start of the period (day/week/month/year)   |
-| `targetPerDuration`| Number   | copied from `Goal.defaultTarget` at upsert time     |
-| `achieved`         | Number   | sum of ticks for this period                         |
-| `note`             | String   | optional                                             |
+**`/history/range` returns raw documents**, so its cost scales with how much was
+recorded. It is capped at 5 years, which is far beyond what any view asks for
+(the goal sheet wants 14 periods; a period view wants one period).
 
-Indexes:
-- `unique (goalId, interval, periodStart)` — the idempotency key.
-- `(accountId, periodStart)` — query acceleration for the log view.
+**`/stats/*` aggregate in MongoDB**, so their cost scales with *bucket count*,
+not with duration. They are therefore bounded by buckets (3,000) rather than by
+years. A decade of monthly totals is 120 rows and perfectly reasonable; a decade
+of daily totals is not, and is refused with a message naming a coarser bucket.
 
-### 4.4 `Category` (`models/category.js`)
+This is what makes "all time" viable: the Review view spans the account's entire
+record — `recordRange.first` from `/bootstrap` to today — and picks its bucket
+from the span (day ≤ 45 d, week ≤ 200 d, month ≤ 6 y, year beyond). Five years of
+monthly totals is under 2 KB; the underlying rows would be tens of thousands.
+A custom range picks its bucket the same way, so an arbitrary span is bounded by
+the same rule rather than by a second set of limits.
 
-One document per user. The schema is `{ account: ObjectId, categories: [{ category: String, order: Number }] }`. (Note: the `account` field name does not match the `accountId` convention used elsewhere. Tracked as a low-priority cleanup in `docs/feature_list.json`.)
+Note that the row-matching window is deliberately widened to the start of the
+`from` year so a yearly-interval row overlapping the range is still found. The
+aggregation then clamps its output back to the caller's range — without that,
+asking for 25 Jan onward returned a first bucket dated the preceding December.
 
-## 5. Security model
+## 5. Data model
 
-- **Auth.** Bcrypt password hashing with `SALT_WORK_FACTOR` from `.env` (currently 13). JWTs signed with `ACCESS_TOKEN_SECRET` / `REFRESH_TOKEN_SECRET`.
-- **Token lifetimes.** Access 180 m, refresh 90 d. Note: `userController.update_user` issues an access token with a *30-day* lifetime (line 29) — almost certainly a copy-paste leftover. Tracked in `docs/feature_list.json` as `bug/access-token-lifetime`.
-- **Account id source of truth.** Always `res.locals.user._id` after `verifyAccessToken`. Controllers must never read `req.body.accountId`.
-- **Public endpoints.** Only `POST /login`, `POST /signup`, `POST /refresh-tokens`. `POST /signup` is currently *unprotected* but not authenticated; it is the only route that creates a user.
-- **Demo guard.** The hard-coded email `DEMO@FAKEACCOUNT.COM` blocks password changes inside `change_password`. (It does **not** block edits to other fields, and it does **not** block read or write of goals. Tracked as a refactor.)
-- **CORS.** `app.use(cors())` with the default `Access-Control-Allow-Origin: *`. Acceptable for a public read-write API paired with a JWT, but should be tightened when the production origin set is known.
+Collection names are unchanged from v1, so the existing data is the same data.
 
-For credential handling, rotation, and incident reporting, see `SECURITY.md`.
+### `User`
+`email` (unique, lowercased), `firstName`, `lastName`, `password` (bcrypt,
+`select: false`), `themeMode`, `isDemo`, `tokenVersion`.
 
-## 6. Client architecture
+`password` never leaves the server: it is excluded by default and
+`toPublicJSON()` is the only shape sent to a client.
 
-### 6.1 Redux store
+### `Goal`
+`task`, `interval` (`daily|weekly|monthly|yearly|none`), `defaultTarget`,
+`trackingMode` (`target` = done is done; `more` = overshoot counts and earns
+laps), `category` (free text), `order`, `accountId`, `hidden`, `color`, `icon`,
+`archivedAt`.
 
-State shape (initial):
+The legacy embedded `history` array is gone; `scripts/maintenance.js` folds any
+survivors into `GoalHistory`, summing collisions rather than dropping them.
+
+### `GoalHistory`
+`goalId`, `accountId`, `interval`, `periodStart` (UTC), `targetPerDuration`,
+`achieved`, `note`.
+
+Indexes: unique `(goalId, interval, periodStart)` — the idempotency key;
+`(accountId, periodStart)` for window queries; `(accountId, goalId, periodStart)`
+for per-goal charts.
+
+### 5.1 Changing the week boundary
+
+`periodStart` for a weekly row is the first day of that week, so changing
+`weekStart` changes where every existing weekly row belongs. `PATCH
+/api/auth/profile` therefore runs `src/lib/rebucketWeeks.js` *before* saving the
+new setting, so a failure leaves the account with a setting that still matches
+its data.
+
+A row is placed by its old week's **midpoint**, not its first day. Shifted
+boundaries mean the old and new weeks overlap only partially, and the midpoint
+picks the new week sharing the most days with the old one — at least four of
+seven. Mapping from the first day instead drags every row into the preceding
+new-week, outside the range the app then queries, which makes recorded progress
+look lost. Two old weeks can still land in one new week, so collisions are summed
+rather than resolved by picking a winner.
+
+The endpoint reports `{ moved, merged, scanned }` and the client drops its cached
+history, which is keyed to the old boundary.
+
+### `Category`
+One document per account: `{ accountId, categories: [{ category, order, color }] }`.
+
+> The v1 schema declared this field as `account` while the data used `accountId`,
+> so Mongoose never cast it and **every document stored the id as a String while
+> `Goal.accountId` is an ObjectId**. The two never matched, so category lookups
+> silently returned nothing for every account, for years. `maintenance.js`
+> converts the type and folds in any category a goal names but the list lacks.
+
+## 6. Invariants (must hold)
+
+1. **A `periodStart` is a date *label*, not an instant.** It is stored at UTC
+   midnight so a given calendar date is the same bucket for everyone, and
+   `activity-server/src/lib/periods.js` and `activity-client/src/lib/periods.js`
+   must agree exactly on how a date string becomes one. If they drift, a tap is
+   written to one bucket and read from another.
+2. **"Today" is the user's LOCAL calendar date**, never `dayjs.utc()`. The label
+   has to come from the calendar the user is looking at; deriving it from UTC
+   rolled the app over to tomorrow partway through the evening for anyone behind
+   UTC (in UTC-7, at 17:00 local), showing an empty day and recording taps
+   against the wrong date. `todayKey()` on the client is local; endpoints that
+   need to know the current period take it as a parameter (`?today=`) rather
+   than reading the server's clock. See §6.1.
+3. **The week boundary is per account** (`User.weekStart`, 0 = Sunday … 6 =
+   Saturday, default Sunday) and is computed arithmetically, never through a
+   dayjs locale or the isoWeek plugin. The server passes it explicitly on every
+   call because it serves many accounts; the client holds a configured default
+   set from the signed-in user, which an explicit argument still overrides.
+   Changing it re-buckets that account's weekly rows — see §5.1.
+4. **`accountId` is server-derived**, always from `res.locals.user._id`.
+   Controllers never read it from the body.
+5. **`GoalHistory` writes are idempotent** on `(goalId, interval, periodStart)`.
+6. **Progress increments use `$inc`**, never read-modify-write. Two quick taps
+   must both land.
+7. **JWT payloads carry identifiers only** — never a document.
+
+### 6.1 Time zones
+
+The server has no idea what day it is for a given user and must not guess. Two
+rules follow:
+
+- **The client sends the date.** `?date=` on history reads, `date` in the body of
+  a progress write, and `?today=` on streaks are all the *client's local calendar
+  date*. Each endpoint falls back to the server's UTC date, which is correct only
+  for callers on UTC and exists for curl and health checks.
+- **Nothing is stored per user.** No timezone field to keep in sync and nothing
+  to update when someone travels — the device that is being looked at is by
+  definition the authority on what day it is there.
+
+The client's local date is live rather than read once at mount (`useTodayKey`).
+This is an installed PWA people leave running, so a date captured at mount goes
+stale at local midnight; it is re-checked on a timer and whenever the tab returns
+to the foreground, and the Today view follows the rollover if the user is still
+sitting on today.
+
+### 6.2 Which sheet opens
+
+A ring is one period, so tapping one opens `GoalSheet` — the count, a note, and
+the recent run. A stave row is a goal seen *across* a period, which is a
+different question, so its label opens `GoalPeriodSheet`.
+
+Passing the page's `periodKey` to the daily sheet was the original bug: on the
+month page it opened the goal at the 1st of the month, which is almost never the
+thing that was clicked.
+
+A `GoalPeriodSheet` row is directly editable when the goal's own cadence lines up
+one-to-one with the row (days on the week and month pages; months on the year
+page for a monthly goal). Where the row is an aggregate of finer periods — a
+daily goal seen by month — there is no single number to write back to, so it
+reads instead and offers a link into the page that can edit it.
+
+**Targets in an aggregate are expected, not recorded.** `targetPerDuration` only
+exists on rows that exist, so summing it describes the periods the user engaged
+with rather than the period as a whole; a month showed as `0/6` because two stray
+rows existed. An aggregated row instead reports (the goal's periods in the span ×
+its target), which is what the unaggregated rows already do by falling back to
+`defaultTarget`. The year page header was corrected the same way — it read 94%
+while its own goal sheets read 8%.
+
+## 7. Client state
+
 ```js
 {
-  goals: [],
-  categories: [],
-  user: { themeMode: 'dark' },
-  activityLoaded: false,
-  activityByDate: {},          // { 'YYYY-MM-DD': { goals, categories } }
-  activityLoadingByDate: {},   // { 'YYYY-MM-DD': boolean }
-  selectedDate: null,
-  activeDate: null,
+  auth:    { user, status, error },
+  goals:   { goals, categories, status, error },
+  history: { entries, dates, ranges, summaries, streaks, pending, errors },
+  ui:      { themeMode, toast },
 }
 ```
 
-`activityByDate` is a date-keyed cache so re-opening the same day is instant. `activeDate` mirrors the currently displayed date so components can know when the cache they hold is still relevant.
+`history.entries` is flat, keyed `"<goalId>|<interval>|<periodKey>"` — the same
+identity the server uses. Two views showing the same period read the same object.
 
-### 6.2 Theme
+`history.dates` and `history.ranges` record what has already been fetched; every
+thunk's `condition` checks them and returns early rather than re-requesting.
+`ranges` also does containment checks, so a week inside an already-loaded month
+costs nothing.
 
-`src/theme.jsx` exports `theme()` — a *function*, not an object — that reads the current Redux state to decide light vs. dark. The store is imported at module load, so a Redux update triggers a re-read on the next `useEffect` in `App.jsx`. Don't cache the result.
+Because the cache is keyed by *data identity* rather than by "what the view is
+currently showing", a late response cannot corrupt a newer one — which is why
+`useAutoFetch` deliberately does not abort in-flight requests. It used to, and
+the abort's rejection resolved after the next dispatch had already been skipped
+by the thunk's `condition`, clearing the cache key and leaving views permanently
+empty.
 
-### 6.3 PWA
+Optimistic writes track a per-entry `pending` count and a `_rollback` value, so a
+failure restores the exact pre-tap number even with several taps in flight.
 
-`vite-plugin-pwa` is configured with a manifest, two icons, and a base path of `/activity-tracker/`. The service worker is auto-registered. The notification flow lives in `src/utils/notifications.js`:
+## 8. Known gaps
 
-1. `requestNotificationPermission()` → standard Web Notifications prompt.
-2. `scheduleDailyCheckin(time, onNotify)` returns a cleanup function; it sets a `setTimeout` to the next occurrence, then a 24 h `setInterval`.
-3. `showCheckinNotification()` prefers `registration.showNotification` (Service Worker path) and falls back to the `Notification` constructor.
-
-### 6.4 Routing
-
-`react-router` v7 with `BrowserRouter basename="/activity-tracker/"`. Public: `/login`, `/signup`, any unmatched path (`NotFoundPage`). All other routes are wrapped in `AuthRoute` which either renders `<Outlet />` (when authenticated) or `<Navigate to="/login" />`. `AuthRoute` also kicks off the first `getActivities` fetch.
-
-### 6.5 Server URL
-
-`src/Redux/actions.jsx` line 26 hard-codes the production API URL. For local development, swap the constant. There is no environment switch today; the recommended refactor is a `VITE_API_URL` env variable read by Vite at build time (tracked in `docs/feature_list.json`).
-
-## 7. Data flow invariants (must hold)
-
-1. **Period keys are computed with `dayjs.utc()` on both sides.** Client and server must agree, or progress ticks land in the wrong bucket.
-2. **`periodStart` is the start of the UTC period, not a timestamp from a tick.** A tick at 23:59 local on 2026-01-15 in `America/Los_Angeles` is still UTC `2026-01-16` — same period bucket as a tick at 00:01 UTC.
-3. **`Goal.history` is read-only.** Any new write goes through `GoalHistory`. The legacy field is preserved on disk for old data and removed by the migration script.
-4. **`accountId` is server-derived.** Client code never sends it; controllers never accept it from the body.
-
-## 8. Where things are likely to break next
-
-These are the spots where the next refactor should focus:
-
-- The `serverURL` constant — bake it from `import.meta.env.VITE_API_URL` instead of hard-coding.
-- The token-lifetime typo in `userController.update_user` (30 d instead of 180 m).
-- `Category.account` vs. `accountId` naming.
-- `socket.io` is installed and required by `app.js` (line 4) but no route mounts it. Either wire it or remove the import.
-- The local MongoDB connection string in `.env` is commented out (line 3). It is referenced as the dev path; either enable it or document why Atlas-only.
-- `Login.jsx` swallows the response promise (`.then(setDisableButtonDuringLogin(false))` after a `setState` already set it to `false`) — works today, fragile tomorrow.
-- `AccountSettings.jsx` has no wired Save / Cancel handlers (`onClick={() => null}`).
-
-These are tracked in `docs/feature_list.json`.
+- `activity-server/.env` is committed and its secrets are 19–20 characters
+  (32+ required). Rotating them is tracked in `SECURITY.md`; the app warns in
+  development and refuses to start in production.
+- 27,399 empty placeholder rows from the old read path are still in
+  `goalhistories`. They are inert. `node scripts/maintenance.js --apply
+  --purge-empty` removes them.
+- No automated test suite beyond `scripts/verify-api.js`. There is no client
+  test harness.
+- Notifications from v1 were removed rather than ported; they were a live-tab
+  `setTimeout` with no push subscription, so they never fired with the app closed.
+- No deployment target is configured.
