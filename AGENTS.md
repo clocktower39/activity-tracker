@@ -49,9 +49,18 @@ These are non-negotiable. If a task appears to require breaking one, stop and as
   response grows with the account's lifetime is a bug, however fast it is today.
 - **MUST** use `$inc` for progress increments, never read-modify-write. Two taps
   in quick succession must both land.
-- **MUST** keep UTC for every period calculation, with ISO weeks starting Monday.
+- **MUST** keep UTC for every period calculation.
   `activity-server/src/lib/periods.js` and `activity-client/src/lib/periods.js`
   are mirrors — change both or neither.
+- **MUST** treat the week boundary as per-account data, never a constant. It is
+  `User.weekStart` (0 = Sunday … 6 = Saturday, default Sunday). The server reads
+  it from `res.locals.user` and passes it explicitly; hard-coding Monday, or
+  reaching for `startOf("week")`/`isoWeek`, silently buckets one account's
+  progress by another account's calendar.
+- **MUST** re-bucket weekly history whenever `weekStart` changes, via
+  `src/lib/rebucketWeeks.js`. Rows keyed to the old boundary stop matching the
+  queries the app makes and vanish from the UI while still holding the unique
+  index.
 - **MUST** gate every authenticated endpoint with `requireAuth`. Public
   endpoints: `POST /api/auth/signup`, `/api/auth/login`, `/api/auth/refresh`.
   Nothing else.

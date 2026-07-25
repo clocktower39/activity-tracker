@@ -2,6 +2,8 @@ const User = require("../models/user");
 const Category = require("../models/category");
 const { ApiError, asyncHandler } = require("../lib/apiError");
 const { createTokens, verifyRefresh } = require("../lib/tokens");
+const { normalizeWeekStart } = require("../lib/periods");
+const { rebucketWeeks } = require("../lib/rebucketWeeks");
 
 const DEFAULT_CATEGORIES = [
   { category: "Health", order: 0 },
@@ -89,12 +91,30 @@ const me = asyncHandler(async (req, res) => {
 const updateProfile = asyncHandler(async (req, res) => {
   // Explicit allow-list. The previous version spread req.body straight into
   // findByIdAndUpdate, which let a client write `password` in plaintext.
-  const allowed = ["firstName", "lastName", "themeMode"];
+  const allowed = ["firstName", "lastName", "themeMode", "weekStart"];
   const updates = {};
   for (const field of allowed) {
     if (req.body[field] !== undefined) updates[field] = req.body[field];
   }
   if (Object.keys(updates).length === 0) throw new ApiError(400, "No supported fields to update");
+
+  let rebucketed = null;
+
+  if (updates.weekStart !== undefined) {
+    const next = Number(updates.weekStart);
+    if (!Number.isInteger(next) || next < 0 || next > 6) {
+      throw new ApiError(400, "weekStart must be a whole number from 0 (Sunday) to 6 (Saturday)");
+    }
+    updates.weekStart = next;
+
+    // Weekly rows are keyed by the first day of their week, so moving that
+    // boundary has to move the rows with it. Do this BEFORE saving the new
+    // setting: if it throws, the account keeps a setting that matches its data.
+    const current = normalizeWeekStart(res.locals.user.weekStart);
+    if (current !== next) {
+      rebucketed = await rebucketWeeks(res.locals.user._id, current, next);
+    }
+  }
 
   const user = await User.findByIdAndUpdate(res.locals.user._id, updates, {
     new: true,
@@ -102,7 +122,7 @@ const updateProfile = asyncHandler(async (req, res) => {
   });
   if (!user) throw new ApiError(404, "User not found");
 
-  res.json({ user: user.toPublicJSON() });
+  res.json({ user: user.toPublicJSON(), ...(rebucketed ? { rebucketed } : {}) });
 });
 
 const changePassword = asyncHandler(async (req, res) => {

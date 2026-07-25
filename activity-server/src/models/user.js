@@ -17,6 +17,9 @@ const userSchema = new mongoose.Schema(
     // can never be accidentally serialised into a response or a JWT payload.
     password: { type: String, required: true, select: false },
     themeMode: { type: String, enum: ["light", "dark", "system"], default: "dark" },
+    // First day of the week, 0 = Sunday … 6 = Saturday. Decides where weekly
+    // goals bucket, so changing it re-buckets existing weekly history.
+    weekStart: { type: Number, min: 0, max: 6, default: 0 },
     // Replaces the old hard-coded DEMO@FAKEACCOUNT.COM string comparison.
     isDemo: { type: Boolean, default: false },
     // Bumped whenever credentials change; refresh tokens carrying an older value
@@ -51,6 +54,7 @@ userSchema.methods.toPublicJSON = function toPublicJSON() {
     firstName: this.firstName,
     lastName: this.lastName,
     themeMode: this.themeMode,
+    weekStart: this.weekStart ?? 0,
     isDemo: this.isDemo,
   };
 };

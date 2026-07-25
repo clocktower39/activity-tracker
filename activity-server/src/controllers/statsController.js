@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const GoalHistory = require("../models/goalHistory");
 const Goal = require("../models/goal");
 const { ApiError, asyncHandler } = require("../lib/apiError");
-const { getQueryRange, dayjs } = require("../lib/periods");
+const { getQueryRange, startOfWeek, weekStartName, dayjs } = require("../lib/periods");
 
 const BUCKETS = { day: "day", week: "week", month: "month", year: "year" };
 
@@ -33,15 +33,15 @@ const parseRange = (req) => {
 
 /**
  * Start of the bucket containing `date`, matching $dateTrunc's own boundaries
- * (weeks start Monday). Used to clamp results: the row-matching window is
+ * for this account's week start. Used to clamp results: the row-matching window is
  * deliberately widened to the start of the year so a yearly goal overlapping
  * the range is found, but a bucket earlier than the range the caller asked for
  * must not appear in the output.
  */
-const truncate = (date, bucket) => {
+const truncate = (date, bucket, weekStart) => {
   switch (bucket) {
     case "week":
-      return date.startOf("isoWeek");
+      return startOfWeek(date, weekStart);
     case "month":
       return date.startOf("month");
     case "year":
@@ -70,12 +70,13 @@ const assertBucketCount = (fromDate, toDate, bucket) => {
  */
 const summary = asyncHandler(async (req, res) => {
   const { fromDate, toDate } = parseRange(req);
+  const { weekStart } = res.locals.user;
   const bucket = BUCKETS[String(req.query.bucket || "day").toLowerCase()];
   if (!bucket) throw new ApiError(400, "`bucket` must be one of day, week, month, year");
   assertBucketCount(fromDate, toDate, bucket);
 
-  const { start } = getQueryRange("yearly", fromDate, fromDate);
-  const { end } = getQueryRange("daily", toDate, toDate);
+  const { start } = getQueryRange("yearly", fromDate, fromDate, weekStart);
+  const { end } = getQueryRange("daily", toDate, toDate, weekStart);
 
   const rows = await GoalHistory.aggregate([
     {
@@ -86,7 +87,7 @@ const summary = asyncHandler(async (req, res) => {
     },
     {
       $group: {
-        _id: { $dateTrunc: { date: "$periodStart", unit: bucket, startOfWeek: "monday" } },
+        _id: { $dateTrunc: { date: "$periodStart", unit: bucket, startOfWeek: weekStartName(weekStart) } },
         achieved: { $sum: "$achieved" },
         target: { $sum: "$targetPerDuration" },
         entries: { $sum: 1 },
@@ -98,7 +99,7 @@ const summary = asyncHandler(async (req, res) => {
       },
     },
     // Keep the output inside the range the caller asked for.
-    { $match: { _id: { $gte: truncate(fromDate, bucket).toDate() } } },
+    { $match: { _id: { $gte: truncate(fromDate, bucket, weekStart).toDate() } } },
     { $sort: { _id: 1 } },
     {
       $project: {
@@ -124,13 +125,14 @@ const summary = asyncHandler(async (req, res) => {
  */
 const matrix = asyncHandler(async (req, res) => {
   const { fromDate, toDate } = parseRange(req);
+  const { weekStart } = res.locals.user;
   const bucket = BUCKETS[String(req.query.bucket || "month").toLowerCase()];
   if (!bucket) throw new ApiError(400, "`bucket` must be one of day, week, month, year");
   // The matrix returns a row per goal per bucket, so it is bounded harder.
   assertBucketCount(fromDate, toDate, bucket === "day" ? "day" : bucket);
 
-  const { start } = getQueryRange("yearly", fromDate, fromDate);
-  const { end } = getQueryRange("daily", toDate, toDate);
+  const { start } = getQueryRange("yearly", fromDate, fromDate, weekStart);
+  const { end } = getQueryRange("daily", toDate, toDate, weekStart);
 
   const rows = await GoalHistory.aggregate([
     {
@@ -143,7 +145,7 @@ const matrix = asyncHandler(async (req, res) => {
       $group: {
         _id: {
           goalId: "$goalId",
-          bucket: { $dateTrunc: { date: "$periodStart", unit: bucket, startOfWeek: "monday" } },
+          bucket: { $dateTrunc: { date: "$periodStart", unit: bucket, startOfWeek: weekStartName(weekStart) } },
         },
         achieved: { $sum: "$achieved" },
         target: { $sum: "$targetPerDuration" },
@@ -153,7 +155,7 @@ const matrix = asyncHandler(async (req, res) => {
         },
       },
     },
-    { $match: { "_id.bucket": { $gte: truncate(fromDate, bucket).toDate() } } },
+    { $match: { "_id.bucket": { $gte: truncate(fromDate, bucket, weekStart).toDate() } } },
     {
       $project: {
         _id: 0,
@@ -180,9 +182,10 @@ const matrix = asyncHandler(async (req, res) => {
 const byGoal = asyncHandler(async (req, res) => {
   const { fromDate, toDate } = parseRange(req);
   const accountId = new mongoose.Types.ObjectId(res.locals.user._id);
+  const { weekStart } = res.locals.user;
 
-  const { start } = getQueryRange("yearly", fromDate, fromDate);
-  const { end } = getQueryRange("daily", toDate, toDate);
+  const { start } = getQueryRange("yearly", fromDate, fromDate, weekStart);
+  const { end } = getQueryRange("daily", toDate, toDate, weekStart);
 
   const [rows, goals] = await Promise.all([
     GoalHistory.aggregate([
@@ -282,7 +285,10 @@ const streaks = asyncHandler(async (req, res) => {
     // The current streak only counts if the most recent completion is the
     // period we are in now, or the one immediately before it.
     if (completed.length > 0) {
-      const now = dayjs.utc().startOf(unit === "week" ? "isoWeek" : unit);
+      const now =
+        unit === "week"
+          ? startOfWeek(dayjs.utc(), res.locals.user.weekStart)
+          : dayjs.utc().startOf(unit);
       const latest = completed[0];
       const gap = now.diff(latest, unit);
       if (gap <= 1) {

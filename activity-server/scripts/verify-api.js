@@ -157,6 +157,67 @@ const main = async () => {
     check("refuses to write to another account's goal", foreign.status === 404);
   }
 
+  console.log("\nWeek start");
+  const profile = await call("GET", "/auth/me");
+  const originalWeekStart = profile.json?.user?.weekStart;
+  check("account exposes a weekStart", Number.isInteger(originalWeekStart), `= ${originalWeekStart}`);
+
+  // A throwaway weekly goal, so the re-bucketing path is exercised against real
+  // data rather than asserted in the abstract.
+  const created = await call("POST", "/goals", {
+    task: `__verify_weekly_${Date.now()}`,
+    category: "Verification",
+    defaultTarget: 1,
+    interval: "weekly",
+  });
+  const weeklyGoal = created.json?.goal;
+  check("creates a weekly goal", created.status === 201 && !!weeklyGoal);
+
+  if (weeklyGoal) {
+    const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+    const periodStartFor = async () => {
+      const res = await call("GET", `/history?date=${today}`);
+      const row = (res.json?.entries || []).find((e) => String(e.goalId) === String(weeklyGoal._id));
+      return row ? new Date(row.periodStart) : null;
+    };
+
+    await call("POST", "/history/progress", { goalId: weeklyGoal._id, date: today, delta: 1 });
+    const before = await periodStartFor();
+    check(
+      "weekly period starts on the account's chosen day",
+      before && before.getUTCDay() === originalWeekStart,
+      before ? `${before.toISOString().slice(0, 10)} is a ${DAY_NAMES[before.getUTCDay()]}` : "no row"
+    );
+
+    // Move the boundary and confirm the recorded progress follows it.
+    const moveTo = (originalWeekStart + 3) % 7;
+    const changed = await call("PATCH", "/auth/profile", { weekStart: moveTo });
+    check("accepts a new week start", changed.status === 200 && changed.json?.user?.weekStart === moveTo);
+    check(
+      "reports what it re-bucketed",
+      (changed.json?.rebucketed?.moved ?? 0) >= 1,
+      `moved ${changed.json?.rebucketed?.moved}, merged ${changed.json?.rebucketed?.merged}`
+    );
+
+    const after = await periodStartFor();
+    check(
+      "the recorded week moved to the new boundary",
+      after && after.getUTCDay() === moveTo,
+      after ? `${after.toISOString().slice(0, 10)} is a ${DAY_NAMES[after.getUTCDay()]}` : "row lost"
+    );
+    check("progress survived the move", after !== null);
+
+    const restored = await call("PATCH", "/auth/profile", { weekStart: originalWeekStart });
+    check("restores the original week start", restored.json?.user?.weekStart === originalWeekStart);
+
+    const bad = await call("PATCH", "/auth/profile", { weekStart: 9 });
+    check("rejects a week start outside 0-6", bad.status === 400);
+
+    const removed = await call("DELETE", `/goals/${weeklyGoal._id}`);
+    check("cleans up the throwaway goal", removed.status === 200);
+  }
+
   console.log("\nToken rotation");
   const refreshed = await call("POST", "/auth/refresh", { refreshToken: login.json.refreshToken });
   check("refresh issues a new pair", refreshed.status === 200 && !!refreshed.json?.refreshToken);

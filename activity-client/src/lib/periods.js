@@ -1,18 +1,56 @@
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import isoWeek from "dayjs/plugin/isoWeek";
-import advancedFormat from "dayjs/plugin/advancedFormat";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 
 dayjs.extend(utc);
-dayjs.extend(isoWeek);
-dayjs.extend(advancedFormat);
+dayjs.extend(customParseFormat);
 
 /**
  * Mirror of activity-server/src/lib/periods.js. These two must agree exactly —
  * if they diverge, a tap is stored in one bucket and read back from another.
  *
- * Everything is UTC. Weeks are ISO weeks, starting Monday.
+ * Everything is UTC. Week boundaries follow the signed-in account's `weekStart`
+ * (0 = Sunday … 6 = Saturday) and are computed arithmetically rather than via a
+ * dayjs locale, so they cannot drift with the browser's locale.
+ *
+ * The server passes weekStart explicitly on every call because it serves many
+ * accounts. This client only ever serves one, so it holds a configured default
+ * that `configureWeekStart` sets from the signed-in user — an explicit argument
+ * still wins wherever one is passed.
  */
+
+export const WEEK_DAYS = [
+  { value: 0, label: "Sunday" },
+  { value: 1, label: "Monday" },
+  { value: 2, label: "Tuesday" },
+  { value: 3, label: "Wednesday" },
+  { value: 4, label: "Thursday" },
+  { value: 5, label: "Friday" },
+  { value: 6, label: "Saturday" },
+];
+
+export const DEFAULT_WEEK_START = 0;
+
+export const normalizeWeekStart = (value) => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 && parsed <= 6 ? parsed : DEFAULT_WEEK_START;
+};
+
+let configuredWeekStart = DEFAULT_WEEK_START;
+
+/** Set from the signed-in user; reset on sign-out. */
+export const configureWeekStart = (value) => {
+  configuredWeekStart = normalizeWeekStart(value);
+};
+
+export const getConfiguredWeekStart = () => configuredWeekStart;
+
+/** Start of the week containing `date`, for an arbitrary first day of week. */
+export const startOfWeek = (date, weekStart) => {
+  const base = dayjs.utc(date).startOf("day");
+  const offset = (base.day() - normalizeWeekStart(weekStart ?? configuredWeekStart) + 7) % 7;
+  return base.subtract(offset, "day");
+};
 
 export const INTERVALS = ["daily", "weekly", "monthly", "yearly", "none"];
 
@@ -44,36 +82,44 @@ export const normalizeInterval = (value) => {
   return INTERVAL_SET.has(normalized) ? normalized : "daily";
 };
 
-export const unitFor = (interval) => {
+const addUnitFor = (interval) => {
   switch (normalizeInterval(interval)) {
     case "weekly":
-      return "isoWeek";
+      return "week";
     case "monthly":
       return "month";
     case "yearly":
       return "year";
-    case "none":
-    case "daily":
     default:
       return "day";
   }
 };
 
-const addUnitFor = (interval) => {
-  const unit = unitFor(interval);
-  return unit === "isoWeek" ? "week" : unit;
+export const getPeriodStart = (interval, date, weekStart) => {
+  const base = dayjs.utc(date);
+  switch (normalizeInterval(interval)) {
+    case "weekly":
+      return startOfWeek(base, weekStart);
+    case "monthly":
+      return base.startOf("month");
+    case "yearly":
+      return base.startOf("year");
+    case "none":
+    case "daily":
+    default:
+      return base.startOf("day");
+  }
 };
 
-export const getPeriodStart = (interval, date) => dayjs.utc(date).startOf(unitFor(interval));
-
-export const getPeriodKey = (interval, date) => getPeriodStart(interval, date).format("YYYY-MM-DD");
+export const getPeriodKey = (interval, date, weekStart) =>
+  getPeriodStart(interval, date, weekStart).format("YYYY-MM-DD");
 
 export const addPeriods = (interval, date, count) =>
   dayjs.utc(date).add(count, addUnitFor(interval));
 
 /** Cache key for a single goal's slot in a single period. */
-export const entryKey = (goalId, interval, date) =>
-  `${goalId}|${normalizeInterval(interval)}|${getPeriodKey(interval, date)}`;
+export const entryKey = (goalId, interval, date, weekStart) =>
+  `${goalId}|${normalizeInterval(interval)}|${getPeriodKey(interval, date, weekStart)}`;
 
 export const todayKey = () => dayjs.utc().format("YYYY-MM-DD");
 
@@ -81,9 +127,9 @@ export const todayKey = () => dayjs.utc().format("YYYY-MM-DD");
  * Human label for a period. Kept deliberately plain — a date the user recognises
  * beats a clever notation they have to decode.
  */
-export const periodLabel = (interval, date) => {
+export const periodLabel = (interval, date, weekStart) => {
   const normalized = normalizeInterval(interval);
-  const start = getPeriodStart(normalized, date);
+  const start = getPeriodStart(normalized, date, weekStart);
   switch (normalized) {
     case "weekly":
       return `Week of ${start.format("MMM D, YYYY")}`;
@@ -96,9 +142,9 @@ export const periodLabel = (interval, date) => {
   }
 };
 
-export const shortPeriodLabel = (interval, date) => {
+export const shortPeriodLabel = (interval, date, weekStart) => {
   const normalized = normalizeInterval(interval);
-  const start = getPeriodStart(normalized, date);
+  const start = getPeriodStart(normalized, date, weekStart);
   switch (normalized) {
     case "weekly":
       return start.format("D MMM");
@@ -112,14 +158,14 @@ export const shortPeriodLabel = (interval, date) => {
 };
 
 /** Every period start in [from, to], oldest first. Bounded. */
-export const eachPeriod = (interval, from, to, cap = 400) => {
+export const eachPeriod = (interval, from, to, cap = 400, weekStart) => {
   const normalized = normalizeInterval(interval);
-  let cursor = getPeriodStart(normalized, from);
-  const end = getPeriodStart(normalized, to);
+  let cursor = getPeriodStart(normalized, from, weekStart);
+  const end = getPeriodStart(normalized, to, weekStart);
   const out = [];
   while (!cursor.isAfter(end) && out.length < cap) {
     out.push(cursor);
-    cursor = getPeriodStart(normalized, addPeriods(normalized, cursor, 1));
+    cursor = getPeriodStart(normalized, addPeriods(normalized, cursor, 1), weekStart);
   }
   return out;
 };

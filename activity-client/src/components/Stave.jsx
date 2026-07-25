@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { Box, Typography, useTheme } from "@mui/material";
-import { dayjs, entryKey, progressState } from "../lib/periods";
+import { dayjs, entryKey, getConfiguredWeekStart, progressState } from "../lib/periods";
 import { stateColor } from "../design/theme";
 
 const columnLabel = (interval, key, count) => {
@@ -18,13 +18,17 @@ const columnTitle = (interval, key) => {
   return d.format("MMM D");
 };
 
-/** Every Monday opens a bar in a month of days; every quarter does in a year. */
+/**
+ * A bar opens at each week boundary in a month of days, each quarter in a year
+ * of months, and every column in a run of years. The day-of-week boundary is
+ * the account's own, so the bars line up with the weeks the user actually keeps.
+ */
 const startsBar = (interval, key, index) => {
   if (index === 0) return false;
   const d = dayjs.utc(key);
   if (interval === "yearly") return true;
   if (interval === "monthly") return d.month() % 3 === 0;
-  return d.isoWeekday() === 1;
+  return d.day() === getConfiguredWeekStart();
 };
 
 /**

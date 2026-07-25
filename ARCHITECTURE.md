@@ -32,6 +32,7 @@ there is no cookie or CSRF surface.
 | `src/db/connect.js` | Mongoose connection |
 | `src/lib/periods.js` | **Period math. Mirrored by the client.** |
 | `src/lib/tokens.js` | JWT signing/verification. Payload is identifiers only. |
+| `src/lib/rebucketWeeks.js` | Moves weekly rows when an account changes `weekStart` |
 | `src/lib/apiError.js` | `ApiError` + `asyncHandler` |
 | `src/middleware/auth.js` | `requireAuth`, `blockDemo` |
 | `src/middleware/errorHandler.js` | The only place an error becomes a response |
@@ -169,6 +170,25 @@ Indexes: unique `(goalId, interval, periodStart)` — the idempotency key;
 `(accountId, periodStart)` for window queries; `(accountId, goalId, periodStart)`
 for per-goal charts.
 
+### 5.1 Changing the week boundary
+
+`periodStart` for a weekly row is the first day of that week, so changing
+`weekStart` changes where every existing weekly row belongs. `PATCH
+/api/auth/profile` therefore runs `src/lib/rebucketWeeks.js` *before* saving the
+new setting, so a failure leaves the account with a setting that still matches
+its data.
+
+A row is placed by its old week's **midpoint**, not its first day. Shifted
+boundaries mean the old and new weeks overlap only partially, and the midpoint
+picks the new week sharing the most days with the old one — at least four of
+seven. Mapping from the first day instead drags every row into the preceding
+new-week, outside the range the app then queries, which makes recorded progress
+look lost. Two old weeks can still land in one new week, so collisions are summed
+rather than resolved by picking a winner.
+
+The endpoint reports `{ moved, merged, scanned }` and the client drops its cached
+history, which is keyed to the old boundary.
+
 ### `Category`
 One document per account: `{ accountId, categories: [{ category, order, color }] }`.
 
@@ -180,16 +200,21 @@ One document per account: `{ accountId, categories: [{ category, order, color }]
 
 ## 6. Invariants (must hold)
 
-1. **Period keys are computed in UTC, weeks are ISO weeks (Monday).**
-   `activity-server/src/lib/periods.js` and `activity-client/src/lib/periods.js`
-   must agree exactly. If they drift, a tap is written to one bucket and read
-   from another.
-2. **`accountId` is server-derived**, always from `res.locals.user._id`.
+1. **Period keys are computed in UTC.** `activity-server/src/lib/periods.js` and
+   `activity-client/src/lib/periods.js` must agree exactly. If they drift, a tap
+   is written to one bucket and read from another.
+2. **The week boundary is per account** (`User.weekStart`, 0 = Sunday … 6 =
+   Saturday, default Sunday) and is computed arithmetically, never through a
+   dayjs locale or the isoWeek plugin. The server passes it explicitly on every
+   call because it serves many accounts; the client holds a configured default
+   set from the signed-in user, which an explicit argument still overrides.
+   Changing it re-buckets that account's weekly rows — see §5.1.
+3. **`accountId` is server-derived**, always from `res.locals.user._id`.
    Controllers never read it from the body.
-3. **`GoalHistory` writes are idempotent** on `(goalId, interval, periodStart)`.
-4. **Progress increments use `$inc`**, never read-modify-write. Two quick taps
+4. **`GoalHistory` writes are idempotent** on `(goalId, interval, periodStart)`.
+5. **Progress increments use `$inc`**, never read-modify-write. Two quick taps
    must both land.
-5. **JWT payloads carry identifiers only** — never a document.
+6. **JWT payloads carry identifiers only** — never a document.
 
 ## 7. Client state
 

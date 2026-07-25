@@ -25,7 +25,8 @@ import {
   selectCategories,
   selectHiddenGoals,
 } from "../features/goals/goalsSlice";
-import { resetHistory } from "../features/history/historySlice";
+import { invalidate, resetHistory } from "../features/history/historySlice";
+import { normalizeWeekStart, WEEK_DAYS } from "../lib/periods";
 import { selectThemeMode, setThemeMode, showToast } from "../features/ui/uiSlice";
 
 const Section = ({ title, description, children }) => (
@@ -61,6 +62,7 @@ export default function SettingsView() {
       </Typography>
 
       <AppearanceSection themeMode={themeMode} onChange={(mode) => dispatch(setThemeMode(mode))} />
+      <WeekStartSection user={user} />
       <ProfileSection user={user} />
       <CategoriesSection categories={categories} goals={allGoals} />
       <HiddenSection goals={hiddenGoals} />
@@ -95,6 +97,65 @@ function AppearanceSection({ themeMode, onChange }) {
         <MenuItem value="dark">Dark</MenuItem>
         <MenuItem value="light">Light</MenuItem>
         <MenuItem value="system">Match my device</MenuItem>
+      </TextField>
+    </Section>
+  );
+}
+
+function WeekStartSection({ user }) {
+  const dispatch = useDispatch();
+  const current = normalizeWeekStart(user?.weekStart);
+  const [saving, setSaving] = useState(false);
+
+  const change = async (value) => {
+    const next = Number(value);
+    if (next === current) return;
+    setSaving(true);
+    try {
+      const result = await dispatch(updateProfile({ weekStart: next })).unwrap();
+      // Weekly history is re-bucketed server-side, so anything already fetched
+      // is keyed to the old boundary and has to be dropped.
+      dispatch(invalidate());
+      dispatch(resetHistory());
+      const moved = result?.rebucketed?.moved ?? 0;
+      const merged = result?.rebucketed?.merged ?? 0;
+      dispatch(
+        showToast({
+          message: moved
+            ? `Weeks now start on ${WEEK_DAYS[next].label}. ${moved} weekly ${
+                moved === 1 ? "entry" : "entries"
+              } moved${merged ? `, ${merged} merged` : ""}.`
+            : `Weeks now start on ${WEEK_DAYS[next].label}.`,
+          id: Date.now(),
+        })
+      );
+    } catch (err) {
+      dispatch(
+        showToast({ message: err.message || "Couldn't change that", tone: "error", id: Date.now() })
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Section
+      title="Start of the week"
+      description="Decides where weekly goals bucket, and where the bar lines fall in the week and month views. Changing it moves any weekly progress you have already recorded onto the new boundary."
+    >
+      <TextField
+        select
+        label="Weeks begin on"
+        value={current}
+        onChange={(event) => change(event.target.value)}
+        disabled={saving}
+        sx={{ minWidth: 220 }}
+      >
+        {WEEK_DAYS.map((day) => (
+          <MenuItem key={day.value} value={day.value}>
+            {day.label}
+          </MenuItem>
+        ))}
       </TextField>
     </Section>
   );

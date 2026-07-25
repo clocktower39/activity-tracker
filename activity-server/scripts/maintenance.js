@@ -16,7 +16,11 @@ const User = require("../src/models/user");
 const Goal = require("../src/models/goal");
 const Category = require("../src/models/category");
 const GoalHistory = require("../src/models/goalHistory");
-const { normalizeInterval } = require("../src/lib/periods");
+const { normalizeInterval, DEFAULT_WEEK_START } = require("../src/lib/periods");
+const { rebucketWeeks } = require("../src/lib/rebucketWeeks");
+
+/** What weekly periods were bucketed by before weekStart existed: ISO weeks. */
+const LEGACY_WEEK_START = 1; // Monday
 
 const apply = process.argv.includes("--apply");
 const purgeEmpty = process.argv.includes("--purge-empty");
@@ -75,6 +79,37 @@ const main = async () => {
       { themeMode: { $nin: ["light", "dark", "system"] } },
       { $set: { themeMode: "dark" } }
     );
+  }
+
+  // 3b. Week start.
+  //
+  // Weekly periods used to be ISO weeks (Monday), hard-coded. They are now a
+  // per-account setting defaulting to Sunday, so an account that has no setting
+  // yet is holding Monday-bucketed rows while the app is about to ask Sunday
+  // questions of them. Give it the default and move its rows to match.
+  const withoutWeekStart = await User.collection
+    .find({ weekStart: { $exists: false } }, { projection: { _id: 1, email: 1 } })
+    .toArray();
+  console.log(`Users without a weekStart: ${withoutWeekStart.length}`);
+
+  for (const account of withoutWeekStart) {
+    const summary = await rebucketWeeks(account._id, LEGACY_WEEK_START, DEFAULT_WEEK_START, {
+      dryRun: !apply,
+    });
+    console.log(
+      `  ${account.email}: weekStart -> ${DEFAULT_WEEK_START} (Sunday)` +
+        (summary.scanned
+          ? `, ${summary.moved}/${summary.scanned} weekly rows move${
+              summary.merged ? `, ${summary.merged} merge` : ""
+            }`
+          : ", no weekly rows")
+    );
+    if (apply) {
+      await User.collection.updateOne(
+        { _id: account._id },
+        { $set: { weekStart: DEFAULT_WEEK_START } }
+      );
+    }
   }
 
   // 4. Normalise goal intervals and drop the legacy embedded history array.

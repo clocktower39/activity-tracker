@@ -35,11 +35,13 @@ const parseDate = (value, label) => {
 const getForDate = asyncHandler(async (req, res) => {
   const date = parseDate(req.query.date || dayjs.utc().format("YYYY-MM-DD"), "date");
 
+  const { weekStart } = res.locals.user;
+
   const rows = await GoalHistory.find({
     accountId: res.locals.user._id,
     $or: INTERVALS.map((interval) => ({
       interval,
-      periodStart: getPeriodStartDate(interval, date),
+      periodStart: getPeriodStartDate(interval, date, weekStart),
     })),
   }).lean();
 
@@ -61,18 +63,19 @@ const getRange = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Range must not exceed 5 years");
   }
 
+  const { weekStart } = res.locals.user;
   const query = { accountId: res.locals.user._id };
   if (goalId) query.goalId = goalId;
 
   if (interval) {
     const normalized = normalizeInterval(interval);
-    const { start, end } = getQueryRange(normalized, fromDate, toDate);
+    const { start, end } = getQueryRange(normalized, fromDate, toDate, weekStart);
     query.interval = normalized;
     query.periodStart = { $gte: start, $lt: end };
   } else {
     // Widest bucket wins, so a yearly goal overlapping the range is still found.
-    const { start } = getQueryRange("yearly", fromDate, fromDate);
-    const { end } = getQueryRange("daily", toDate, toDate);
+    const { start } = getQueryRange("yearly", fromDate, fromDate, weekStart);
+    const { end } = getQueryRange("daily", toDate, toDate, weekStart);
     query.periodStart = { $gte: start, $lt: end };
   }
 
@@ -96,7 +99,7 @@ const recordProgress = asyncHandler(async (req, res) => {
 
   const when = date ? parseDate(date, "date") : dayjs.utc();
   const interval = normalizeInterval(goal.interval);
-  const periodStart = getPeriodStartDate(interval, when);
+  const periodStart = getPeriodStartDate(interval, when, res.locals.user.weekStart);
   const target = Number(goal.defaultTarget) || 0;
 
   const filter = { goalId: goal._id, interval, periodStart };

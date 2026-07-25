@@ -1,5 +1,6 @@
 const { verifyAccess } = require("../lib/tokens");
 const { ApiError } = require("../lib/apiError");
+const { normalizeWeekStart } = require("../lib/periods");
 const User = require("../models/user");
 
 /**
@@ -31,7 +32,14 @@ const requireAuth = async (req, res, next) => {
     return next(new ApiError(401, "Session no longer valid, please sign in again"));
   }
 
-  res.locals.user = { _id: user._id, email: user.email, isDemo: !!user.isDemo };
+  res.locals.user = {
+    _id: user._id,
+    email: user.email,
+    isDemo: !!user.isDemo,
+    // Every weekly period computation reads this. It is never ambient on the
+    // server — one process serves many accounts with different week starts.
+    weekStart: normalizeWeekStart(user.weekStart),
+  };
   return next();
 };
 
