@@ -56,16 +56,32 @@ for (const [name, secret] of [
 module.exports = {
   isProduction,
   port: int("PORT", 8000),
+  /**
+   * Loopback in production: nginx is the only thing that should reach this
+   * process. Binding 0.0.0.0 on a VPS publishes the API on port 8000 directly,
+   * bypassing TLS, Cloudflare and every nginx rule in front of it.
+   */
+  host: process.env.HOST || (isProduction ? "127.0.0.1" : "0.0.0.0"),
   dbUrl: required("DBURL"),
   saltWorkFactor: int("SALT_WORK_FACTOR", 12),
   accessTokenSecret,
   refreshTokenSecret,
   accessTokenTtl: process.env.ACCESS_TOKEN_TTL || "180m",
   refreshTokenTtl: process.env.REFRESH_TOKEN_TTL || "90d",
-  // In development the Vite dev server may bind a few different ports.
-  corsOrigins: list("CORS_ORIGINS", [
-    "http://localhost:5173",
-    "http://localhost:4173",
-    "http://127.0.0.1:5173",
-  ]),
+  // Empty is the normal production case: nginx serves the client and proxies
+  // /api on the same origin, so the browser never makes a cross-origin request
+  // and no CORS headers are needed. Populate this only if the client is ever
+  // served from a different host to the API.
+  corsOrigins: list("CORS_ORIGINS", []),
+
+  /**
+   * How many reverse proxies sit in front of this process, for Express's
+   * `trust proxy`. This decides which entry of X-Forwarded-For becomes req.ip,
+   * and req.ip is what the auth rate limiter counts against.
+   *
+   * Get it wrong and every request appears to come from one address: twenty
+   * failed sign-ins from anyone would then lock out everyone. See
+   * docs/deployment.md for the matching nginx directives.
+   */
+  trustProxy: process.env.TRUST_PROXY ?? (isProduction ? "1" : "loopback"),
 };

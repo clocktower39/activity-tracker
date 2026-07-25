@@ -20,6 +20,24 @@
 The browser talks to the API directly; there is no BFF. Auth is JWT-based, so
 there is no cookie or CSRF surface.
 
+**The client and the API share an origin.** nginx serves the built client at `/`
+and proxies `/api` to Node on loopback, so the browser never makes a
+cross-origin request: CORS is not mounted at all unless `CORS_ORIGINS` is set,
+and no hostname is compiled into the bundle. `yarn dev` reproduces this with a
+proxy rather than a second origin, so development and production agree.
+
+Three settings carry every deployment difference, and nothing else in the code
+knows where it is running:
+
+| Setting | Meaning |
+|---|---|
+| `VITE_BASE_PATH` | where the client is served from; drives the asset base, the router basename and the PWA scope together |
+| `TRUST_PROXY` | how many proxies sit in front of Node, which decides `req.ip` and therefore who the auth rate limiter counts |
+| `HOST` | the interface Node binds; loopback in production so only nginx can reach it |
+
+See `docs/deployment.md` for the nginx and Cloudflare configuration, including
+the real-client-IP block that the rate limiter depends on.
+
 ## 2. Module map
 
 ### 2.1 Server (`activity-server/`)

@@ -16,6 +16,12 @@ import SignInView from "./views/SignInView";
 import SignUpView from "./views/SignUpView";
 import NotFoundView from "./views/NotFoundView";
 
+/**
+ * Derived from Vite's `base`, so the router, the asset paths and the PWA scope
+ * all come from one setting. React Router wants no trailing slash.
+ */
+const ROUTER_BASENAME = import.meta.env.BASE_URL.replace(/\/+$/, "") || "/";
+
 export default function App() {
   const dispatch = useDispatch();
   const mode = useSelector(selectThemeMode);
@@ -40,7 +46,7 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <ErrorBoundary>
-        <BrowserRouter basename="/activity-tracker">
+        <BrowserRouter basename={ROUTER_BASENAME}>
           <Routes>
             <Route path="/signin" element={<SignInView />} />
             <Route path="/signup" element={<SignUpView />} />

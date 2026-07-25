@@ -1,6 +1,6 @@
 const app = require("./src/app");
 const { connect } = require("./src/db/connect");
-const { port } = require("./src/config/env");
+const { port, host } = require("./src/config/env");
 
 /**
  * Connect before listening. The old bootstrap started the HTTP server
@@ -16,8 +16,8 @@ const start = async () => {
     process.exit(1);
   }
 
-  const server = app.listen(port, () => {
-    console.log(`API listening on http://localhost:${port}`);
+  const server = app.listen(port, host, () => {
+    console.log(`API listening on http://${host}:${port}`);
   });
 
   const shutdown = (signal) => () => {

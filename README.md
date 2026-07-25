@@ -44,7 +44,8 @@ activity-tracker/
 | Backend | Node 20+, Express 5, Mongoose 9 |
 | Database | MongoDB |
 | Auth | JWT (access 180m / refresh 90d, rotating) + bcrypt |
-| Tooling | yarn, ESLint 9, Docker (server) |
+| Serving | nginx serves the built client and proxies `/api` on the same origin |
+| Tooling | yarn, ESLint 9 |
 
 ## Quick start
 
@@ -68,11 +69,14 @@ that 500s on every request.
 ```bash
 cd activity-client
 yarn install
-cp .env.example .env.local   # VITE_API_URL=http://localhost:8000
 yarn dev                     # vite on :5173
 ```
 
-Then open <http://localhost:5173/activity-tracker/>.
+Then open <http://localhost:5173>.
+
+No configuration is needed: `yarn dev` proxies `/api` to `localhost:8000`, so
+development is same-origin exactly like production and CORS is not involved at
+either end. `.env.example` documents the overrides if you need them.
 
 ### 3. Demo account
 
@@ -84,8 +88,9 @@ app is actually demonstrable; only credential changes are blocked, via the
 
 **`activity-server`**
 - `yarn start` / `yarn dev`
-- `yarn verify` — end-to-end API check against a running server (22 assertions
-  covering auth, payload shape, concurrent writes and account isolation)
+- `yarn verify` — end-to-end API check against a running server (34 assertions
+  covering auth, payload shape, concurrent writes, account isolation and the
+  week-start re-bucketing)
 - `yarn maintenance` — data maintenance; **dry-run by default**
 
 **`activity-client`**
@@ -102,16 +107,21 @@ node scripts/maintenance.js --apply --purge-empty  # also delete placeholder row
 Idempotent and safe to re-run. It lowercases emails, flags the demo account,
 folds any legacy embedded `Goal.history` into `GoalHistory` (summing collisions
 instead of dropping them), fixes `Category.accountId` from String to ObjectId,
-and syncs indexes.
+gives accounts the default week start and moves their weekly rows to match, and
+syncs indexes.
 
 `--purge-empty` is the only destructive option and is never implied. It deletes
-`GoalHistory` rows with `achieved: 0` and no note — placeholders that the old
-read path created on every page view, which carry no information.
+`GoalHistory` rows with `achieved <= 0` and no note: the placeholders the old
+read path created on every page view, plus a few rows the old client's unclamped
+decrement drove negative. Neither carries information.
 
 ## Conventions
 
-- **UTC everywhere**, ISO weeks starting Monday. `src/lib/periods.js` exists on
-  both sides and the two must stay identical.
+- **Periods are UTC-anchored date labels**, not instants. `src/lib/periods.js`
+  exists on both sides and the two must stay identical.
+- **"Today" is the user's local calendar date**, never derived from UTC.
+- **The week boundary is per account** (`User.weekStart`, default Sunday), so
+  nothing may hard-code Monday or reach for `startOf("week")`.
 - **No writes on read paths.** A history row exists only because a user recorded
   something; a missing row means zero.
 - **Every history query is bounded** by an indexed period range. Rollups are
@@ -129,6 +139,7 @@ read path created on every page view, which carry no information.
 | `ARCHITECTURE.md` | Module map, API, data model, invariants |
 | `AGENTS.md` | Working rules for an AI agent in this repo |
 | `SECURITY.md` | Credential rotation + vulnerability reporting |
+| `docs/deployment.md` | Subdomain deployment: nginx, Cloudflare, systemd, firewall |
 
 ## License
 

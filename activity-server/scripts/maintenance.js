@@ -232,9 +232,15 @@ const main = async () => {
     }
   }
 
-  // 6. Empty placeholder rows.
+  // 6. Rows carrying nothing.
+  //
+  // `$lte: 0` rather than `0`: the old client did a read-modify-write on the
+  // decrement with no server-side clamp, so a few rows went negative. They carry
+  // no progress, they violate the `min: 0` on the current schema, and they drag
+  // the achieved totals down. The current server clamps at zero, so no new ones
+  // can appear.
   const emptyFilter = {
-    achieved: 0,
+    achieved: { $lte: 0 },
     $or: [{ note: "" }, { note: null }, { note: { $exists: false } }],
   };
   const emptyCount = await GoalHistory.countDocuments(emptyFilter);

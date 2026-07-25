@@ -1,4 +1,12 @@
-const BASE = (import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/\/+$/, "");
+/**
+ * Empty means same-origin: requests go to /api on whatever host served the app.
+ * That is the nginx setup, and it means there is no CORS to configure, no
+ * hostname compiled into the bundle, and nothing to change when the domain does.
+ *
+ * Set VITE_API_URL only when the API genuinely lives on another origin; the
+ * server's CORS allow-list has to name that origin too.
+ */
+const BASE = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
 const ACCESS_KEY = "activity.accessToken";
 const REFRESH_KEY = "activity.refreshToken";
