@@ -49,9 +49,16 @@ These are non-negotiable. If a task appears to require breaking one, stop and as
   response grows with the account's lifetime is a bug, however fast it is today.
 - **MUST** use `$inc` for progress increments, never read-modify-write. Two taps
   in quick succession must both land.
-- **MUST** keep UTC for every period calculation.
-  `activity-server/src/lib/periods.js` and `activity-client/src/lib/periods.js`
-  are mirrors — change both or neither.
+- **MUST** keep UTC for every period *calculation*: a `periodStart` is a date
+  label stored at UTC midnight, so the same calendar date is the same bucket for
+  everyone. `activity-server/src/lib/periods.js` and
+  `activity-client/src/lib/periods.js` are mirrors — change both or neither.
+- **MUST NOT** derive "today" from `dayjs.utc()`. That is an instant, not a
+  calendar date, and it makes the app roll over to tomorrow partway through the
+  evening for every user behind UTC. Use `todayKey()` on the client, which is
+  local; on the server, take the date from the request (`?date=`, `?today=`)
+  because one process serves users in many time zones and has no way to know
+  what day it is for any of them.
 - **MUST** treat the week boundary as per-account data, never a constant. It is
   `User.weekStart` (0 = Sunday … 6 = Saturday, default Sunday). The server reads
   it from `res.locals.user` and passes it explicitly; hard-coding Monday, or

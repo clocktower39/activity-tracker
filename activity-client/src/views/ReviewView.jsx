@@ -18,7 +18,7 @@ import {
   selectVisibleGoals,
 } from "../features/goals/goalsSlice";
 import { useAutoFetch } from "../hooks/useAutoFetch";
-import { dayjs, eachPeriod } from "../lib/periods";
+import { dayjs, eachPeriod, localDateKey, todayKey } from "../lib/periods";
 
 const WINDOWS = [
   { id: "30d", days: 30, label: "30 days" },
@@ -81,7 +81,7 @@ export default function ReviewView() {
   const active = WINDOWS.find((w) => w.id === windowId) || WINDOWS[2];
   const isCustom = windowId === "custom";
 
-  const today = dayjs.utc().format("YYYY-MM-DD");
+  const today = todayKey();
   const recordStart = recordRange?.first
     ? dayjs.utc(recordRange.first).format("YYYY-MM-DD")
     : null;
@@ -89,8 +89,8 @@ export default function ReviewView() {
   // Seeded to the last 6 months, which is long enough to be interesting and
   // short enough to be a sensible starting point to narrow from.
   const [draft, setDraft] = useState(() => ({
-    from: dayjs.utc().subtract(6, "month").format("YYYY-MM-DD"),
-    to: dayjs.utc().format("YYYY-MM-DD"),
+    from: localDateKey(-6, "month"),
+    to: todayKey(),
   }));
   const [custom, setCustom] = useState(draft);
 
@@ -118,8 +118,8 @@ export default function ReviewView() {
       active.days === null
         ? recordStart
           ? dayjs.utc(recordStart).startOf("month").format("YYYY-MM-DD")
-          : dayjs.utc().subtract(365, "day").format("YYYY-MM-DD")
-        : dayjs.utc().subtract(active.days, "day").format("YYYY-MM-DD");
+          : localDateKey(-365)
+        : localDateKey(-active.days);
 
     const days = dayjs.utc(to).diff(dayjs.utc(from), "day") + 1;
     return { from, to, bucket: bucketFor(days), days };
@@ -207,7 +207,7 @@ export default function ReviewView() {
   }, [goals]);
 
   const spanLabel = recordRange?.first
-    ? `${dayjs.utc(recordRange.first).format("MMM YYYY")} – ${dayjs.utc().format("MMM YYYY")}`
+    ? `${dayjs.utc(recordRange.first).format("MMM YYYY")} – ${dayjs(todayKey()).format("MMM YYYY")}`
     : null;
 
   const bucketNoun = { day: "day", week: "week", month: "month", year: "year" }[range.bucket];

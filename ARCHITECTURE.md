@@ -200,21 +200,49 @@ One document per account: `{ accountId, categories: [{ category, order, color }]
 
 ## 6. Invariants (must hold)
 
-1. **Period keys are computed in UTC.** `activity-server/src/lib/periods.js` and
-   `activity-client/src/lib/periods.js` must agree exactly. If they drift, a tap
-   is written to one bucket and read from another.
-2. **The week boundary is per account** (`User.weekStart`, 0 = Sunday … 6 =
+1. **A `periodStart` is a date *label*, not an instant.** It is stored at UTC
+   midnight so a given calendar date is the same bucket for everyone, and
+   `activity-server/src/lib/periods.js` and `activity-client/src/lib/periods.js`
+   must agree exactly on how a date string becomes one. If they drift, a tap is
+   written to one bucket and read from another.
+2. **"Today" is the user's LOCAL calendar date**, never `dayjs.utc()`. The label
+   has to come from the calendar the user is looking at; deriving it from UTC
+   rolled the app over to tomorrow partway through the evening for anyone behind
+   UTC (in UTC-7, at 17:00 local), showing an empty day and recording taps
+   against the wrong date. `todayKey()` on the client is local; endpoints that
+   need to know the current period take it as a parameter (`?today=`) rather
+   than reading the server's clock. See §6.1.
+3. **The week boundary is per account** (`User.weekStart`, 0 = Sunday … 6 =
    Saturday, default Sunday) and is computed arithmetically, never through a
    dayjs locale or the isoWeek plugin. The server passes it explicitly on every
    call because it serves many accounts; the client holds a configured default
    set from the signed-in user, which an explicit argument still overrides.
    Changing it re-buckets that account's weekly rows — see §5.1.
-3. **`accountId` is server-derived**, always from `res.locals.user._id`.
+4. **`accountId` is server-derived**, always from `res.locals.user._id`.
    Controllers never read it from the body.
-4. **`GoalHistory` writes are idempotent** on `(goalId, interval, periodStart)`.
-5. **Progress increments use `$inc`**, never read-modify-write. Two quick taps
+5. **`GoalHistory` writes are idempotent** on `(goalId, interval, periodStart)`.
+6. **Progress increments use `$inc`**, never read-modify-write. Two quick taps
    must both land.
-6. **JWT payloads carry identifiers only** — never a document.
+7. **JWT payloads carry identifiers only** — never a document.
+
+### 6.1 Time zones
+
+The server has no idea what day it is for a given user and must not guess. Two
+rules follow:
+
+- **The client sends the date.** `?date=` on history reads, `date` in the body of
+  a progress write, and `?today=` on streaks are all the *client's local calendar
+  date*. Each endpoint falls back to the server's UTC date, which is correct only
+  for callers on UTC and exists for curl and health checks.
+- **Nothing is stored per user.** No timezone field to keep in sync and nothing
+  to update when someone travels — the device that is being looked at is by
+  definition the authority on what day it is there.
+
+The client's local date is live rather than read once at mount (`useTodayKey`).
+This is an installed PWA people leave running, so a date captured at mount goes
+stale at local midnight; it is re-checked on a timer and whenever the tab returns
+to the foreground, and the Today view follows the rollover if the user is still
+sitting on today.
 
 ## 7. Client state
 

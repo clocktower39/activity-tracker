@@ -33,6 +33,9 @@ const parseDate = (value, label) => {
  * returns at most one row per goal — a few KB rather than the whole collection.
  */
 const getForDate = asyncHandler(async (req, res) => {
+  // The client always sends its local calendar date. The UTC fallback exists
+  // for non-browser callers and is a day out either side of midnight for anyone
+  // not on UTC, which is exactly the bug this parameter avoids.
   const date = parseDate(req.query.date || dayjs.utc().format("YYYY-MM-DD"), "date");
 
   const { weekStart } = res.locals.user;
@@ -97,6 +100,8 @@ const recordProgress = asyncHandler(async (req, res) => {
   const goal = await Goal.findOne({ _id: goalId, accountId: res.locals.user._id }).lean();
   if (!goal) throw new ApiError(404, "Goal not found");
 
+  // Same as above: the client sends the date it is displaying, so a tap lands
+  // on the day the user is looking at rather than the server's UTC day.
   const when = date ? parseDate(date, "date") : dayjs.utc();
   const interval = normalizeInterval(goal.interval);
   const periodStart = getPeriodStartDate(interval, when, res.locals.user.weekStart);

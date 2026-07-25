@@ -112,6 +112,13 @@ const main = async () => {
   const streaks = await call("GET", "/stats/streaks?days=120");
   check("streaks respond", streaks.status === 200 && Array.isArray(streaks.json?.streaks), bytes(streaks.size));
 
+  // Whether a streak is still alive depends on which period the caller is in,
+  // which is a fact about their calendar rather than the server's clock.
+  const streaksToday = await call("GET", `/stats/streaks?days=120&today=${today}`);
+  check("streaks accept the caller's local date", streaksToday.status === 200);
+  const streaksBadToday = await call("GET", "/stats/streaks?days=120&today=25-07-2026");
+  check("rejects a malformed local date", streaksBadToday.status === 400);
+
   const badRange = await call("GET", `/history/range?from=${today}&to=not-a-date`);
   check("rejects a malformed date with 400", badRange.status === 400);
 

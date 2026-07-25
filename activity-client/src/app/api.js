@@ -150,8 +150,13 @@ export const api = {
     request(`/stats/matrix?${new URLSearchParams({ from, to, bucket })}`, { signal }),
   byGoal: ({ from, to }, signal) =>
     request(`/stats/by-goal?${new URLSearchParams({ from, to })}`, { signal }),
-  // `days` accepts a number or the string "all".
-  streaks: (days = 365, signal) => request(`/stats/streaks?days=${days}`, { signal }),
+  // `days` accepts a number or the string "all". `today` is the caller's local
+  // calendar date — whether a streak is still alive depends on which period the
+  // user is in, which the server cannot know from UTC alone.
+  streaks: (days = 365, today, signal) =>
+    request(`/stats/streaks?${new URLSearchParams({ days: String(days), ...(today ? { today } : {}) })}`, {
+      signal,
+    }),
 };
 
 export { BASE as API_BASE };

@@ -14,6 +14,7 @@ import {
   selectMatrix,
 } from "../features/history/historySlice";
 import { useAutoFetch } from "../hooks/useAutoFetch";
+import { useTodayKey } from "../hooks/useTodayKey";
 import {
   addPeriods,
   dayjs,
@@ -21,6 +22,7 @@ import {
   entryKey,
   getPeriodKey,
   getPeriodStart,
+  isFutureKey,
   periodLabel,
   todayKey,
 } from "../lib/periods";
@@ -45,6 +47,7 @@ export default function PeriodView({ interval }) {
   const errors = useSelector((state) => state.history.errors);
   const pending = useSelector((state) => state.history.pending);
 
+  const today = useTodayKey();
   const [anchor, setAnchor] = useState(todayKey);
   const [openGoal, setOpenGoal] = useState(null);
 
@@ -148,8 +151,8 @@ export default function PeriodView({ interval }) {
     [interval]
   );
 
-  const isCurrent = periodKey === getPeriodKey(interval, todayKey());
-  const inFuture = periodStart.isAfter(dayjs.utc());
+  const isCurrent = periodKey === getPeriodKey(interval, today);
+  const inFuture = isFutureKey(periodKey);
   const nothingToShow = cadenceGoals.length === 0 && staveGoals.length === 0;
 
   return (
@@ -165,7 +168,7 @@ export default function PeriodView({ interval }) {
         nextLabel={`Next ${NOUN[interval]}`}
         // Nothing has been recorded past the current period, so stop there.
         nextDisabled={isCurrent}
-        onToday={() => setAnchor(todayKey())}
+        onToday={() => setAnchor(today)}
         todayDisabled={isCurrent}
       />
 

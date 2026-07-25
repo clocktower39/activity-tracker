@@ -236,12 +236,20 @@ const byGoal = asyncHandler(async (req, res) => {
 const streaks = asyncHandler(async (req, res) => {
   const accountId = new mongoose.Types.ObjectId(res.locals.user._id);
 
+  // "Is this streak still alive" depends on which period the user is currently
+  // in, which is a question about their calendar, not the server's. The client
+  // sends its local date; the UTC date is only a fallback for callers that
+  // cannot (curl, health checks), and will be a day out either side of midnight.
+  const todayKey = req.query.today
+    ? parseDate(req.query.today, "today")
+    : dayjs.utc().startOf("day");
+
   // `days=all` walks the whole record. The query is indexed and the projection
   // is four fields, and the response is one summary row per goal either way —
   // "longest streak ever" is not a meaningful number over a trailing window.
   const all = String(req.query.days).toLowerCase() === "all";
   const days = all ? null : Math.max(1, Number(req.query.days) || 365);
-  const since = all ? null : dayjs.utc().subtract(days, "day").startOf("day").toDate();
+  const since = all ? null : todayKey.subtract(days, "day").startOf("day").toDate();
 
   const [goals, rows] = await Promise.all([
     Goal.find({ accountId, archivedAt: null }).lean(),
@@ -287,8 +295,8 @@ const streaks = asyncHandler(async (req, res) => {
     if (completed.length > 0) {
       const now =
         unit === "week"
-          ? startOfWeek(dayjs.utc(), res.locals.user.weekStart)
-          : dayjs.utc().startOf(unit);
+          ? startOfWeek(todayKey, res.locals.user.weekStart)
+          : todayKey.startOf(unit);
       const latest = completed[0];
       const gap = now.diff(latest, unit);
       if (gap <= 1) {

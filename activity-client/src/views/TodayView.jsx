@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Box, Button, Container, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -9,17 +9,29 @@ import GoalFormDialog from "../components/GoalFormDialog";
 import EmptyState from "../components/EmptyState";
 import { selectGoalsStatus, selectGroupedGoals } from "../features/goals/goalsSlice";
 import { fetchDate, selectDateStatus } from "../features/history/historySlice";
-import { dayjs, entryKey, periodLabel, todayKey } from "../lib/periods";
+import { dayjs, entryKey, isFutureKey, periodLabel, todayKey } from "../lib/periods";
 import { useAutoFetch } from "../hooks/useAutoFetch";
+import { useTodayKey } from "../hooks/useTodayKey";
 
 export default function TodayView() {
   const dispatch = useDispatch();
   const groups = useSelector(selectGroupedGoals);
   const goalsStatus = useSelector(selectGoalsStatus);
 
+  const today = useTodayKey();
   const [date, setDate] = useState(todayKey);
   const [openGoal, setOpenGoal] = useState(null);
   const [showNewGoal, setShowNewGoal] = useState(false);
+
+  // If the app is sitting on today when local midnight passes, follow the date
+  // forward. If the user has navigated elsewhere, leave them where they are.
+  const previousToday = useRef(today);
+  useEffect(() => {
+    if (previousToday.current !== today) {
+      setDate((current) => (current === previousToday.current ? today : current));
+      previousToday.current = today;
+    }
+  }, [today]);
 
   const dateStatus = useSelector(selectDateStatus(date));
   const entries = useSelector((state) => state.history.entries);
@@ -44,13 +56,13 @@ export default function TodayView() {
     return { achieved, target };
   }, [groups, entries, date]);
 
-  const isToday = date === todayKey();
+  const isToday = date === today;
   const hasGoals = groups.length > 0;
 
   return (
     <>
       <TempoLine
-        sublabel={isToday ? "Today" : dayjs.utc(date).isAfter(dayjs.utc()) ? "Ahead" : "Looking back"}
+        sublabel={isToday ? "Today" : isFutureKey(date) ? "Ahead" : "Looking back"}
         label={periodLabel("daily", date)}
         achieved={totals.achieved}
         target={totals.target}
@@ -60,7 +72,7 @@ export default function TodayView() {
         nextLabel="Next day"
         // Nothing has been recorded tomorrow, so there is nowhere to page to.
         nextDisabled={isToday}
-        onToday={() => setDate(todayKey())}
+        onToday={() => setDate(today)}
         todayDisabled={isToday}
       />
 

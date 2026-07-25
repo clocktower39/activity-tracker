@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
 import { api } from "../../app/api";
-import { entryKey, getPeriodKey, normalizeInterval } from "../../lib/periods";
+import { entryKey, getPeriodKey, normalizeInterval, todayKey } from "../../lib/periods";
 
 /**
  * History cache.
@@ -112,11 +112,15 @@ export const fetchMatrix = createAsyncThunk(
 export const fetchStreaks = createAsyncThunk(
   "history/fetchStreaks",
   async (days = 365) => {
-    const data = await api.streaks(days);
-    return { key: String(days), streaks: data.streaks };
+    const today = todayKey();
+    const data = await api.streaks(days, today);
+    // Keyed by day as well as window: a streak computed yesterday is stale once
+    // the local date rolls over, and this is a long-lived single-page app.
+    return { key: `${days}|${today}`, streaks: data.streaks };
   },
   {
-    condition: (days = 365, { getState }) => !getState().history.streaks[String(days)],
+    condition: (days = 365, { getState }) =>
+      !getState().history.streaks[`${days}|${todayKey()}`],
   }
 );
 
@@ -300,7 +304,8 @@ export const selectMatrix = (bucket, from, to) => (state) =>
 export const selectStatsError = (bucket, from, to) => (state) =>
   state.history.statsErrors[`${bucket}|${from}|${to}`] || null;
 
-export const selectStreaks = (days) => (state) => state.history.streaks[String(days)] || null;
+export const selectStreaks = (days) => (state) =>
+  state.history.streaks[`${days}|${todayKey()}`] || null;
 
 /** Progress for one goal in one period, falling back to a zero entry. */
 export const makeSelectProgress = () =>

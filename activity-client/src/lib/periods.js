@@ -121,7 +121,27 @@ export const addPeriods = (interval, date, count) =>
 export const entryKey = (goalId, interval, date, weekStart) =>
   `${goalId}|${normalizeInterval(interval)}|${getPeriodKey(interval, date, weekStart)}`;
 
-export const todayKey = () => dayjs.utc().format("YYYY-MM-DD");
+/**
+ * The user's LOCAL calendar date, as "YYYY-MM-DD".
+ *
+ * This is deliberately not `dayjs.utc()`. A `periodStart` is a date *label*
+ * that happens to be stored at UTC midnight — it is not an instant — so the
+ * label has to come from the calendar the user is actually looking at. Deriving
+ * it from UTC meant that everywhere behind UTC the app rolled over to tomorrow
+ * partway through the evening (in UTC-7, at 17:00 local), showing an empty day
+ * and recording taps against the wrong date.
+ *
+ * Everything downstream still parses these strings as UTC, which is what keeps
+ * a given calendar date the same bucket for everyone.
+ */
+export const todayKey = () => dayjs().format("YYYY-MM-DD");
+
+/** A local calendar date offset from today, e.g. localDateKey(-365). */
+export const localDateKey = (offset = 0, unit = "day") =>
+  dayjs().add(offset, unit).format("YYYY-MM-DD");
+
+/** Date-string comparison; ISO dates sort lexicographically. */
+export const isFutureKey = (key) => String(key) > todayKey();
 
 /**
  * Human label for a period. Kept deliberately plain — a date the user recognises
