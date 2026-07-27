@@ -8,6 +8,10 @@ import { createTheme } from "@mui/material/styles";
  * authored, not derived from one another.
  */
 
+/**
+ * Kept as a convenience for the two built-ins the app falls back to. The full
+ * set, including the custom one, lives in ./palettes.js.
+ */
 export const palettes = {
   dark: {
     ground: "#0D1117",
@@ -64,8 +68,9 @@ export const stateColor = (chart, state) => {
  * grows or shrinks together rather than only the text. Components that need a
  * pixel number of their own — the ring, its cell — read `theme.scale`.
  */
-export const buildTheme = (mode, scale = 1) => {
-  const c = palettes[mode];
+export const buildTheme = (palette, scale = 1) => {
+  const c = palette.colors;
+  const mode = palette.mode;
   const rem = (value) => `${(value * scale).toFixed(4)}rem`;
 
   return createTheme({

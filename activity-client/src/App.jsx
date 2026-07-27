@@ -3,7 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { CssBaseline, ThemeProvider, useMediaQuery } from "@mui/material";
 import { buildTheme } from "./design/theme";
-import { selectScale, selectThemeMode } from "./features/ui/uiSlice";
+import { selectCustomPalette, selectScale, selectThemeId } from "./features/ui/uiSlice";
+import { resolvePalette } from "./design/palettes";
 import { restoreSession, signedOut } from "./features/auth/authSlice";
 import ErrorBoundary from "./components/ErrorBoundary";
 import RequireAuth from "./components/RequireAuth";
@@ -24,12 +25,16 @@ const ROUTER_BASENAME = import.meta.env.BASE_URL.replace(/\/+$/, "") || "/";
 
 export default function App() {
   const dispatch = useDispatch();
-  const mode = useSelector(selectThemeMode);
+  const themeId = useSelector(selectThemeId);
+  const custom = useSelector(selectCustomPalette);
   const scale = useSelector(selectScale);
   const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
 
-  const resolved = mode === "system" ? (prefersDark ? "dark" : "light") : mode;
-  const theme = useMemo(() => buildTheme(resolved, scale), [resolved, scale]);
+  const palette = useMemo(
+    () => resolvePalette({ themeId, custom, prefersDark }),
+    [themeId, custom, prefersDark]
+  );
+  const theme = useMemo(() => buildTheme(palette, scale), [palette, scale]);
 
   useEffect(() => {
     dispatch(restoreSession());

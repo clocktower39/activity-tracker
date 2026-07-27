@@ -35,7 +35,25 @@ import {
 } from "../features/goals/goalsSlice";
 import { invalidate, resetHistory } from "../features/history/historySlice";
 import { normalizeWeekStart, todayKey, WEEK_DAYS } from "../lib/periods";
-import { selectScale, selectThemeMode, setScale, setThemeMode, showToast } from "../features/ui/uiSlice";
+import {
+  seedCustomFrom,
+  selectCustomPalette,
+  selectScale,
+  selectThemeId,
+  setCustomColor,
+  setCustomMode,
+  setScale,
+  setThemeId,
+  showToast,
+} from "../features/ui/uiSlice";
+import {
+  contrastRatio,
+  CUSTOM_ID,
+  isHex,
+  PALETTES,
+  resolvePalette,
+  TOKENS,
+} from "../design/palettes";
 
 /**
  * Settings as an index and a body rather than one long scroll.
@@ -57,8 +75,9 @@ const GROUPS = [
 
 const SECTIONS = {
   appearance: {
-    label: "Appearance",
-    description: "Dark suits the evening catch-up; light reads better in daylight.",
+    label: "Theme",
+    description:
+      "Every theme fills the same ten slots, so the meaning of a colour never changes — only the colour does. Pick one to see its values, or build your own from any of them.",
   },
   "display-size": {
     label: "Display size",
@@ -89,7 +108,6 @@ const DEFAULT_SECTION = "appearance";
 export default function SettingsView() {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
-  const themeMode = useSelector(selectThemeMode);
   const categories = useSelector(selectCategories);
   const hiddenGoals = useSelector(selectHiddenGoals);
   const allGoals = useSelector(selectAllGoals);
@@ -164,9 +182,7 @@ export default function SettingsView() {
 
   const bodies = useMemo(
     () => ({
-      appearance: (
-        <AppearanceSection themeMode={themeMode} onChange={(mode) => dispatch(setThemeMode(mode))} />
-      ),
+      appearance: <ThemeSection />,
       "display-size": <DisplaySizeSection />,
       "week-start": <WeekStartSection user={user} />,
       profile: <ProfileSection user={user} />,
@@ -186,7 +202,7 @@ export default function SettingsView() {
       categories: <CategoriesSection categories={categories} goals={allGoals} />,
       hidden: <HiddenSection goals={hiddenGoals} />,
     }),
-    [dispatch, themeMode, user, categories, allGoals, hiddenGoals]
+    [dispatch, user, categories, allGoals, hiddenGoals]
   );
 
   return (
@@ -358,19 +374,189 @@ function Panel({ id, title, description, open, onToggle, innerRef, children }) {
   );
 }
 
-function AppearanceSection({ themeMode, onChange }) {
+function ThemeSection() {
+  const dispatch = useDispatch();
+  const themeId = useSelector(selectThemeId);
+  const custom = useSelector(selectCustomPalette);
+  const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
+
+  const active = resolvePalette({ themeId, custom, prefersDark });
+  const editing = themeId === CUSTOM_ID;
+
+  const options = [
+    ...Object.entries(PALETTES).map(([id, palette]) => ({ id, ...palette })),
+    { id: "system", label: "Match my device", note: "Practice Chart, following your device's light or dark setting.", mode: prefersDark ? "dark" : "light" },
+    { id: CUSTOM_ID, ...custom, label: "Custom", note: "Your own, built from any theme above." },
+  ];
+
   return (
-    <TextField
-      select
-      label="Theme"
-      value={themeMode}
-      onChange={(event) => onChange(event.target.value)}
-      sx={{ minWidth: 220 }}
+    <>
+      <TextField
+        select
+        label="Theme"
+        value={themeId}
+        onChange={(event) => dispatch(setThemeId(event.target.value))}
+        sx={{ minWidth: 260, mb: 4 }}
+      >
+        {options.map((option) => (
+          <MenuItem key={option.id} value={option.id}>
+            {option.label}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      <Typography variant="body2" sx={{ color: "text.secondary", mb: 6, maxWidth: "60ch" }}>
+        {options.find((o) => o.id === themeId)?.note}
+      </Typography>
+
+      {/* Every slot, with its value. Editable only for Custom — a built-in that
+          could be edited in place would stop being the thing it is named. */}
+      <Box sx={{ mb: 5 }}>
+        {TOKENS.map((token) => (
+          <TokenRow
+            key={token.key}
+            token={token}
+            value={active.colors[token.key]}
+            ground={active.colors.ground}
+            editable={editing}
+            onChange={(value) => dispatch(setCustomColor({ key: token.key, value }))}
+          />
+        ))}
+      </Box>
+
+      {editing ? (
+        <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4 }}>
+          <TextField
+            select
+            label="Base mode"
+            value={custom.mode}
+            onChange={(event) => dispatch(setCustomMode(event.target.value))}
+            helperText="Sets how form controls and menus render"
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="dark">Dark</MenuItem>
+            <MenuItem value="light">Light</MenuItem>
+          </TextField>
+
+          <TextField
+            select
+            label="Start over from"
+            value=""
+            onChange={(event) => {
+              dispatch(seedCustomFrom(event.target.value));
+              dispatch(showToast({ message: `Custom reset from ${PALETTES[event.target.value].label}`, id: Date.now() }));
+            }}
+            helperText="Replaces every value below"
+            sx={{ minWidth: 200 }}
+          >
+            {Object.entries(PALETTES).map(([id, palette]) => (
+              <MenuItem key={id} value={id}>
+                {palette.label}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
+      ) : (
+        <Button
+          onClick={() => {
+            dispatch(seedCustomFrom(themeId === "system" ? (prefersDark ? "practice-dark" : "practice-light") : themeId));
+            dispatch(setThemeId(CUSTOM_ID));
+          }}
+        >
+          Build a custom theme from this one
+        </Button>
+      )}
+    </>
+  );
+}
+
+/**
+ * One slot: a swatch, what it is for, and its value. In Custom the swatch is a
+ * colour picker and the value is typeable, so a hex can be pasted in.
+ *
+ * Text slots carry their contrast against the page colour, because a theme is
+ * easy to build and hard to notice you have made unreadable.
+ */
+function TokenRow({ token, value, ground, editable, onChange }) {
+  // Derived during render rather than in an effect: the field shows what is
+  // stored, except while a partly-typed hex is in it.
+  const [draft, setDraft] = useState(value);
+  const [lastValue, setLastValue] = useState(value);
+  if (value !== lastValue) {
+    setLastValue(value);
+    setDraft(value);
+  }
+
+  const isText = token.key === "ink" || token.key === "inkMuted";
+  const ratio = isText ? contrastRatio(value, ground) : null;
+  const poor = ratio !== null && ratio < 4.5;
+
+  const commit = (next) => {
+    setDraft(next);
+    if (isHex(next)) onChange(next);
+  };
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 3,
+        py: 2,
+        borderBottom: "1px solid",
+        borderColor: "divider",
+      }}
     >
-      <MenuItem value="dark">Dark</MenuItem>
-      <MenuItem value="light">Light</MenuItem>
-      <MenuItem value="system">Match my device</MenuItem>
-    </TextField>
+      <Box
+        component={editable ? "input" : "div"}
+        type={editable ? "color" : undefined}
+        value={editable ? (isHex(draft) ? draft.slice(0, 7) : "#000000") : undefined}
+        onChange={editable ? (event) => commit(event.target.value) : undefined}
+        aria-label={editable ? `${token.label} colour` : undefined}
+        title={value}
+        sx={{
+          width: 32,
+          height: 32,
+          flexShrink: 0,
+          p: 0,
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 1,
+          bgcolor: value,
+          cursor: editable ? "pointer" : "default",
+          appearance: editable ? "none" : undefined,
+        }}
+      />
+
+      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+        <Typography variant="body2" sx={{ color: "text.primary" }}>
+          {token.label}
+        </Typography>
+        <Typography variant="overline" sx={{ color: "text.secondary" }}>
+          {token.help}
+          {ratio !== null && ` · ${ratio.toFixed(1)}:1`}
+          {poor && " — below 4.5:1"}
+        </Typography>
+      </Box>
+
+      {editable ? (
+        <TextField
+          value={draft}
+          onChange={(event) => commit(event.target.value)}
+          variant="standard"
+          error={!isHex(draft)}
+          inputProps={{ "aria-label": `${token.label} hex value`, spellCheck: false }}
+          sx={{ width: 108, flexShrink: 0, input: { fontFamily: (t) => t.typography.h1.fontFamily } }}
+        />
+      ) : (
+        <Typography
+          variant="overline"
+          sx={{ color: poor ? "chart.vermilion" : "text.secondary", flexShrink: 0 }}
+        >
+          {value}
+        </Typography>
+      )}
+    </Box>
   );
 }
 

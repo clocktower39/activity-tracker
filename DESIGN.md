@@ -38,6 +38,35 @@ web — React 19, MUI 7, Redux Toolkit, Vite, installable PWA
 
 ## Color
 
+### Themes
+
+The palette below is one of several. Every theme fills the same ten slots, so
+what a colour *means* never changes — only which colour fills it. Anything
+reading `theme.palette.chart.*` works under all of them.
+
+The slot keys are still the original names — `vermilion`, `brass`,
+`ultramarine` — because they are referenced across the app. Under Legacy,
+"vermilion" is red and "brass" is green; they are slot names, not descriptions.
+Settings labels them by meaning: *In progress*, *Target reached*, *Past target*.
+
+| Theme | Mode | Character |
+|---|---|---|
+| Practice Chart | dark | The default, documented below |
+| Practice Chart Light | light | The same world in daylight |
+| Legacy | dark | The pre-rebuild scheme: charcoal, red building to green, blue past target |
+| Blueprint | dark | Drafting ink and cyanotype, amber for a target met |
+| Terracotta | light | Clay and olive |
+| High contrast | dark | Pure black and white, for low light or low vision |
+
+Plus **Custom**, seeded from any of them and edited slot by slot. The editor
+shows every value, and reports the contrast of the two text slots against the
+page so an unreadable pairing is caught while building rather than in use.
+
+A theme is a device setting, not an account one — it lives in `localStorage`
+beside the display size. See §6.1 in `ARCHITECTURE.md`.
+
+### The default palette
+
 Strategy: **Committed.** Ink owns the ground at page scale; one saturated colour
 (vermilion) carries state across the whole surface, with brass and ultramarine as
 the two other semantic stops.

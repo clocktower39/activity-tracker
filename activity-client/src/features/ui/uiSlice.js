@@ -1,8 +1,32 @@
 import { createSlice } from "@reduxjs/toolkit";
+import {
+  CUSTOM_ID,
+  DEFAULT_PALETTE_ID,
+  normalizePalette,
+  PALETTES,
+} from "../../design/palettes";
 
-const storedTheme = () => {
-  const saved = localStorage.getItem("activity.themeMode");
-  return saved === "light" || saved === "dark" || saved === "system" ? saved : "dark";
+/**
+ * Reads the chosen theme, translating the two values the old light/dark control
+ * used so nobody's setting is lost by the upgrade.
+ */
+const storedThemeId = () => {
+  const saved = localStorage.getItem("activity.themeId");
+  if (saved && (PALETTES[saved] || saved === "system" || saved === CUSTOM_ID)) return saved;
+
+  const legacyMode = localStorage.getItem("activity.themeMode");
+  if (legacyMode === "light") return "practice-light";
+  if (legacyMode === "system") return "system";
+  return DEFAULT_PALETTE_ID;
+};
+
+const storedCustom = () => {
+  try {
+    const raw = localStorage.getItem("activity.customPalette");
+    return raw ? normalizePalette(JSON.parse(raw)) : normalizePalette(PALETTES[DEFAULT_PALETTE_ID]);
+  } catch {
+    return normalizePalette(PALETTES[DEFAULT_PALETTE_ID]);
+  }
 };
 
 /**
@@ -23,16 +47,33 @@ const storedScale = () => {
 const uiSlice = createSlice({
   name: "ui",
   initialState: {
-    themeMode: storedTheme(),
+    themeId: storedThemeId(),
+    customPalette: storedCustom(),
     scale: storedScale(),
     // Transient message shown in the status line. Not an error dialog — a failed
     // tap should be legible without interrupting the next one.
     toast: null,
   },
   reducers: {
-    setThemeMode(state, action) {
-      state.themeMode = action.payload;
-      localStorage.setItem("activity.themeMode", action.payload);
+    setThemeId(state, action) {
+      state.themeId = action.payload;
+      localStorage.setItem("activity.themeId", action.payload);
+    },
+    /** One slot at a time, as the builder's colour inputs change. */
+    setCustomColor(state, action) {
+      const { key, value } = action.payload;
+      state.customPalette.colors[key] = value;
+      localStorage.setItem("activity.customPalette", JSON.stringify(state.customPalette));
+    },
+    setCustomMode(state, action) {
+      state.customPalette.mode = action.payload === "light" ? "light" : "dark";
+      localStorage.setItem("activity.customPalette", JSON.stringify(state.customPalette));
+    },
+    /** Seeds the builder from an existing theme, so editing starts somewhere. */
+    seedCustomFrom(state, action) {
+      const source = PALETTES[action.payload] ?? PALETTES[DEFAULT_PALETTE_ID];
+      state.customPalette = normalizePalette({ ...source, label: "Custom", note: "" });
+      localStorage.setItem("activity.customPalette", JSON.stringify(state.customPalette));
     },
     setScale(state, action) {
       const next = Math.min(1.5, Math.max(0.75, Number(action.payload) || 1));
@@ -48,9 +89,11 @@ const uiSlice = createSlice({
   },
 });
 
-export const { setThemeMode, setScale, showToast, clearToast } = uiSlice.actions;
+export const { setThemeId, setCustomColor, setCustomMode, seedCustomFrom, setScale, showToast, clearToast } =
+  uiSlice.actions;
 export default uiSlice.reducer;
 
-export const selectThemeMode = (state) => state.ui.themeMode;
+export const selectThemeId = (state) => state.ui.themeId;
+export const selectCustomPalette = (state) => state.ui.customPalette;
 export const selectScale = (state) => state.ui.scale;
 export const selectToast = (state) => state.ui.toast;
