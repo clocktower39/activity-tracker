@@ -487,8 +487,13 @@ function CategoriesSection({ categories, goals }) {
   // { key, from } while a row is being dragged, so the row can be dimmed and
   // the commit skipped when nothing actually moved.
   const [dragging, setDragging] = useState(null);
+  // How far the held row has been pulled from its resting slot, so it follows
+  // the pointer instead of only snapping between slots.
+  const [dragShift, setDragShift] = useState(0);
 
   const rowNodes = useRef([]);
+  // Row centres, measured once when the drag starts. See onHandleMove.
+  const dragGeom = useRef(null);
   const latestRows = useRef([]);
   useEffect(() => {
     latestRows.current = rows;
@@ -570,34 +575,64 @@ function CategoriesSection({ categories, goals }) {
 
   const onHandleDown = (index) => (event) => {
     if (event.button !== undefined && event.button !== 0) return;
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+
+    // Measure every row ONCE, here. Page coordinates rather than viewport ones
+    // so a scroll mid-drag cannot skew them.
+    dragGeom.current = {
+      centers: rowNodes.current.map((node) => {
+        if (!node) return 0;
+        const box = node.getBoundingClientRect();
+        return box.top + window.scrollY + box.height / 2;
+      }),
+      startY: event.pageY,
+      startIndex: index,
+    };
+    setDragShift(0);
     setDragging({ key: rows[index].key, from: index, pointerId: event.pointerId });
   };
 
+  /**
+   * Where the held row wants to be, decided against the layout as it was when
+   * the drag started.
+   *
+   * Measuring live rows instead is what made this fight itself: reordering
+   * moves the rows, so the next event measures geometry the previous event just
+   * changed, the pointer lands back inside the row it displaced, and the two
+   * swap on every frame. Fixed centres make the target a pure function of how
+   * far the pointer has travelled, so it changes only when the pointer really
+   * crosses into another slot.
+   */
   const onHandleMove = (event) => {
-    if (!dragging || event.pointerId !== dragging.pointerId) return;
+    if (!dragging || event.pointerId !== dragging.pointerId || !dragGeom.current) return;
+    const { centers, startY, startIndex } = dragGeom.current;
+
     const current = latestRows.current.findIndex((row) => row.key === dragging.key);
     if (current === -1) return;
 
-    // Land where the pointer is, by row midpoint, so the list reorders under
-    // the finger rather than after it is lifted.
-    const y = event.clientY;
-    const over = rowNodes.current.findIndex((node) => {
-      if (!node) return false;
-      const box = node.getBoundingClientRect();
-      return y >= box.top && y <= box.bottom;
+    const held = centers[startIndex] + (event.pageY - startY);
+
+    let target = 0;
+    let closest = Infinity;
+    centers.forEach((centre, i) => {
+      const distance = Math.abs(centre - held);
+      if (distance < closest) {
+        closest = distance;
+        target = i;
+      }
     });
-    if (over === -1 || over === current) return;
-    moveTo(current, over);
+
+    // Keep the row under the pointer while its slot changes beneath it.
+    if (target !== current) moveTo(current, target);
+    setDragShift(held - centers[target]);
   };
 
   const endDrag = (event) => {
     if (!dragging) return;
-    if (event?.pointerId !== undefined) {
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
-    }
+    if (event && event.pointerId !== undefined && event.pointerId !== dragging.pointerId) return;
     const landed = latestRows.current.findIndex((row) => row.key === dragging.key);
     setDragging(null);
+    setDragShift(0);
+    dragGeom.current = null;
     // Only write when the order actually changed.
     if (landed !== -1 && landed !== dragging.from) commit(latestRows.current);
   };
@@ -605,8 +640,34 @@ function CategoriesSection({ categories, goals }) {
   const cancelDrag = () => {
     if (!dragging) return;
     setDragging(null);
+    setDragShift(0);
+    dragGeom.current = null;
     setRows(categories.map((cat) => ({ ...cat, key: cat.category })));
   };
+
+  /**
+   * Move and release are bound to the window, not the handle.
+   *
+   * Pointer capture on the handle looks like the obvious choice and is wrong
+   * here: reordering moves the row — and the handle inside it — to a new place
+   * in the DOM, and a captured element that gets moved loses its capture. The
+   * drag then went dead after the second reorder, silently, part way down the
+   * list. The window never moves.
+   */
+  useEffect(() => {
+    if (!dragging) return undefined;
+    const move = (event) => onHandleMove(event);
+    const up = (event) => endDrag(event);
+    const cancel = () => cancelDrag();
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", cancel);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", cancel);
+    };
+  });
 
   const onHandleKeyDown = (index) => (event) => {
     const delta = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
@@ -651,7 +712,14 @@ function CategoriesSection({ categories, goals }) {
               pl: 2,
               bgcolor: isDragging ? "background.paper" : "transparent",
               opacity: dragging && !isDragging ? 0.55 : 1,
-              transition: "opacity 120ms linear",
+              // The held row tracks the pointer with no transition, or it lags
+              // behind the finger. The rest ease into their new slots.
+              transform: isDragging ? `translateY(${dragShift}px)` : "none",
+              transition: isDragging
+                ? "opacity 120ms linear"
+                : "transform 180ms cubic-bezier(0.16, 1, 0.3, 1), opacity 120ms linear",
+              position: "relative",
+              zIndex: isDragging ? 2 : 1,
             }}
           >
             <Box
@@ -659,9 +727,6 @@ function CategoriesSection({ categories, goals }) {
               tabIndex={0}
               aria-label={`Reorder ${row.category}, position ${index + 1} of ${rows.length}. Use the arrow keys to move it.`}
               onPointerDown={onHandleDown(index)}
-              onPointerMove={onHandleMove}
-              onPointerUp={endDrag}
-              onPointerCancel={cancelDrag}
               onKeyDown={onHandleKeyDown(index)}
               sx={{
                 display: "flex",
