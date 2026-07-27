@@ -1,6 +1,7 @@
 import { memo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useMediaQuery } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import Ring from "./Ring";
 import { recordProgress } from "../features/history/historySlice";
 import { entryKey } from "../lib/periods";
@@ -13,6 +14,11 @@ import { entryKey } from "../lib/periods";
  */
 function GoalRow({ category, goals, date, loading, onOpenGoal }) {
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const roomy = useMediaQuery(theme.breakpoints.up("sm"));
+  // Mirrors Ring's own sizing, plus a small gutter. Kept in one expression so
+  // the cell and the dial cannot drift apart.
+  const ringCellWidth = Math.round((roomy ? 96 : 60) * (theme.scale ?? 1)) + 12;
   const entries = useSelector((state) => state.history.entries);
   const errors = useSelector((state) => state.history.errors);
   const pending = useSelector((state) => state.history.pending);
@@ -86,7 +92,10 @@ function GoalRow({ category, goals, date, loading, onOpenGoal }) {
               key={goal._id}
               sx={{
                 flex: "0 0 auto",
-                width: { xs: "25%", sm: "16.666%" },
+                // Sized to the dial, not to a fraction of the row. A percentage pins
+                // the count per row whatever the dial does, and left a 64px ring
+                // floating in a 90px cell; this lets the count follow the size.
+                width: ringCellWidth,
                 display: "flex",
                 justifyContent: "center",
               }}

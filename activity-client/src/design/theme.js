@@ -57,8 +57,16 @@ export const stateColor = (chart, state) => {
   }
 };
 
-export const buildTheme = (mode) => {
+/**
+ * `scale` is the reader's display size, 1 being the default.
+ *
+ * It multiplies the spacing step and every type size, so the whole interface
+ * grows or shrinks together rather than only the text. Components that need a
+ * pixel number of their own — the ring, its cell — read `theme.scale`.
+ */
+export const buildTheme = (mode, scale = 1) => {
   const c = palettes[mode];
+  const rem = (value) => `${(value * scale).toFixed(4)}rem`;
 
   return createTheme({
     palette: {
@@ -76,7 +84,9 @@ export const buildTheme = (mode) => {
 
     shape: { borderRadius: 3 },
 
-    spacing: 4,
+    scale,
+
+    spacing: (factor) => factor * 4 * scale,
 
     typography: {
       fontFamily: FONT_UI,
@@ -84,27 +94,27 @@ export const buildTheme = (mode) => {
       // line at 390px rather than breaking mid-phrase.
       h1: {
         fontFamily: FONT_NUM,
-        fontSize: "2.25rem",
+        fontSize: rem(2.25),
         fontWeight: 500,
         letterSpacing: "-0.03em",
         lineHeight: 1,
-        "@media (min-width:600px)": { fontSize: "3rem" },
+        "@media (min-width:600px)": { fontSize: rem(3) },
       },
       h2: {
         fontFamily: FONT_NUM,
-        fontSize: "1.5rem",
+        fontSize: rem(1.5),
         fontWeight: 500,
         letterSpacing: "-0.02em",
         lineHeight: 1.15,
-        "@media (min-width:600px)": { fontSize: "2rem" },
+        "@media (min-width:600px)": { fontSize: rem(2) },
       },
-      h3: { fontSize: "1.375rem", fontWeight: 600, letterSpacing: "-0.01em" },
-      body1: { fontSize: "1rem", lineHeight: 1.5 },
-      body2: { fontSize: "0.8125rem", lineHeight: 1.5 },
+      h3: { fontSize: rem(1.375), fontWeight: 600, letterSpacing: "-0.01em" },
+      body1: { fontSize: rem(1), lineHeight: 1.5 },
+      body2: { fontSize: rem(0.8125), lineHeight: 1.5 },
       // Tempo marks: the small tracked caps that label a section or a cadence.
       overline: {
         fontFamily: FONT_NUM,
-        fontSize: "0.6875rem",
+        fontSize: rem(0.6875),
         fontWeight: 600,
         letterSpacing: "0.08em",
         textTransform: "uppercase",
@@ -134,6 +144,20 @@ export const buildTheme = (mode) => {
             "*": {
               animationDuration: "0.01ms !important",
               transitionDuration: "0.01ms !important",
+            },
+          },
+        },
+      },
+      MuiContainer: {
+        styleOverrides: {
+          root: {
+            // 16px each side on a 390px screen is 8% of it. The rings are the
+            // content that pays for that, so the gutter is tighter and scales.
+            paddingLeft: 10 * scale,
+            paddingRight: 10 * scale,
+            "@media (min-width:600px)": {
+              paddingLeft: 20 * scale,
+              paddingRight: 20 * scale,
             },
           },
         },

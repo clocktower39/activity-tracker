@@ -39,9 +39,10 @@ function Ring({
   const theme = useTheme();
   const chart = theme.palette.chart;
   const roomy = useMediaQuery(theme.breakpoints.up("sm"));
-  // 64px fits four across a 390px phone with room for the label; desktop has
-  // space for a larger dial. Still far above the 44px touch floor.
-  const size = sizeOverride ?? (roomy ? 96 : 64);
+  // Scaled by the reader's display size, so shrinking the interface really does
+  // fit more dials to a row. Still far above the 44px touch floor at the
+  // smallest setting (0.75 x 60 = 45).
+  const size = sizeOverride ?? Math.round((roomy ? 96 : 60) * (theme.scale ?? 1));
 
   const mode = goal.trackingMode === "more" ? "more" : "target";
   const state = progressState(achieved, target, mode);
@@ -90,7 +91,7 @@ function Ring({
         flexDirection: "column",
         alignItems: "center",
         gap: 1.5,
-        width: size + 16,
+        width: size + 8,
       }}
     >
       <Box

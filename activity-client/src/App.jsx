@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { CssBaseline, ThemeProvider, useMediaQuery } from "@mui/material";
 import { buildTheme } from "./design/theme";
-import { selectThemeMode } from "./features/ui/uiSlice";
+import { selectScale, selectThemeMode } from "./features/ui/uiSlice";
 import { restoreSession, signedOut } from "./features/auth/authSlice";
 import ErrorBoundary from "./components/ErrorBoundary";
 import RequireAuth from "./components/RequireAuth";
@@ -25,10 +25,11 @@ const ROUTER_BASENAME = import.meta.env.BASE_URL.replace(/\/+$/, "") || "/";
 export default function App() {
   const dispatch = useDispatch();
   const mode = useSelector(selectThemeMode);
+  const scale = useSelector(selectScale);
   const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
 
   const resolved = mode === "system" ? (prefersDark ? "dark" : "light") : mode;
-  const theme = useMemo(() => buildTheme(resolved), [resolved]);
+  const theme = useMemo(() => buildTheme(resolved, scale), [resolved, scale]);
 
   useEffect(() => {
     dispatch(restoreSession());

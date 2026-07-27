@@ -9,6 +9,7 @@ import {
   IconButton,
   MenuItem,
   TextField,
+  Slider,
   Typography,
   useMediaQuery,
 } from "@mui/material";
@@ -34,7 +35,7 @@ import {
 } from "../features/goals/goalsSlice";
 import { invalidate, resetHistory } from "../features/history/historySlice";
 import { normalizeWeekStart, todayKey, WEEK_DAYS } from "../lib/periods";
-import { selectThemeMode, setThemeMode, showToast } from "../features/ui/uiSlice";
+import { selectScale, selectThemeMode, setScale, setThemeMode, showToast } from "../features/ui/uiSlice";
 
 /**
  * Settings as an index and a body rather than one long scroll.
@@ -49,7 +50,7 @@ import { selectThemeMode, setThemeMode, showToast } from "../features/ui/uiSlice
  */
 
 const GROUPS = [
-  { id: "preferences", label: "Preferences", items: ["appearance", "week-start"] },
+  { id: "preferences", label: "Preferences", items: ["appearance", "display-size", "week-start"] },
   { id: "account", label: "Account", items: ["profile", "password", "session"] },
   { id: "goals", label: "Goals", items: ["categories", "hidden"] },
 ];
@@ -58,6 +59,11 @@ const SECTIONS = {
   appearance: {
     label: "Appearance",
     description: "Dark suits the evening catch-up; light reads better in daylight.",
+  },
+  "display-size": {
+    label: "Display size",
+    description:
+      "Scales the whole interface, not just the text — so it does the job page zoom does, without the pinching. Smaller fits more rings to a row.",
   },
   "week-start": {
     label: "Start of the week",
@@ -161,6 +167,7 @@ export default function SettingsView() {
       appearance: (
         <AppearanceSection themeMode={themeMode} onChange={(mode) => dispatch(setThemeMode(mode))} />
       ),
+      "display-size": <DisplaySizeSection />,
       "week-start": <WeekStartSection user={user} />,
       profile: <ProfileSection user={user} />,
       password: <PasswordSection isDemo={user?.isDemo} />,
@@ -364,6 +371,88 @@ function AppearanceSection({ themeMode, onChange }) {
       <MenuItem value="light">Light</MenuItem>
       <MenuItem value="system">Match my device</MenuItem>
     </TextField>
+  );
+}
+
+function DisplaySizeSection() {
+  const dispatch = useDispatch();
+  const theme = useTheme();
+  const scale = useSelector(selectScale);
+  const roomy = useMediaQuery(theme.breakpoints.up("sm"));
+
+  // The same maths GoalRow uses, so the preview is the real layout rather than
+  // an impression of it.
+  const previewRef = useRef(null);
+  const [perRow, setPerRow] = useState(null);
+  const cell = Math.round((roomy ? 96 : 60) * scale) + 12;
+
+  useEffect(() => {
+    const measure = () => {
+      const width = previewRef.current?.clientWidth;
+      if (width) setPerRow(Math.max(1, Math.floor(width / cell)));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [cell]);
+
+  return (
+    <>
+      {/* Inset, or the 75% and 150% mark labels are clipped at the edges. */}
+      <Box sx={{ maxWidth: 420, mb: 6, px: 4 }}>
+        <Slider
+          value={scale}
+          min={0.75}
+          max={1.5}
+          step={0.05}
+          marks={[
+            { value: 0.75, label: "75%" },
+            { value: 1, label: "100%" },
+            { value: 1.25, label: "125%" },
+            { value: 1.5, label: "150%" },
+          ]}
+          valueLabelDisplay="auto"
+          valueLabelFormat={(v) => `${Math.round(v * 100)}%`}
+          onChange={(_event, value) => dispatch(setScale(value))}
+          aria-label="Display size"
+          getAriaValueText={(v) => `${Math.round(v * 100)} percent`}
+          sx={{ color: "chart.vermilion" }}
+        />
+      </Box>
+
+      <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 3 }}>
+        {Math.round(scale * 100)}%
+        {perRow ? ` · ${perRow} ring${perRow === 1 ? "" : "s"} per row at this width` : ""}
+      </Typography>
+
+      {/* Dials at the real size, in the real container, wrapping the real way. */}
+      <Box
+        ref={previewRef}
+        aria-hidden
+        sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", rowGap: 3 }}
+      >
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Box
+            key={i}
+            sx={{ flex: "0 0 auto", width: cell, display: "flex", justifyContent: "center" }}
+          >
+            <Box
+              sx={{
+                width: Math.round((roomy ? 96 : 60) * scale),
+                height: Math.round((roomy ? 96 : 60) * scale),
+                borderRadius: "50%",
+                border: "2px solid",
+                borderColor: i % 3 === 0 ? "chart.brass" : "chart.empty",
+              }}
+            />
+          </Box>
+        ))}
+      </Box>
+
+      <Button onClick={() => dispatch(setScale(1))} disabled={scale === 1} sx={{ mt: 5 }}>
+        Reset to 100%
+      </Button>
+    </>
   );
 }
 

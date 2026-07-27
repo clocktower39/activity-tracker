@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Box, Container, Typography } from "@mui/material";
+import { Box, Container, Typography, useMediaQuery } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useNavigate, useSearchParams } from "react-router";
 import TempoLine from "../components/TempoLine";
 import Ring from "../components/Ring";
@@ -42,6 +43,10 @@ const NOUN = { weekly: "week", monthly: "month", yearly: "year" };
  */
 export default function PeriodView({ interval }) {
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const roomy = useMediaQuery(theme.breakpoints.up("sm"));
+  // Same cell maths as Today, so the dials read identically on every cadence.
+  const ringCellWidth = Math.round((roomy ? 96 : 60) * (theme.scale ?? 1)) + 12;
   const goals = useSelector(selectVisibleGoals);
   const goalsStatus = useSelector(selectGoalsStatus);
   const entries = useSelector((state) => state.history.entries);
@@ -227,7 +232,10 @@ export default function PeriodView({ interval }) {
                     key={goal._id}
                     sx={{
                       flex: "0 0 auto",
-                      width: { xs: "25%", sm: "16.666%" },
+                      // Sized to the dial, not to a fraction of the row. A percentage pins
+                      // the count per row whatever the dial does, and left a 64px ring
+                      // floating in a 90px cell; this lets the count follow the size.
+                      width: ringCellWidth,
                       display: "flex",
                       justifyContent: "center",
                     }}

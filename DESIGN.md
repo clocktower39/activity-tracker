@@ -159,6 +159,21 @@ flat fill would have left them as the only distinction.
   side by side. Listening to both double-counts every tap on a phone, because the
   browser synthesises a compatibility mouse pair after `touchend`.
 
+## Display size
+
+One setting, 75% to 150%, that multiplies the spacing step, every type size and
+the ring — so the interface grows or shrinks together rather than the text
+moving while everything around it stays put. It does what page zoom does, which
+is hard to reach and harder to keep on a phone.
+
+Because the ring cell is sized to the dial rather than to a fraction of the row,
+shrinking really does fit more rings per row: 4 at 125%, 5 at 100%, 6 at 80% on
+a 390px screen. The setting shows a live row of dials at the chosen size and
+states how many fit, so it can be dialled to a target instead of guessed at.
+
+Container gutters scale with it and start tighter than MUI's default: 16px each
+side of a 390px screen is 8% of it, and the rings are what pays for that.
+
 ## Settings
 
 An index and a body, not one long scroll.
