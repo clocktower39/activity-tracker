@@ -14,6 +14,8 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import AddIcon from "@mui/icons-material/Add";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -66,7 +68,11 @@ const SECTIONS = {
   profile: { label: "Your details" },
   password: { label: "Password" },
   session: { label: "Session" },
-  categories: { label: "Categories", description: "Goals are grouped by these, in this order." },
+  categories: {
+    label: "Categories",
+    description:
+      "Goals are grouped by these, in this order — on Today, and down the side of the week, month and year charts. Reorder with the arrows.",
+  },
   hidden: {
     label: "Hidden goals",
     description: "These keep their history but stay off the chart. Bring one back whenever you like.",
@@ -111,13 +117,24 @@ export default function SettingsView() {
       setAlsoOpen(new Set());
       setSearchParams(id === DEFAULT_SECTION ? {} : { s: id }, { replace: true });
       if (compact) setGroupOverrides({});
-      // Let the panel expand before scrolling to where it ends up.
-      requestAnimationFrame(() => {
-        panelRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
     },
     [setSearchParams, compact]
   );
+
+  // Bring the focused panel into view — on click, and equally when arriving on
+  // a ?s= link, which otherwise opened the right panel somewhere below the fold.
+  // Only when a section was actually named: the default one is already at top.
+  const requested = searchParams.get("s");
+  useEffect(() => {
+    if (!requested || !SECTIONS[requested]) return;
+    const node = panelRefs.current[requested];
+    if (!node) return;
+    // Let the panel expand before scrolling to where it ends up.
+    const id = requestAnimationFrame(() =>
+      node.scrollIntoView({ behavior: "smooth", block: "start" })
+    );
+    return () => cancelAnimationFrame(id);
+  }, [requested]);
 
   const togglePanel = useCallback(
     (id) => {
@@ -516,6 +533,21 @@ function CategoriesSection({ categories, goals }) {
     commit(rows.filter((_, i) => i !== index));
   };
 
+  /**
+   * Category order is the order goals are grouped in on every view, so this is
+   * a real setting rather than cosmetics. Buttons rather than drag-and-drop:
+   * they work under a thumb, they work from the keyboard, and they need no
+   * dependency. `commit` already writes `order` from array position.
+   */
+  const move = (index, delta) => {
+    const target = index + delta;
+    if (target < 0 || target >= rows.length) return;
+    const next = [...rows];
+    [next[index], next[target]] = [next[target], next[index]];
+    setRows(next);
+    commit(next);
+  };
+
   const add = () => {
     const name = adding.trim();
     if (!name) return;
@@ -532,8 +564,23 @@ function CategoriesSection({ categories, goals }) {
       {rows.map((row, index) => (
         <Box
           key={`${row.category}-${index}`}
-          sx={{ display: "flex", alignItems: "center", gap: 3, py: 2, borderBottom: "1px solid", borderColor: "divider" }}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            py: 2,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+          }}
         >
+          <Typography
+            variant="overline"
+            sx={{ color: "text.secondary", width: 20, flexShrink: 0 }}
+            aria-hidden
+          >
+            {index + 1}
+          </Typography>
+
           <TextField
             value={row.category}
             onChange={(event) =>
@@ -541,17 +588,40 @@ function CategoriesSection({ categories, goals }) {
             }
             onBlur={(event) => rename(index, event.target.value)}
             variant="standard"
-            sx={{ flexGrow: 1 }}
-            inputProps={{ "aria-label": `Category name ${index + 1}` }}
+            sx={{ flexGrow: 1, minWidth: 0 }}
+            inputProps={{ "aria-label": `Category name, position ${index + 1} of ${rows.length}` }}
           />
-          <Typography variant="overline" sx={{ color: "text.secondary" }}>
+
+          {/* Goal counts are context, not a control; the first thing to give up
+              room when the row gets tight. */}
+          <Typography
+            variant="overline"
+            sx={{ color: "text.secondary", display: { xs: "none", sm: "block" }, flexShrink: 0 }}
+          >
             {countFor(row.category)} goals
           </Typography>
+
+          <IconButton
+            onClick={() => move(index, -1)}
+            aria-label={`Move ${row.category} up`}
+            disabled={saving || index === 0}
+            sx={{ width: 44, height: 44, flexShrink: 0 }}
+          >
+            <ArrowUpwardIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            onClick={() => move(index, 1)}
+            aria-label={`Move ${row.category} down`}
+            disabled={saving || index === rows.length - 1}
+            sx={{ width: 44, height: 44, flexShrink: 0 }}
+          >
+            <ArrowDownwardIcon fontSize="small" />
+          </IconButton>
           <IconButton
             onClick={() => remove(index)}
             aria-label={`Delete ${row.category}`}
-            size="small"
             disabled={saving}
+            sx={{ width: 44, height: 44, flexShrink: 0 }}
           >
             <DeleteOutlineIcon fontSize="small" />
           </IconButton>
