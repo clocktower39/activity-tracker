@@ -66,13 +66,14 @@ function GoalRow({ category, goals, date, loading, onOpenGoal }) {
 
       <Box
         sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "repeat(auto-fill, minmax(76px, 1fr))",
-            sm: "repeat(auto-fill, minmax(124px, 1fr))",
-          },
-          gap: { xs: 4, sm: 6 },
-          justifyItems: "center",
+          // Wrapping flex rather than a grid, so a row that is not full centres
+          // itself instead of left-aligning into fixed columns. Four to a row on
+          // a phone, six from `sm` up; the offset that gives a short last row is
+          // the staggering, and it comes free from centring each row.
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          rowGap: { xs: 5, sm: 6 },
           opacity: loading ? 0.5 : 1,
           transition: "opacity 160ms linear",
         }}
@@ -81,16 +82,25 @@ function GoalRow({ category, goals, date, loading, onOpenGoal }) {
           const key = entryKey(goal._id, goal.interval, date);
           const entry = entries[key];
           return (
-            <Ring
+            <Box
               key={goal._id}
-              goal={goal}
-              achieved={entry?.achieved ?? 0}
-              target={entry?.target ?? (Number(goal.defaultTarget) || 0)}
-              pending={Boolean(pending[key])}
-              error={errors[key] || null}
-              onIncrement={() => increment(goal)}
-              onOpen={() => onOpenGoal(goal)}
-            />
+              sx={{
+                flex: "0 0 auto",
+                width: { xs: "25%", sm: "16.666%" },
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <Ring
+                goal={goal}
+                achieved={entry?.achieved ?? 0}
+                target={entry?.target ?? (Number(goal.defaultTarget) || 0)}
+                pending={Boolean(pending[key])}
+                error={errors[key] || null}
+                onIncrement={() => increment(goal)}
+                onOpen={() => onOpenGoal(goal)}
+              />
+            </Box>
           );
         })}
       </Box>

@@ -211,29 +211,37 @@ export default function PeriodView({ interval }) {
             <Box sx={{ height: 2, bgcolor: "divider", mb: 6 }} />
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "repeat(auto-fill, minmax(76px, 1fr))",
-                  sm: "repeat(auto-fill, minmax(124px, 1fr))",
-                },
-                gap: { xs: 4, sm: 6 },
-                justifyItems: "center",
+                // Same centred wrap as Today, so the rings read identically
+                // whichever cadence you are on.
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "center",
+                rowGap: { xs: 5, sm: 6 },
               }}
             >
               {cadenceGoals.map((goal) => {
                 const key = entryKey(goal._id, goal.interval, periodKey);
                 const entry = entries[key];
                 return (
-                  <Ring
+                  <Box
                     key={goal._id}
-                    goal={goal}
-                    achieved={entry?.achieved ?? 0}
-                    target={entry?.target ?? (Number(goal.defaultTarget) || 0)}
-                    pending={Boolean(pending[key])}
-                    error={errors[key] || null}
-                    onIncrement={() => dispatch(recordProgress({ goal, date: periodKey, delta: 1 }))}
-                    onOpen={() => setOpenGoal(goal)}
-                  />
+                    sx={{
+                      flex: "0 0 auto",
+                      width: { xs: "25%", sm: "16.666%" },
+                      display: "flex",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ring
+                      goal={goal}
+                      achieved={entry?.achieved ?? 0}
+                      target={entry?.target ?? (Number(goal.defaultTarget) || 0)}
+                      pending={Boolean(pending[key])}
+                      error={errors[key] || null}
+                      onIncrement={() => dispatch(recordProgress({ goal, date: periodKey, delta: 1 }))}
+                      onOpen={() => setOpenGoal(goal)}
+                    />
+                  </Box>
                 );
               })}
             </Box>

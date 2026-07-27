@@ -1,5 +1,5 @@
 const GoalHistory = require("../models/goalHistory");
-const { getPeriodStartDate, dayjs } = require("./periods");
+const { getPeriodStartDate, startOfWeek, dayjs } = require("./periods");
 
 /**
  * Move an account's weekly history onto a different week boundary.
@@ -17,13 +17,21 @@ const { getPeriodStartDate, dayjs } = require("./periods");
  * new-week, which puts it outside the range the app then queries and makes the
  * progress look lost.
  *
+ * The result is then clamped so nothing lands in a week that has not started.
+ * The week in progress is the case that needs it: change the boundary early in
+ * a week and max-overlap points at the NEXT new-week, so the progress recorded
+ * today would move into the future and vanish from the view of today. A week
+ * can only overshoot by one, so clamping to the week containing `today` is
+ * enough. `today` is the user's local date and must be passed in — the server
+ * cannot know what day it is where they are.
+ *
  * Two old weeks can still land in one new week, so collisions are summed rather
  * than resolved by picking a winner — dropping a week of recorded progress to
  * avoid a duplicate key would be the worst possible outcome here.
  *
  * Returns a summary; pass `{ dryRun: true }` to compute it without writing.
  */
-const rebucketWeeks = async (accountId, fromWeekStart, toWeekStart, { dryRun = false } = {}) => {
+const rebucketWeeks = async (accountId, fromWeekStart, toWeekStart, { dryRun = false, today } = {}) => {
   if (fromWeekStart === toWeekStart) {
     return { moved: 0, merged: 0, scanned: 0, unchanged: true };
   }
@@ -31,13 +39,18 @@ const rebucketWeeks = async (accountId, fromWeekStart, toWeekStart, { dryRun = f
   const rows = await GoalHistory.find({ accountId, interval: "weekly" }).lean();
   if (rows.length === 0) return { moved: 0, merged: 0, scanned: 0, unchanged: false };
 
+  // Nothing may be placed later than the week the user is currently in.
+  const ceiling = startOfWeek(today ? dayjs.utc(today) : dayjs.utc(), toWeekStart);
+
   // Group by where each row is going.
   const target = new Map();
   let moved = 0;
 
   for (const row of rows) {
     const midpoint = dayjs.utc(row.periodStart).add(3, "day");
-    const recomputed = getPeriodStartDate("weekly", midpoint, toWeekStart);
+    const byOverlap = getPeriodStartDate("weekly", midpoint, toWeekStart);
+    // Only the in-progress week can overshoot, and only by one week.
+    const recomputed = ceiling.isBefore(dayjs.utc(byOverlap)) ? ceiling.toDate() : byOverlap;
     if (recomputed.getTime() !== new Date(row.periodStart).getTime()) moved += 1;
 
     const key = `${row.goalId}|${recomputed.toISOString()}`;

@@ -26,7 +26,7 @@ import {
   selectHiddenGoals,
 } from "../features/goals/goalsSlice";
 import { invalidate, resetHistory } from "../features/history/historySlice";
-import { normalizeWeekStart, WEEK_DAYS } from "../lib/periods";
+import { normalizeWeekStart, todayKey, WEEK_DAYS } from "../lib/periods";
 import { selectThemeMode, setThemeMode, showToast } from "../features/ui/uiSlice";
 
 const Section = ({ title, description, children }) => (
@@ -112,7 +112,9 @@ function WeekStartSection({ user }) {
     if (next === current) return;
     setSaving(true);
     try {
-      const result = await dispatch(updateProfile({ weekStart: next })).unwrap();
+      // Sending the local date keeps the re-bucketing from pushing this week's
+      // progress into a week that has not started here yet.
+      const result = await dispatch(updateProfile({ weekStart: next, today: todayKey() })).unwrap();
       // Weekly history is re-bucketed server-side, so anything already fetched
       // is keyed to the old boundary and has to be dropped.
       dispatch(invalidate());

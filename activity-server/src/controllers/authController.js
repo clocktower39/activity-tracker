@@ -92,6 +92,9 @@ const updateProfile = asyncHandler(async (req, res) => {
   // Explicit allow-list. The previous version spread req.body straight into
   // findByIdAndUpdate, which let a client write `password` in plaintext.
   const allowed = ["firstName", "lastName", "themeMode", "weekStart"];
+  // Not a stored field: the caller's local date, used only to keep re-bucketing
+  // from placing progress in a week that has not started where they are.
+  const today = req.body.today;
   const updates = {};
   for (const field of allowed) {
     if (req.body[field] !== undefined) updates[field] = req.body[field];
@@ -112,7 +115,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     // setting: if it throws, the account keeps a setting that matches its data.
     const current = normalizeWeekStart(res.locals.user.weekStart);
     if (current !== next) {
-      rebucketed = await rebucketWeeks(res.locals.user._id, current, next);
+      rebucketed = await rebucketWeeks(res.locals.user._id, current, next, { today });
     }
   }
 

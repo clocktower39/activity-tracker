@@ -124,6 +124,12 @@ screen. It lays out months instead, against a server-side goal × month rollup.
   390px screen, so a full category is visible without scrolling — and 96px from
   `sm` up. Text inside the ring is sized from the ring but floored, so shrinking
   the dial never takes the count or the `/target` below legibility.
+- **Rings wrap centred, not into a grid.** Each row centres on the page
+  independently, so a category of six shows a row of four above a row of two
+  sitting under its middle. The offset that produces is the point: rows stagger
+  against each other and the column of dials reads as one centred object rather
+  than a left-aligned table. This is the v1 layout, restored deliberately — a
+  CSS grid packs short rows to the left, which reads as a ragged edge.
 
 ## The ring
 
