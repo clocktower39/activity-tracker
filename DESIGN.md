@@ -180,6 +180,14 @@ Nothing here is boxed. Folders and panels are labelled with tempo-mark caps over
 a rule, the current leaf is marked with the vermilion bar line the cadence
 switcher uses, and the disclosure is a chevron rather than a card that opens.
 
+**Reordering categories** is a drag by the row's handle, on Pointer Events so
+mouse, touch and pen are one path. The list reorders live under the pointer
+rather than after release, the row in hand takes the same vermilion bar line,
+and the rest dim. The handle is also a keyboard control — focus it, arrow keys
+move the row — because a drag that is the only way to reorder is unusable
+without a pointer, the same rule that keeps the ring's long-press from being its
+only route.
+
 ## Motion
 
 One authored moment: **the cadence**. When a ring reaches its target the arc closes

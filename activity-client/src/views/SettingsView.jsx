@@ -14,8 +14,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import AddIcon from "@mui/icons-material/Add";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -71,7 +70,7 @@ const SECTIONS = {
   categories: {
     label: "Categories",
     description:
-      "Goals are grouped by these, in this order — on Today, and down the side of the week, month and year charts. Reorder with the arrows.",
+      "Goals are grouped by these, in this order — on Today, and down the side of the week, month and year charts. Drag a row by its handle to reorder, or focus the handle and use the arrow keys.",
   },
   hidden: {
     label: "Hidden goals",
@@ -485,10 +484,22 @@ function CategoriesSection({ categories, goals }) {
   const [rows, setRows] = useState([]);
   const [adding, setAdding] = useState("");
   const [saving, setSaving] = useState(false);
+  // { key, from } while a row is being dragged, so the row can be dimmed and
+  // the commit skipped when nothing actually moved.
+  const [dragging, setDragging] = useState(null);
+
+  const rowNodes = useRef([]);
+  const latestRows = useRef([]);
+  useEffect(() => {
+    latestRows.current = rows;
+  }, [rows]);
 
   // Resync whenever the store changes, so an edit elsewhere is never clobbered.
+  // `key` is the persisted name, held separately from the editable one: keying a
+  // row by its live value remounts the field on every keystroke and drops focus,
+  // and would make a dragged row lose its identity mid-drag.
   useEffect(() => {
-    setRows(categories.map((cat) => ({ ...cat })));
+    setRows(categories.map((cat) => ({ ...cat, key: cat.category })));
   }, [categories]);
 
   const countFor = (name) => goals.filter((goal) => goal.category === name).length;
@@ -496,10 +507,16 @@ function CategoriesSection({ categories, goals }) {
   const commit = async (next) => {
     setSaving(true);
     try {
-      await dispatch(saveCategories(next.map((row, index) => ({ ...row, order: index })))).unwrap();
+      // Built explicitly rather than spread: `key` is a client-side identity for
+      // React and drag tracking, and has no business being persisted.
+      await dispatch(
+        saveCategories(
+          next.map((row, index) => ({ category: row.category, color: row.color ?? null, order: index }))
+        )
+      ).unwrap();
     } catch (err) {
       dispatch(showToast({ message: err.message || "Couldn't save categories", tone: "error", id: Date.now() }));
-      setRows(categories.map((cat) => ({ ...cat })));
+      setRows(categories.map((cat) => ({ ...cat, key: cat.category })));
     } finally {
       setSaving(false);
     }
@@ -513,7 +530,7 @@ function CategoriesSection({ categories, goals }) {
       await dispatch(renameCategory({ from: previous, to: nextName.trim() })).unwrap();
     } catch (err) {
       dispatch(showToast({ message: err.message || "Couldn't rename", tone: "error", id: Date.now() }));
-      setRows(categories.map((cat) => ({ ...cat })));
+      setRows(categories.map((cat) => ({ ...cat, key: cat.category })));
     }
   };
 
@@ -534,18 +551,69 @@ function CategoriesSection({ categories, goals }) {
   };
 
   /**
-   * Category order is the order goals are grouped in on every view, so this is
-   * a real setting rather than cosmetics. Buttons rather than drag-and-drop:
-   * they work under a thumb, they work from the keyboard, and they need no
-   * dependency. `commit` already writes `order` from array position.
+   * Category order is the order goals are grouped in on every view, so this is a
+   * real setting rather than decoration.
+   *
+   * Dragging runs on Pointer Events, so mouse, touch and pen are one code path
+   * and no drag library is needed for a list this size. The handle is also a
+   * keyboard control — focus it and use the arrow keys — because a drag that is
+   * the only way to reorder is unusable without a pointer.
    */
-  const move = (index, delta) => {
-    const target = index + delta;
-    if (target < 0 || target >= rows.length) return;
+  const moveTo = (from, to) => {
+    if (to < 0 || to >= rows.length || to === from) return null;
     const next = [...rows];
-    [next[index], next[target]] = [next[target], next[index]];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
     setRows(next);
-    commit(next);
+    return next;
+  };
+
+  const onHandleDown = (index) => (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setDragging({ key: rows[index].key, from: index, pointerId: event.pointerId });
+  };
+
+  const onHandleMove = (event) => {
+    if (!dragging || event.pointerId !== dragging.pointerId) return;
+    const current = latestRows.current.findIndex((row) => row.key === dragging.key);
+    if (current === -1) return;
+
+    // Land where the pointer is, by row midpoint, so the list reorders under
+    // the finger rather than after it is lifted.
+    const y = event.clientY;
+    const over = rowNodes.current.findIndex((node) => {
+      if (!node) return false;
+      const box = node.getBoundingClientRect();
+      return y >= box.top && y <= box.bottom;
+    });
+    if (over === -1 || over === current) return;
+    moveTo(current, over);
+  };
+
+  const endDrag = (event) => {
+    if (!dragging) return;
+    if (event?.pointerId !== undefined) {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    }
+    const landed = latestRows.current.findIndex((row) => row.key === dragging.key);
+    setDragging(null);
+    // Only write when the order actually changed.
+    if (landed !== -1 && landed !== dragging.from) commit(latestRows.current);
+  };
+
+  const cancelDrag = () => {
+    if (!dragging) return;
+    setDragging(null);
+    setRows(categories.map((cat) => ({ ...cat, key: cat.category })));
+  };
+
+  const onHandleKeyDown = (index) => (event) => {
+    const delta = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+    if (!delta) return;
+    event.preventDefault();
+    const next = moveTo(index, index + delta);
+    if (next) commit(next);
   };
 
   const add = () => {
@@ -556,77 +624,102 @@ function CategoriesSection({ categories, goals }) {
       return;
     }
     setAdding("");
-    commit([...rows, { category: name, order: rows.length, color: null }]);
+    commit([...rows, { category: name, order: rows.length, color: null, key: name }]);
   };
 
   return (
     <>
-      {rows.map((row, index) => (
-        <Box
-          key={`${row.category}-${index}`}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            py: 2,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <Typography
-            variant="overline"
-            sx={{ color: "text.secondary", width: 20, flexShrink: 0 }}
-            aria-hidden
+      {rows.map((row, index) => {
+        const isDragging = dragging?.key === row.key;
+        return (
+          <Box
+            key={row.key}
+            ref={(node) => {
+              rowNodes.current[index] = node;
+            }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              py: 2,
+              borderBottom: "1px solid",
+              borderColor: "divider",
+              // A bar line marks the row in hand, the same marker used for the
+              // current cadence and the current settings section.
+              borderLeft: "2px solid",
+              borderLeftColor: isDragging ? "chart.vermilion" : "transparent",
+              pl: 2,
+              bgcolor: isDragging ? "background.paper" : "transparent",
+              opacity: dragging && !isDragging ? 0.55 : 1,
+              transition: "opacity 120ms linear",
+            }}
           >
-            {index + 1}
-          </Typography>
+            <Box
+              role="button"
+              tabIndex={0}
+              aria-label={`Reorder ${row.category}, position ${index + 1} of ${rows.length}. Use the arrow keys to move it.`}
+              onPointerDown={onHandleDown(index)}
+              onPointerMove={onHandleMove}
+              onPointerUp={endDrag}
+              onPointerCancel={cancelDrag}
+              onKeyDown={onHandleKeyDown(index)}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 44,
+                height: 44,
+                flexShrink: 0,
+                cursor: dragging ? "grabbing" : "grab",
+                color: isDragging ? "chart.vermilion" : "text.secondary",
+                // Claim the gesture, or the browser scrolls the page instead of
+                // letting the row be dragged.
+                touchAction: "none",
+                "&:hover": { color: "text.primary" },
+              }}
+            >
+              <DragIndicatorIcon fontSize="small" />
+            </Box>
 
-          <TextField
-            value={row.category}
-            onChange={(event) =>
-              setRows((prev) => prev.map((item, i) => (i === index ? { ...item, category: event.target.value } : item)))
-            }
-            onBlur={(event) => rename(index, event.target.value)}
-            variant="standard"
-            sx={{ flexGrow: 1, minWidth: 0 }}
-            inputProps={{ "aria-label": `Category name, position ${index + 1} of ${rows.length}` }}
-          />
+            <Typography
+              variant="overline"
+              sx={{ color: "text.secondary", width: 20, flexShrink: 0 }}
+              aria-hidden
+            >
+              {index + 1}
+            </Typography>
 
-          {/* Goal counts are context, not a control; the first thing to give up
-              room when the row gets tight. */}
-          <Typography
-            variant="overline"
-            sx={{ color: "text.secondary", display: { xs: "none", sm: "block" }, flexShrink: 0 }}
-          >
-            {countFor(row.category)} goals
-          </Typography>
+            <TextField
+              value={row.category}
+              onChange={(event) =>
+                setRows((prev) => prev.map((item, i) => (i === index ? { ...item, category: event.target.value } : item)))
+              }
+              onBlur={(event) => rename(index, event.target.value)}
+              variant="standard"
+              sx={{ flexGrow: 1, minWidth: 0 }}
+              inputProps={{ "aria-label": `Category name, position ${index + 1} of ${rows.length}` }}
+            />
 
-          <IconButton
-            onClick={() => move(index, -1)}
-            aria-label={`Move ${row.category} up`}
-            disabled={saving || index === 0}
-            sx={{ width: 44, height: 44, flexShrink: 0 }}
-          >
-            <ArrowUpwardIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            onClick={() => move(index, 1)}
-            aria-label={`Move ${row.category} down`}
-            disabled={saving || index === rows.length - 1}
-            sx={{ width: 44, height: 44, flexShrink: 0 }}
-          >
-            <ArrowDownwardIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            onClick={() => remove(index)}
-            aria-label={`Delete ${row.category}`}
-            disabled={saving}
-            sx={{ width: 44, height: 44, flexShrink: 0 }}
-          >
-            <DeleteOutlineIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      ))}
+            {/* Goal counts are context, not a control; the first thing to give
+                up room when the row gets tight. */}
+            <Typography
+              variant="overline"
+              sx={{ color: "text.secondary", display: { xs: "none", sm: "block" }, flexShrink: 0 }}
+            >
+              {countFor(row.category)} goals
+            </Typography>
+
+            <IconButton
+              onClick={() => remove(index)}
+              aria-label={`Delete ${row.category}`}
+              disabled={saving || Boolean(dragging)}
+              sx={{ width: 44, height: 44, flexShrink: 0 }}
+            >
+              <DeleteOutlineIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        );
+      })}
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 3, mt: 5 }}>
         <TextField
