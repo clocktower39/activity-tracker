@@ -159,6 +159,27 @@ flat fill would have left them as the only distinction.
   side by side. Listening to both double-counts every tap on a phone, because the
   browser synthesises a compatibility mouse pair after `touchend`.
 
+## Settings
+
+An index and a body, not one long scroll.
+
+A file-explorer tree names every section — three folders, seven leaves — so what
+exists is visible without scrolling to find out. Picking a leaf opens that panel
+and closes the others, which keeps the body near one screen whatever you are
+doing. Panels also toggle on their own header, so several can be open at once
+when comparing.
+
+Folders start open beside the content and closed above it: on a phone the tree
+stacks on top, and left open it filled the first screen so every setting sat
+below the fold. Only folders the reader actually toggles override that.
+
+The open panel lives in the URL (`?s=`), so a section is linkable and the back
+button walks between them — the same rule as every other view.
+
+Nothing here is boxed. Folders and panels are labelled with tempo-mark caps over
+a rule, the current leaf is marked with the vermilion bar line the cadence
+switcher uses, and the disclosure is a chevron rather than a card that opens.
+
 ## Motion
 
 One authored moment: **the cadence**. When a ring reaches its target the arc closes

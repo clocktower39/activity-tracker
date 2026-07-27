@@ -1,16 +1,22 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useSearchParams } from "react-router";
 import {
   Box,
   Button,
+  Collapse,
   Container,
   IconButton,
   MenuItem,
   TextField,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import AddIcon from "@mui/icons-material/Add";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   changePassword,
   selectUser,
@@ -29,20 +35,45 @@ import { invalidate, resetHistory } from "../features/history/historySlice";
 import { normalizeWeekStart, todayKey, WEEK_DAYS } from "../lib/periods";
 import { selectThemeMode, setThemeMode, showToast } from "../features/ui/uiSlice";
 
-const Section = ({ title, description, children }) => (
-  <Box component="section" sx={{ mb: 12 }}>
-    <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 1 }}>
-      {title}
-    </Typography>
-    <Box sx={{ height: 2, bgcolor: "divider", mb: 4 }} />
-    {description && (
-      <Typography variant="body2" sx={{ color: "text.secondary", mb: 5, maxWidth: "60ch" }}>
-        {description}
-      </Typography>
-    )}
-    {children}
-  </Box>
-);
+/**
+ * Settings as an index and a body rather than one long scroll.
+ *
+ * The tree on the left is the whole map of the page — three folders, eight
+ * leaves — so what exists is visible without scrolling to find out. Each panel
+ * on the right collapses, and picking a leaf opens that one and closes the
+ * rest, which keeps the body roughly one screen whatever you are doing.
+ *
+ * The open panel is in the URL (`?s=`), so a section can be linked to and the
+ * back button walks between them, as everywhere else in this app.
+ */
+
+const GROUPS = [
+  { id: "preferences", label: "Preferences", items: ["appearance", "week-start"] },
+  { id: "account", label: "Account", items: ["profile", "password", "session"] },
+  { id: "goals", label: "Goals", items: ["categories", "hidden"] },
+];
+
+const SECTIONS = {
+  appearance: {
+    label: "Appearance",
+    description: "Dark suits the evening catch-up; light reads better in daylight.",
+  },
+  "week-start": {
+    label: "Start of the week",
+    description:
+      "Decides where weekly goals bucket, and where the bar lines fall in the week and month views. Changing it moves any weekly progress you have already recorded onto the new boundary.",
+  },
+  profile: { label: "Your details" },
+  password: { label: "Password" },
+  session: { label: "Session" },
+  categories: { label: "Categories", description: "Goals are grouped by these, in this order." },
+  hidden: {
+    label: "Hidden goals",
+    description: "These keep their history but stay off the chart. Bring one back whenever you like.",
+  },
+};
+
+const DEFAULT_SECTION = "appearance";
 
 export default function SettingsView() {
   const dispatch = useDispatch();
@@ -52,23 +83,72 @@ export default function SettingsView() {
   const hiddenGoals = useSelector(selectHiddenGoals);
   const allGoals = useSelector(selectAllGoals);
 
-  return (
-    <Container maxWidth="md" sx={{ pt: 8 }}>
-      <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
-        Settings
-      </Typography>
-      <Typography variant="h2" sx={{ mb: 10 }}>
-        {user?.firstName ? `${user.firstName}'s setup` : "Your setup"}
-      </Typography>
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focused = SECTIONS[searchParams.get("s")] ? searchParams.get("s") : DEFAULT_SECTION;
 
-      <AppearanceSection themeMode={themeMode} onChange={(mode) => dispatch(setThemeMode(mode))} />
-      <WeekStartSection user={user} />
-      <ProfileSection user={user} />
-      <CategoriesSection categories={categories} goals={allGoals} />
-      <HiddenSection goals={hiddenGoals} />
-      <PasswordSection isDemo={user?.isDemo} />
+  // Panels the user has opened by hand, on top of the focused one. Picking from
+  // the tree resets this, which is what makes the tree feel like navigation
+  // rather than a second set of toggles.
+  const [alsoOpen, setAlsoOpen] = useState(() => new Set());
+  const panelRefs = useRef({});
 
-      <Section title="Session">
+  // Folders start open beside the content and closed above it. On a phone the
+  // tree stacks on top, and left open it filled the first screen so every
+  // setting sat below the fold — the opposite of easy to navigate. Only the
+  // folders the user has actually toggled override this.
+  const theme = useTheme();
+  const compact = useMediaQuery(theme.breakpoints.down("md"));
+  const [groupOverrides, setGroupOverrides] = useState({});
+  const groupExpanded = (id) => groupOverrides[id] ?? !compact;
+
+  const isOpen = useCallback(
+    (id) => id === focused || alsoOpen.has(id),
+    [focused, alsoOpen]
+  );
+
+  const focus = useCallback(
+    (id) => {
+      setAlsoOpen(new Set());
+      setSearchParams(id === DEFAULT_SECTION ? {} : { s: id }, { replace: true });
+      if (compact) setGroupOverrides({});
+      // Let the panel expand before scrolling to where it ends up.
+      requestAnimationFrame(() => {
+        panelRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    },
+    [setSearchParams, compact]
+  );
+
+  const togglePanel = useCallback(
+    (id) => {
+      if (id === focused) {
+        // Closing the focused panel: hand focus to nothing rather than leaving
+        // a highlighted tree item with a closed body.
+        setSearchParams({ s: "none" }, { replace: true });
+        return;
+      }
+      setAlsoOpen((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+    },
+    [focused, setSearchParams]
+  );
+
+  const toggleGroup = (id) =>
+    setGroupOverrides((prev) => ({ ...prev, [id]: !groupExpanded(id) }));
+
+  const bodies = useMemo(
+    () => ({
+      appearance: (
+        <AppearanceSection themeMode={themeMode} onChange={(mode) => dispatch(setThemeMode(mode))} />
+      ),
+      "week-start": <WeekStartSection user={user} />,
+      profile: <ProfileSection user={user} />,
+      password: <PasswordSection isDemo={user?.isDemo} />,
+      session: (
         <Button
           variant="outlined"
           onClick={() => {
@@ -79,26 +159,195 @@ export default function SettingsView() {
         >
           Sign out
         </Button>
-      </Section>
+      ),
+      categories: <CategoriesSection categories={categories} goals={allGoals} />,
+      hidden: <HiddenSection goals={hiddenGoals} />,
+    }),
+    [dispatch, themeMode, user, categories, allGoals, hiddenGoals]
+  );
+
+  return (
+    <Container maxWidth="lg" sx={{ pt: 8 }}>
+      <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+        Settings
+      </Typography>
+      <Typography variant="h2" sx={{ mb: 8 }}>
+        {user?.firstName ? `${user.firstName}'s setup` : "Your setup"}
+      </Typography>
+
+      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: { xs: 5, md: 10 } }}>
+        <Box
+          component="nav"
+          aria-label="Settings sections"
+          sx={{
+            flex: { md: "0 0 208px" },
+            alignSelf: "flex-start",
+            position: { md: "sticky" },
+            top: { md: 88 },
+            width: "100%",
+          }}
+        >
+          {GROUPS.map((group) => {
+            const collapsed = !groupExpanded(group.id);
+            return (
+              <Box key={group.id} sx={{ mb: 4 }}>
+                <Box
+                  component="button"
+                  type="button"
+                  onClick={() => toggleGroup(group.id)}
+                  aria-expanded={!collapsed}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    width: "100%",
+                    minHeight: 32,
+                    px: 0,
+                    border: 0,
+                    bgcolor: "transparent",
+                    cursor: "pointer",
+                    color: "text.secondary",
+                    fontFamily: (t) => t.typography.overline.fontFamily,
+                    fontSize: (t) => t.typography.overline.fontSize,
+                    fontWeight: 600,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    "&:hover": { color: "text.primary" },
+                  }}
+                >
+                  {collapsed ? (
+                    <ChevronRightIcon sx={{ fontSize: 16 }} />
+                  ) : (
+                    <ExpandMoreIcon sx={{ fontSize: 16 }} />
+                  )}
+                  {group.label}
+                </Box>
+                <Box sx={{ height: 1, bgcolor: "divider", mt: 1 }} />
+
+                <Collapse in={!collapsed}>
+                  <Box sx={{ pt: 1 }}>
+                    {group.items.map((id) => {
+                      const active = id === focused;
+                      return (
+                        <Box
+                          key={id}
+                          component="button"
+                          type="button"
+                          onClick={() => focus(id)}
+                          aria-current={active ? "true" : undefined}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            width: "100%",
+                            minHeight: 36,
+                            textAlign: "left",
+                            border: 0,
+                            // A bar line marks the current item, the same marker
+                            // the cadence switcher uses.
+                            borderLeft: "2px solid",
+                            borderColor: active ? "chart.vermilion" : "transparent",
+                            pl: 3,
+                            bgcolor: "transparent",
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            fontSize: "0.8125rem",
+                            color: active ? "chart.vermilion" : "text.primary",
+                            "&:hover": { color: active ? "chart.vermilion" : "chart.brass" },
+                          }}
+                        >
+                          {SECTIONS[id].label}
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </Collapse>
+              </Box>
+            );
+          })}
+        </Box>
+
+        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          {GROUPS.flatMap((group) => group.items).map((id) => (
+            <Panel
+              key={id}
+              id={id}
+              title={SECTIONS[id].label}
+              description={SECTIONS[id].description}
+              open={isOpen(id)}
+              onToggle={() => togglePanel(id)}
+              innerRef={(node) => {
+                panelRefs.current[id] = node;
+              }}
+            >
+              {bodies[id]}
+            </Panel>
+          ))}
+        </Box>
+      </Box>
     </Container>
+  );
+}
+
+function Panel({ id, title, description, open, onToggle, innerRef, children }) {
+  return (
+    <Box component="section" ref={innerRef} sx={{ mb: 6, scrollMarginTop: 88 }}>
+      <Box
+        component="button"
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-controls={`panel-${id}`}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          width: "100%",
+          minHeight: 44,
+          px: 0,
+          border: 0,
+          bgcolor: "transparent",
+          cursor: "pointer",
+          color: open ? "text.primary" : "text.secondary",
+          fontFamily: (t) => t.typography.overline.fontFamily,
+          fontSize: (t) => t.typography.overline.fontSize,
+          fontWeight: 600,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          "&:hover": { color: "text.primary" },
+        }}
+      >
+        {open ? <ExpandMoreIcon sx={{ fontSize: 18 }} /> : <ChevronRightIcon sx={{ fontSize: 18 }} />}
+        {title}
+      </Box>
+      <Box sx={{ height: 2, bgcolor: open ? "chart.rule" : "divider", mb: 4 }} />
+
+      <Collapse in={open} unmountOnExit>
+        <Box id={`panel-${id}`} sx={{ pb: 6 }}>
+          {description && (
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 5, maxWidth: "60ch" }}>
+              {description}
+            </Typography>
+          )}
+          {children}
+        </Box>
+      </Collapse>
+    </Box>
   );
 }
 
 function AppearanceSection({ themeMode, onChange }) {
   return (
-    <Section title="Appearance" description="Dark suits the evening catch-up; light reads better in daylight.">
-      <TextField
-        select
-        label="Theme"
-        value={themeMode}
-        onChange={(event) => onChange(event.target.value)}
-        sx={{ minWidth: 220 }}
-      >
-        <MenuItem value="dark">Dark</MenuItem>
-        <MenuItem value="light">Light</MenuItem>
-        <MenuItem value="system">Match my device</MenuItem>
-      </TextField>
-    </Section>
+    <TextField
+      select
+      label="Theme"
+      value={themeMode}
+      onChange={(event) => onChange(event.target.value)}
+      sx={{ minWidth: 220 }}
+    >
+      <MenuItem value="dark">Dark</MenuItem>
+      <MenuItem value="light">Light</MenuItem>
+      <MenuItem value="system">Match my device</MenuItem>
+    </TextField>
   );
 }
 
@@ -141,25 +390,20 @@ function WeekStartSection({ user }) {
   };
 
   return (
-    <Section
-      title="Start of the week"
-      description="Decides where weekly goals bucket, and where the bar lines fall in the week and month views. Changing it moves any weekly progress you have already recorded onto the new boundary."
+    <TextField
+      select
+      label="Weeks begin on"
+      value={current}
+      onChange={(event) => change(event.target.value)}
+      disabled={saving}
+      sx={{ minWidth: 220 }}
     >
-      <TextField
-        select
-        label="Weeks begin on"
-        value={current}
-        onChange={(event) => change(event.target.value)}
-        disabled={saving}
-        sx={{ minWidth: 220 }}
-      >
-        {WEEK_DAYS.map((day) => (
-          <MenuItem key={day.value} value={day.value}>
-            {day.label}
-          </MenuItem>
-        ))}
-      </TextField>
-    </Section>
+      {WEEK_DAYS.map((day) => (
+        <MenuItem key={day.value} value={day.value}>
+          {day.label}
+        </MenuItem>
+      ))}
+    </TextField>
   );
 }
 
@@ -188,7 +432,7 @@ function ProfileSection({ user }) {
   };
 
   return (
-    <Section title="Account">
+    <>
       <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap", mb: 4 }}>
         <TextField
           label="First name"
@@ -215,7 +459,7 @@ function ProfileSection({ user }) {
           </Button>
         )}
       </Box>
-    </Section>
+    </>
   );
 }
 
@@ -284,7 +528,7 @@ function CategoriesSection({ categories, goals }) {
   };
 
   return (
-    <Section title="Categories" description="Goals are grouped by these, in this order.">
+    <>
       {rows.map((row, index) => (
         <Box
           key={`${row.category}-${index}`}
@@ -331,52 +575,44 @@ function CategoriesSection({ categories, goals }) {
           Add
         </Button>
       </Box>
-    </Section>
+    </>
   );
 }
 
 function HiddenSection({ goals }) {
   const dispatch = useDispatch();
 
-  return (
-    <Section
-      title="Hidden goals"
-      description="These keep their history but stay off the chart. Bring one back whenever you like."
+  if (goals.length === 0) {
+    return (
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+        Nothing is hidden.
+      </Typography>
+    );
+  }
+
+  return goals.map((goal) => (
+    <Box
+      key={goal._id}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 3,
+        py: 3,
+        borderBottom: "1px solid",
+        borderColor: "divider",
+      }}
     >
-      {goals.length === 0 ? (
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          Nothing is hidden.
+      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+        <Typography variant="body1">{goal.task}</Typography>
+        <Typography variant="overline" sx={{ color: "text.secondary" }}>
+          {goal.category}
         </Typography>
-      ) : (
-        goals.map((goal) => (
-          <Box
-            key={goal._id}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 3,
-              py: 3,
-              borderBottom: "1px solid",
-              borderColor: "divider",
-            }}
-          >
-            <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-              <Typography variant="body1">{goal.task}</Typography>
-              <Typography variant="overline" sx={{ color: "text.secondary" }}>
-                {goal.category}
-              </Typography>
-            </Box>
-            <Button
-              size="small"
-              onClick={() => dispatch(saveGoal({ id: goal._id, patch: { hidden: false } }))}
-            >
-              Unhide
-            </Button>
-          </Box>
-        ))
-      )}
-    </Section>
-  );
+      </Box>
+      <Button size="small" onClick={() => dispatch(saveGoal({ id: goal._id, patch: { hidden: false } }))}>
+        Unhide
+      </Button>
+    </Box>
+  ));
 }
 
 function PasswordSection({ isDemo }) {
@@ -405,52 +641,48 @@ function PasswordSection({ isDemo }) {
 
   if (isDemo) {
     return (
-      <Section title="Password">
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          The demo account&apos;s password is shared, so it can&apos;t be changed.
-        </Typography>
-      </Section>
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+        The demo account&apos;s password is shared, so it can&apos;t be changed.
+      </Typography>
     );
   }
 
   return (
-    <Section title="Password">
-      <Box component="form" onSubmit={submit} sx={{ display: "flex", flexDirection: "column", gap: 4, maxWidth: 360 }}>
-        <TextField
-          label="Current password"
-          type="password"
-          autoComplete="current-password"
-          value={form.current}
-          onChange={(event) => setForm((p) => ({ ...p, current: event.target.value }))}
-        />
-        <TextField
-          label="New password"
-          type="password"
-          autoComplete="new-password"
-          value={form.next}
-          onChange={(event) => setForm((p) => ({ ...p, next: event.target.value }))}
-        />
-        <TextField
-          label="Confirm new password"
-          type="password"
-          autoComplete="new-password"
-          value={form.confirm}
-          onChange={(event) => setForm((p) => ({ ...p, confirm: event.target.value }))}
-        />
-        {error && (
-          <Typography role="alert" variant="body2" sx={{ color: "chart.vermilion" }}>
-            {error}
-          </Typography>
-        )}
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={saving || !form.current || !form.next}
-          sx={{ alignSelf: "flex-start" }}
-        >
-          {saving ? "Changing…" : "Change password"}
-        </Button>
-      </Box>
-    </Section>
+    <Box component="form" onSubmit={submit} sx={{ display: "flex", flexDirection: "column", gap: 4, maxWidth: 360 }}>
+      <TextField
+        label="Current password"
+        type="password"
+        autoComplete="current-password"
+        value={form.current}
+        onChange={(event) => setForm((p) => ({ ...p, current: event.target.value }))}
+      />
+      <TextField
+        label="New password"
+        type="password"
+        autoComplete="new-password"
+        value={form.next}
+        onChange={(event) => setForm((p) => ({ ...p, next: event.target.value }))}
+      />
+      <TextField
+        label="Confirm new password"
+        type="password"
+        autoComplete="new-password"
+        value={form.confirm}
+        onChange={(event) => setForm((p) => ({ ...p, confirm: event.target.value }))}
+      />
+      {error && (
+        <Typography role="alert" variant="body2" sx={{ color: "chart.vermilion" }}>
+          {error}
+        </Typography>
+      )}
+      <Button
+        type="submit"
+        variant="contained"
+        disabled={saving || !form.current || !form.next}
+        sx={{ alignSelf: "flex-start" }}
+      >
+        {saving ? "Changing…" : "Change password"}
+      </Button>
+    </Box>
   );
 }
