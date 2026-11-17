@@ -24,6 +24,7 @@ const blank = {
   defaultTarget: "1",
   interval: "daily",
   trackingMode: "target",
+  rolling: true,
   hidden: false,
 };
 
@@ -35,6 +36,7 @@ const toForm = (goal) =>
         defaultTarget: String(goal.defaultTarget ?? 1),
         interval: goal.interval ?? "daily",
         trackingMode: goal.trackingMode === "more" ? "more" : "target",
+        rolling: goal.rolling !== false,
         hidden: Boolean(goal.hidden),
       }
     : blank;
@@ -78,6 +80,7 @@ export default function GoalFormDialog({ open, goal = null, onClose, onDeleted }
       defaultTarget: Number(form.defaultTarget),
       interval: form.interval,
       trackingMode: form.trackingMode,
+      rolling: form.rolling,
       hidden: form.hidden,
     };
 
@@ -180,6 +183,28 @@ export default function GoalFormDialog({ open, goal = null, onClose, onDeleted }
           <MenuItem value="target">Done is done</MenuItem>
           <MenuItem value="more">More is better</MenuItem>
         </TextField>
+
+        {(form.interval === "weekly" || form.interval === "monthly") && (
+          <FormControlLabel
+            control={
+              <Switch checked={form.rolling} onChange={(event) => set("rolling")(event.target.checked)} />
+            }
+            label={
+              <Typography variant="body2">
+                Rolling window{" "}
+                <Typography component="span" variant="body2" sx={{ color: "text.secondary" }}>
+                  {form.rolling
+                    ? form.interval === "weekly"
+                      ? "— counts the last 7 days, whatever day it is"
+                      : "— counts the last month, whatever the date"
+                    : form.interval === "weekly"
+                      ? "— off: resets at the start of each week"
+                      : "— off: resets on the 1st of each month"}
+                </Typography>
+              </Typography>
+            }
+          />
+        )}
 
         {goal && (
           <FormControlLabel

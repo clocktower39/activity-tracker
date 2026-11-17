@@ -62,6 +62,31 @@ const normalizeInterval = (value) => {
   return INTERVAL_SET.has(normalized) ? normalized : "daily";
 };
 
+/**
+ * Rolling cadences. A weekly or monthly goal is "rolling" unless it opts out:
+ * its window is the trailing 7 days (or month) ending on the day being looked
+ * at, not the calendar week or month. Rolling goals record taps against the
+ * day they happened, so storage for them is daily.
+ *
+ * `rolling` is read as "anything but false" so goals created before the field
+ * existed are rolling without a migration.
+ */
+const ROLLING_INTERVALS = new Set(["weekly", "monthly"]);
+
+const isRolling = (goal) =>
+  Boolean(goal) && ROLLING_INTERVALS.has(normalizeInterval(goal.interval)) && goal.rolling !== false;
+
+/** The interval a goal's history rows are written under. */
+const storageInterval = (goal) => (isRolling(goal) ? "daily" : normalizeInterval(goal?.interval));
+
+/** First day of the rolling window that ends on `date`, inclusive. */
+const rollingWindowStart = (interval, date) => {
+  const day = dayjs.utc(date).startOf("day");
+  return normalizeInterval(interval) === "monthly"
+    ? day.subtract(1, "month").add(1, "day")
+    : day.subtract(6, "day");
+};
+
 /** Start of the week containing `date`, for an arbitrary first day of week. */
 const startOfWeek = (date, weekStart = DEFAULT_WEEK_START) => {
   const base = dayjs.utc(date).startOf("day");
@@ -157,5 +182,8 @@ module.exports = {
   addPeriods,
   listPeriodStarts,
   getQueryRange,
+  isRolling,
+  storageInterval,
+  rollingWindowStart,
   dayjs,
 };

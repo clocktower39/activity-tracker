@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const GoalHistory = require("../models/goalHistory");
 const Goal = require("../models/goal");
 const { ApiError, asyncHandler } = require("../lib/apiError");
-const { getQueryRange, startOfWeek, weekStartName, dayjs } = require("../lib/periods");
+const { getQueryRange, startOfWeek, weekStartName, isRolling, dayjs } = require("../lib/periods");
 
 const BUCKETS = { day: "day", week: "week", month: "month", year: "year" };
 
@@ -272,7 +272,20 @@ const streaks = asyncHandler(async (req, res) => {
   const result = goals.map((goal) => {
     const unit = unitFor[goal.interval] || "day";
     // Newest first, so index 0 is the most recent completed period.
-    const completed = completedByGoal.get(String(goal._id)) || [];
+    let completed = completedByGoal.get(String(goal._id)) || [];
+    // A rolling goal's rows are days. Its streak is still counted in its own
+    // periods, so fold the days into the periods that hold them, once each.
+    if (isRolling(goal)) {
+      const seen = new Set();
+      completed = completed
+        .map((day) => (unit === "week" ? startOfWeek(day, res.locals.user.weekStart) : day.startOf(unit)))
+        .filter((start) => {
+          const key = start.format("YYYY-MM-DD");
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+    }
 
     let current = 0;
     let longest = 0;

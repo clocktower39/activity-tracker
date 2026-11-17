@@ -15,11 +15,19 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import EditIcon from "@mui/icons-material/EditOutlined";
 import GoalFormDialog from "./GoalFormDialog";
 import PeriodBars from "./PeriodBars";
-import { fetchRange, recordProgress } from "../features/history/historySlice";
+import {
+  fetchRange,
+  fetchRolling,
+  recordProgress,
+  rollingProgress,
+  selectRolling,
+} from "../features/history/historySlice";
 import { useAutoFetch } from "../hooks/useAutoFetch";
 import {
   addPeriods,
+  asDayGoal,
   dayjs,
+  isRolling,
   entryKey,
   getPeriodKey,
   periodLabel,
@@ -32,9 +40,17 @@ const HISTORY_PERIODS = 14;
  * Everything a ring cannot hold: exact adjustment, a note, and the recent run of
  * periods. Reached by long press or by Enter on the ring.
  */
-export default function GoalSheet({ goal, date, onClose }) {
+export default function GoalSheet({ goal: sourceGoal, date, onClose }) {
   const dispatch = useDispatch();
   const entries = useSelector((state) => state.history.entries);
+  // A rolling goal is edited one day at a time; its window is summarised above.
+  const rolling = isRolling(sourceGoal);
+  const goal = useMemo(() => (sourceGoal ? asDayGoal(sourceGoal) : null), [sourceGoal]);
+  const windowState = useSelector(selectRolling(date));
+  useAutoFetch(
+    () => (rolling && !windowState ? dispatch(fetchRolling(date)) : undefined),
+    [rolling, date, Boolean(windowState)]
+  );
   const [editing, setEditing] = useState(false);
   const [noteDraft, setNoteDraft] = useState(null);
 
@@ -99,6 +115,7 @@ export default function GoalSheet({ goal, date, onClose }) {
   if (!goal) return null;
 
   const state = progressState(achieved, target, goal.trackingMode);
+  const windowReading = rolling ? rollingProgress(sourceGoal, date, entries, windowState) : null;
 
   return (
     <>
@@ -128,6 +145,8 @@ export default function GoalSheet({ goal, date, onClose }) {
           </Box>
 
           <Box sx={{ height: 1, bgcolor: "divider" }} />
+
+          {windowReading && <RollingSummary goal={sourceGoal} reading={windowReading} />}
 
           <Box
             sx={{
@@ -167,7 +186,7 @@ export default function GoalSheet({ goal, date, onClose }) {
                 {achieved}
               </Typography>
               <Typography variant="overline" sx={{ color: "text.secondary" }}>
-                of {target}
+                {rolling ? "on this day" : `of ${target}`}
               </Typography>
             </Box>
 
@@ -212,7 +231,7 @@ export default function GoalSheet({ goal, date, onClose }) {
 
       <GoalFormDialog
         open={editing}
-        goal={goal}
+        goal={sourceGoal}
         onClose={() => setEditing(false)}
         onDeleted={() => {
           setEditing(false);
@@ -222,3 +241,73 @@ export default function GoalSheet({ goal, date, onClose }) {
     </>
   );
 }
+
+/**
+ * A rolling goal's window at a glance: how much of the target the trailing
+ * window holds, and how long since it was last done.
+ */
+function RollingSummary({ goal, reading }) {
+  const span = normalizeSpan(goal.interval);
+  const met = reading.target > 0 && reading.achieved >= reading.target;
+  const lastLabel = !reading.ready
+    ? "…"
+    : reading.lastDone === null
+      ? "Not yet"
+      : reading.daysSince === 0
+        ? "Today"
+        : reading.daysSince === 1
+          ? "Yesterday"
+          : `${reading.daysSince} days ago`;
+  const lastDate =
+    reading.lastDone && reading.daysSince > 1 ? dayjs.utc(reading.lastDone).format("ddd D MMM") : null;
+
+  return (
+    <>
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1px 1fr", px: 6, py: 5 }}>
+        <Box>
+          <Typography variant="overline" sx={{ color: "text.secondary", display: "block" }}>
+            {span}
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: (t) => t.typography.h1.fontFamily,
+              fontVariantNumeric: "tabular-nums",
+              fontSize: "1.75rem",
+              lineHeight: 1.1,
+              color: met ? "chart.brass" : reading.achieved > 0 ? "chart.vermilion" : "text.secondary",
+            }}
+          >
+            {reading.ready ? reading.achieved : "–"}
+            <Typography component="span" variant="overline" sx={{ color: "text.secondary", ml: 1 }}>
+              of {reading.target}
+            </Typography>
+          </Typography>
+        </Box>
+        <Box sx={{ bgcolor: "divider" }} />
+        <Box sx={{ pl: 5 }}>
+          <Typography variant="overline" sx={{ color: "text.secondary", display: "block" }}>
+            Last done
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: (t) => t.typography.h1.fontFamily,
+              fontSize: "1.75rem",
+              lineHeight: 1.1,
+              color: reading.lastDone === null ? "chart.vermilion" : "text.primary",
+            }}
+          >
+            {lastLabel}
+          </Typography>
+          {lastDate && (
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              {lastDate}
+            </Typography>
+          )}
+        </Box>
+      </Box>
+      <Box sx={{ height: 1, bgcolor: "divider" }} />
+    </>
+  );
+}
+
+const normalizeSpan = (interval) => (interval === "monthly" ? "Last month" : "Last 7 days");

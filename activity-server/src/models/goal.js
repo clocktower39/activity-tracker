@@ -16,6 +16,9 @@ const goalSchema = new mongoose.Schema(
     // achievement (take medication). "more": beyond the target keeps counting and
     // earns laps (push-ups). Drives how the ring renders past 100%.
     trackingMode: { type: String, enum: ["target", "more"], default: "target" },
+    // Weekly and monthly goals count a trailing window (the last 7 days, the
+    // last month) rather than the calendar week or month. See lib/periods.js.
+    rolling: { type: Boolean, default: true },
     category: { type: String, required: true, trim: true },
     order: { type: Number, required: true, default: 0 },
     accountId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },

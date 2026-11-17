@@ -12,6 +12,25 @@ const STROKE = 7;
 
 const circumference = (r) => 2 * Math.PI * r;
 
+/** "today", "yesterday", "3d ago" — short enough for the smallest dial's cell. */
+const sinceShort = (days) =>
+  days === null || days === undefined
+    ? "not yet"
+    : days <= 0
+      ? "today"
+      : days === 1
+        ? "yesterday"
+        : `${days}d ago`;
+
+const sinceLong = (days) =>
+  days === null || days === undefined
+    ? "Not done yet"
+    : days <= 0
+      ? "Last done today"
+      : days === 1
+        ? "Last done yesterday"
+        : `Last done ${days} days ago`;
+
 const STATE_LABEL = {
   empty: "not started",
   partial: "in progress",
@@ -33,6 +52,7 @@ function Ring({
   size: sizeOverride,
   pending = false,
   error = null,
+  since = null,
   onIncrement,
   onOpen,
 }) {
@@ -80,9 +100,11 @@ function Ring({
   const trackC = circumference(TRACK_R);
   const lapC = circumference(LAP_R);
 
-  const label = `${goal.task}. ${achieved} of ${target}, ${STATE_LABEL[state]}.${
+  const label = `${goal.task}. ${achieved} of ${target}${
+    since ? ` in the last ${since.windowDays === 7 ? "7 days" : "month"}` : ""
+  }, ${STATE_LABEL[state]}.${
     mark ? ` ${mark === "f" ? "forte" : mark === "ff" ? "fortissimo" : "beyond"}.` : ""
-  }`;
+  }${since ? ` ${sinceLong(since.daysSince)}.` : ""}`;
 
   return (
     <Box
@@ -259,6 +281,8 @@ function Ring({
         {goal.task}
       </Typography>
 
+      {since && <Since days={since.daysSince} windowDays={since.windowDays} width={size} />}
+
       {error && (
         <Typography
           id={`${goal._id}-error`}
@@ -269,6 +293,54 @@ function Ring({
           {error}
         </Typography>
       )}
+    </Box>
+  );
+}
+
+/**
+ * How long since a rolling goal was last done: a word, and beneath it a hairline
+ * that drains across the window — full on the day, empty once the window has
+ * passed it by. The same rule-as-progress device the category rows use.
+ */
+function Since({ days, windowDays, width }) {
+  const theme = useTheme();
+  const chart = theme.palette.chart;
+  const never = days === null || days === undefined;
+  const remaining = never ? 0 : Math.max(0, 1 - days / windowDays);
+  const lapsed = never || days >= windowDays;
+  const tone = lapsed ? chart.vermilion : days <= 0 ? chart.brass : chart.inkMuted;
+
+  return (
+    <Box aria-hidden sx={{ width: Math.max(44, width * 0.7), mt: -0.5 }}>
+      <Typography
+        component="span"
+        sx={{
+          display: "block",
+          textAlign: "center",
+          fontFamily: (t) => t.typography.overline.fontFamily,
+          fontSize: 10.5,
+          lineHeight: 1.2,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          fontVariantNumeric: "tabular-nums",
+          color: tone,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {sinceShort(days)}
+      </Typography>
+      <Box sx={{ position: "relative", height: 2, mt: 0.75, bgcolor: "divider" }}>
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            bgcolor: tone,
+            transformOrigin: "left center",
+            transform: `scaleX(${remaining})`,
+            transition: "transform 200ms cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+        />
+      </Box>
     </Box>
   );
 }

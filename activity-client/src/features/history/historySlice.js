@@ -1,6 +1,14 @@
 import { createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
 import { api } from "../../app/api";
-import { entryKey, getPeriodKey, normalizeInterval, todayKey } from "../../lib/periods";
+import {
+  daysBetween,
+  entryKey,
+  getPeriodKey,
+  isRolling,
+  normalizeInterval,
+  storageInterval,
+  todayKey,
+} from "../../lib/periods";
 
 /**
  * History cache.
@@ -35,6 +43,9 @@ const storeEntries = (state, rows) => {
     state.entries[key] = entry;
   });
 };
+
+/** Target a freshly written row starts with — a rolling goal's day row is "done that day". */
+const rowTarget = (goal) => (isRolling(goal) ? 1 : Number(goal.defaultTarget) || 0);
 
 /** True when some already-loaded range fully covers the one being asked for. */
 const isCovered = (state, { from, to, interval }) => {
@@ -73,6 +84,25 @@ export const fetchRange = createAsyncThunk(
       const key = rangeKey(params);
       if (state.ranges[key] === "ready" || state.ranges[key] === "loading") return false;
       return !isCovered(state, params);
+    },
+  }
+);
+
+/**
+ * What each rolling goal's window holds before `date`, and when it was last
+ * done. The day row for `date` lives in `entries` like any other, so a tap only
+ * touches that row and the ring adds the two together.
+ */
+export const fetchRolling = createAsyncThunk(
+  "history/fetchRolling",
+  async (date, { signal }) => {
+    const data = await api.historyRolling(date, signal);
+    return { date, goals: data.goals };
+  },
+  {
+    condition: (date, { getState }) => {
+      const status = getState().history.rolling[date]?.status;
+      return status !== "ready" && status !== "loading";
     },
   }
 );
@@ -136,7 +166,7 @@ export const recordProgress = createAsyncThunk(
   async ({ goal, date, delta, achieved, note }) => {
     const data = await api.recordProgress({
       goalId: goal._id,
-      date: getPeriodKey(goal.interval, date),
+      date: getPeriodKey(storageInterval(goal), date),
       ...(achieved !== undefined ? { achieved } : { delta }),
       ...(note !== undefined ? { note } : {}),
     });
@@ -154,6 +184,8 @@ const initialState = {
   // say so rather than render as an empty chart.
   statsErrors: {},
   streaks: {},
+  // Keyed by date: { status, goals: { [goalId]: { prior, lastBefore, windowStart } } }.
+  rolling: {},
   pending: {},
   errors: {},
 };
@@ -168,6 +200,7 @@ const historySlice = createSlice({
       state.dates = {};
       state.ranges = {};
       state.summaries = {};
+      state.rolling = {};
     },
     dismissError(state, action) {
       delete state.errors[action.payload];
@@ -216,15 +249,33 @@ const historySlice = createSlice({
       .addCase(fetchMatrix.fulfilled, (state, action) => {
         state.matrices[action.payload.key] = action.payload.cells;
       })
+      .addCase(fetchRolling.pending, (state, action) => {
+        state.rolling[action.meta.arg] = { status: "loading", goals: state.rolling[action.meta.arg]?.goals };
+      })
+      .addCase(fetchRolling.fulfilled, (state, action) => {
+        const goals = {};
+        action.payload.goals.forEach((row) => {
+          goals[String(row.goalId)] = {
+            prior: Number(row.prior) || 0,
+            lastBefore: row.lastBefore || null,
+            windowStart: row.windowStart,
+          };
+        });
+        state.rolling[action.payload.date] = { status: "ready", goals };
+      })
+      .addCase(fetchRolling.rejected, (state, action) => {
+        if (action.meta.aborted) delete state.rolling[action.meta.arg];
+        else state.rolling[action.meta.arg] = { status: "error", goals: state.rolling[action.meta.arg]?.goals };
+      })
       .addCase(fetchStreaks.fulfilled, (state, action) => {
         state.streaks[action.payload.key] = action.payload.streaks;
       })
 
       .addCase(recordProgress.pending, (state, action) => {
         const { goal, date, delta, achieved, note } = action.meta.arg;
-        const key = entryKey(goal._id, goal.interval, date);
+        const key = entryKey(goal._id, storageInterval(goal), date);
         const existing = state.entries[key];
-        const target = existing?.target ?? (Number(goal.defaultTarget) || 0);
+        const target = existing?.target ?? rowTarget(goal);
 
         const before = existing?.achieved ?? 0;
         const next =
@@ -233,8 +284,8 @@ const historySlice = createSlice({
         state.entries[key] = {
           ...(existing || {
             goalId: String(goal._id),
-            interval: normalizeInterval(goal.interval),
-            periodKey: getPeriodKey(goal.interval, date),
+            interval: storageInterval(goal),
+            periodKey: getPeriodKey(storageInterval(goal), date),
             note: "",
           }),
           target,
@@ -250,7 +301,17 @@ const historySlice = createSlice({
       })
       .addCase(recordProgress.fulfilled, (state, action) => {
         const { goal, date, entry } = action.payload;
-        const key = entryKey(goal._id, goal.interval, date);
+        const key = entryKey(goal._id, storageInterval(goal), date);
+
+        // A day row feeds the windows of the days after it. Those cached windows
+        // are now stale; the one for this date is not, because it excludes the
+        // date's own row.
+        if (goal.windowInterval || isRolling(goal)) {
+          const day = getPeriodKey("daily", date);
+          Object.keys(state.rolling).forEach((cached) => {
+            if (cached !== day) delete state.rolling[cached];
+          });
+        }
         state.pending[key] = Math.max(0, (state.pending[key] || 1) - 1);
 
         // Only trust the server's value once every optimistic write has landed;
@@ -262,7 +323,7 @@ const historySlice = createSlice({
       })
       .addCase(recordProgress.rejected, (state, action) => {
         const { goal, date } = action.meta.arg;
-        const key = entryKey(goal._id, goal.interval, date);
+        const key = entryKey(goal._id, storageInterval(goal), date);
         state.pending[key] = Math.max(0, (state.pending[key] || 1) - 1);
 
         if (state.pending[key] === 0) {
@@ -275,7 +336,15 @@ const historySlice = createSlice({
           }
         }
         state.errors[key] = action.error?.message || "That didn't save";
-      });
+      })
+      // A goal turning rolling on or off, or changing cadence, changes what its
+      // window holds. Matched by type so this slice need not import goalsSlice.
+      .addMatcher(
+        (action) => /^goals\/(create|save|remove)\/fulfilled$/.test(action.type),
+        (state) => {
+          state.rolling = {};
+        }
+      );
   },
 });
 
@@ -304,6 +373,58 @@ export const selectMatrix = (bucket, from, to) => (state) =>
 export const selectStatsError = (bucket, from, to) => (state) =>
   state.history.statsErrors[`${bucket}|${from}|${to}`] || null;
 
+export const selectRolling = (date) => (state) => state.history.rolling[date] || null;
+
+/**
+ * A rolling goal's ring on `date`: its window before the day, plus the day's own
+ * row (which carries any optimistic taps). Also when it was last done.
+ */
+export const rollingProgress = (goal, date, entries, rolling) => {
+  const info = rolling?.goals?.[String(goal._id)];
+  const day = entries[entryKey(goal._id, "daily", date)];
+  const dayCount = day?.achieved ?? 0;
+  const lastDone = dayCount > 0 ? date : (info?.lastBefore ?? null);
+  return {
+    achieved: (info?.prior ?? 0) + dayCount,
+    target: Number(goal.defaultTarget) || 0,
+    lastDone,
+    daysSince: lastDone ? daysBetween(lastDone, date) : null,
+    windowStart: info?.windowStart ?? null,
+    ready: Boolean(info),
+    key: entryKey(goal._id, "daily", date),
+  };
+};
+
+/**
+ * What one goal's ring shows on `date`. A rolling goal reads its trailing window
+ * and carries how long since it was last done; everything else reads its period.
+ */
+export const ringReading = (goal, date, entries, rolling) => {
+  if (isRolling(goal)) {
+    const r = rollingProgress(goal, date, entries, rolling);
+    return {
+      key: r.key,
+      achieved: r.achieved,
+      target: r.target,
+      since: r.ready
+        ? {
+            daysSince: r.daysSince,
+            windowDays: r.windowStart ? daysBetween(r.windowStart, date) + 1 : 7,
+          }
+        : null,
+    };
+  }
+  const key = entryKey(goal._id, goal.interval, date);
+  const entry = entries[key];
+  return {
+    key,
+    achieved: entry?.achieved ?? 0,
+    target: entry?.target ?? (Number(goal.defaultTarget) || 0),
+    since: null,
+  };
+};
+
+
 export const selectStreaks = (days) => (state) =>
   state.history.streaks[`${days}|${todayKey()}`] || null;
 
@@ -312,11 +433,11 @@ export const makeSelectProgress = () =>
   createSelector(
     [selectEntries, selectErrors, (_state, props) => props],
     (entries, errors, { goal, date }) => {
-      const key = entryKey(goal._id, goal.interval, date);
+      const key = entryKey(goal._id, storageInterval(goal), date);
       const entry = entries[key];
       return {
         achieved: entry?.achieved ?? 0,
-        target: entry?.target ?? (Number(goal.defaultTarget) || 0),
+        target: entry?.target ?? rowTarget(goal),
         note: entry?.note ?? "",
         error: errors[key] || null,
       };

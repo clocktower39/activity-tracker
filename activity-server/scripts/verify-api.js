@@ -176,6 +176,8 @@ const main = async () => {
     category: "Verification",
     defaultTarget: 1,
     interval: "weekly",
+    // Calendar weeks are what re-bucketing is about; rolling goals store days.
+    rolling: false,
   });
   const weeklyGoal = created.json?.goal;
   check("creates a weekly goal", created.status === 201 && !!weeklyGoal);
@@ -223,6 +225,53 @@ const main = async () => {
 
     const removed = await call("DELETE", `/goals/${weeklyGoal._id}`);
     check("cleans up the throwaway goal", removed.status === 200);
+  }
+
+  console.log("\nRolling windows");
+  const shift = (days) => new Date(Date.parse(today) + days * 86400000).toISOString().slice(0, 10);
+  const rollingCreated = await call("POST", "/goals", {
+    task: `__verify_rolling_${Date.now()}`,
+    category: "Verification",
+    defaultTarget: 3,
+    interval: "weekly",
+  });
+  const rollingGoal = rollingCreated.json?.goal;
+  check("a new weekly goal is rolling by default", rollingCreated.status === 201 && rollingGoal?.rolling === true);
+
+  if (rollingGoal) {
+    const tap = (date) => call("POST", "/history/progress", { goalId: rollingGoal._id, date, delta: 1 });
+    const inside = await tap(shift(-2));
+    await tap(shift(-8));
+    await tap(today);
+    check(
+      "a rolling tap is stored against its day",
+      inside.json?.entry?.interval === "daily" &&
+        new Date(inside.json.entry.periodStart).toISOString().slice(0, 10) === shift(-2)
+    );
+
+    const windowFor = async (date) => {
+      const res = await call("GET", `/history/rolling?date=${date}`);
+      return { res, row: (res.json?.goals || []).find((g) => String(g.goalId) === String(rollingGoal._id)) };
+    };
+
+    const now = await windowFor(today);
+    check("rolling endpoint responds", now.res.status === 200 && !!now.row, bytes(now.res.size));
+    check(
+      "the window holds the last 7 days only, excluding the day itself",
+      now.row?.prior === 1,
+      `prior ${now.row?.prior}, window from ${now.row?.windowStart}`
+    );
+    check("reports the last day done before the date", now.row?.lastBefore === shift(-2), `${now.row?.lastBefore}`);
+
+    const earlier = await windowFor(shift(-3));
+    check("an earlier date sees only what came before it", earlier.row?.lastBefore === shift(-8) && earlier.row?.prior === 1);
+
+    const optOut = await call("PATCH", `/goals/${rollingGoal._id}`, { rolling: false });
+    const afterOptOut = await windowFor(today);
+    check("opting out removes the goal from rolling reads", optOut.json?.goal?.rolling === false && !afterOptOut.row);
+
+    const removed = await call("DELETE", `/goals/${rollingGoal._id}`);
+    check("cleans up the rolling goal", removed.status === 200);
   }
 
   console.log("\nToken rotation");

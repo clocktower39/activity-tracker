@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const GoalHistory = require("../models/goalHistory");
 const Goal = require("../models/goal");
 const { ApiError, asyncHandler } = require("../lib/apiError");
@@ -6,6 +7,9 @@ const {
   normalizeInterval,
   getPeriodStartDate,
   getQueryRange,
+  isRolling,
+  storageInterval,
+  rollingWindowStart,
   dayjs,
 } = require("../lib/periods");
 
@@ -103,9 +107,12 @@ const recordProgress = asyncHandler(async (req, res) => {
   // Same as above: the client sends the date it is displaying, so a tap lands
   // on the day the user is looking at rather than the server's UTC day.
   const when = date ? parseDate(date, "date") : dayjs.utc();
-  const interval = normalizeInterval(goal.interval);
+  // A rolling goal records against the day the tap happened, and each day row
+  // reads as "done that day" (target 1); the goal's own target applies to the
+  // trailing window, which is summed on read. See getRolling.
+  const interval = storageInterval(goal);
   const periodStart = getPeriodStartDate(interval, when, res.locals.user.weekStart);
-  const target = Number(goal.defaultTarget) || 0;
+  const target = isRolling(goal) ? 1 : Number(goal.defaultTarget) || 0;
 
   const filter = { goalId: goal._id, interval, periodStart };
   const update = {
@@ -162,4 +169,66 @@ const recordProgress = asyncHandler(async (req, res) => {
   res.json({ entry: serialize(row) });
 });
 
-module.exports = { getForDate, getRange, recordProgress };
+/**
+ * Rows a rolling goal's window treats as "before `date`": day rows strictly
+ * before it, plus any calendar-bucket row (from before the goal was rolling)
+ * that starts on or before it — those count as done on their period's first day.
+ * The day row for `date` itself is excluded because the client already holds it
+ * from GET /history and applies optimistic taps to it.
+ */
+const beforeDate = (dateStart, from) => ({
+  $or: [
+    { interval: "daily", periodStart: { ...(from ? { $gte: from } : {}), $lt: dateStart } },
+    { interval: { $ne: "daily" }, periodStart: { ...(from ? { $gte: from } : {}), $lte: dateStart } },
+  ],
+});
+
+/**
+ * For every rolling goal: what its window holds before `date`, and the last day
+ * before `date` it was done. The client adds the day row for `date` on top.
+ *
+ * Bounded per goal: the window sum covers at most a month of day rows, and the
+ * last-done lookup is a single indexed row walking back from `date`.
+ */
+const getRolling = asyncHandler(async (req, res) => {
+  const date = parseDate(req.query.date || dayjs.utc().format("YYYY-MM-DD"), "date");
+  const accountId = new mongoose.Types.ObjectId(res.locals.user._id);
+  const dateStart = date.startOf("day").toDate();
+
+  const goals = (
+    await Goal.find({ accountId, archivedAt: null, interval: { $in: ["weekly", "monthly"] } })
+      .select("interval rolling")
+      .lean()
+  ).filter(isRolling);
+
+  const out = await Promise.all(
+    goals.map(async (goal) => {
+      const windowStart = rollingWindowStart(goal.interval, date);
+      const [sums, last] = await Promise.all([
+        GoalHistory.aggregate([
+          { $match: { accountId, goalId: goal._id, ...beforeDate(dateStart, windowStart.toDate()) } },
+          { $group: { _id: null, achieved: { $sum: "$achieved" } } },
+        ]),
+        GoalHistory.findOne({
+          accountId,
+          goalId: goal._id,
+          achieved: { $gt: 0 },
+          ...beforeDate(dateStart),
+        })
+          .sort({ periodStart: -1 })
+          .select("periodStart")
+          .lean(),
+      ]);
+      return {
+        goalId: goal._id,
+        windowStart: windowStart.format("YYYY-MM-DD"),
+        prior: sums[0]?.achieved ?? 0,
+        lastBefore: last ? dayjs.utc(last.periodStart).format("YYYY-MM-DD") : null,
+      };
+    })
+  );
+
+  res.json({ date: date.format("YYYY-MM-DD"), goals: out });
+});
+
+module.exports = { getForDate, getRange, recordProgress, getRolling };

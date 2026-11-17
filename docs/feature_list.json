@@ -194,6 +194,14 @@
       "title": "Per-goal tracking mode for overshoot",
       "status": "passing",
       "evidence": "Goal.trackingMode is target|more. \"more\" goals draw lap arcs and a dynamic mark (f/ff/fff) past the target; \"target\" goals simply read complete."
+    },
+    {
+      "id": "F18",
+      "priority": 2,
+      "area": "ux",
+      "title": "Rolling weekly/monthly windows and days-since",
+      "status": "passing",
+      "evidence": "Weekly/monthly goals count the trailing 7 days / month (opt out per goal). Rings show 'last done' with a draining hairline; GoalSheet summarises the window. yarn verify Rolling windows section passes; yarn lint + yarn build clean."
     }
   ]
 }

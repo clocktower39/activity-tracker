@@ -9,8 +9,14 @@ import GoalSheet from "../components/GoalSheet";
 import GoalFormDialog from "../components/GoalFormDialog";
 import EmptyState from "../components/EmptyState";
 import { selectGoalsStatus, selectGroupedGoals } from "../features/goals/goalsSlice";
-import { fetchDate, selectDateStatus } from "../features/history/historySlice";
-import { dayjs, entryKey, isFutureKey, periodLabel } from "../lib/periods";
+import {
+  fetchDate,
+  fetchRolling,
+  ringReading,
+  selectDateStatus,
+  selectRolling,
+} from "../features/history/historySlice";
+import { dayjs, isFutureKey, isRolling, periodLabel } from "../lib/periods";
 import { useAutoFetch } from "../hooks/useAutoFetch";
 import { useTodayKey } from "../hooks/useTodayKey";
 
@@ -40,9 +46,20 @@ export default function TodayView() {
 
   const dateStatus = useSelector(selectDateStatus(date));
   const entries = useSelector((state) => state.history.entries);
+  const rolling = useSelector(selectRolling(date));
+  const hasRolling = useMemo(
+    () => groups.some((group) => group.goals.some(isRolling)),
+    [groups]
+  );
 
   // Cached: revisiting a date the session has already seen costs no request.
   useAutoFetch(() => dispatch(fetchDate(date)), [date]);
+  // Rolling goals also need their window and last-done day. `rolling` is in the
+  // deps so a window dropped by a tap on another day is fetched again.
+  useAutoFetch(
+    () => (hasRolling && !rolling ? dispatch(fetchRolling(date)) : undefined),
+    [date, hasRolling, Boolean(rolling)]
+  );
 
   // setDate writes a URL param, so it takes a value rather than an updater.
   const shift = useCallback(
@@ -55,13 +72,13 @@ export default function TodayView() {
     let target = 0;
     groups.forEach((group) => {
       group.goals.forEach((goal) => {
-        const entry = entries[entryKey(goal._id, goal.interval, date)];
-        achieved += entry?.achieved ?? 0;
-        target += entry?.target ?? (Number(goal.defaultTarget) || 0);
+        const reading = ringReading(goal, date, entries, rolling);
+        achieved += reading.achieved;
+        target += reading.target;
       });
     });
     return { achieved, target };
-  }, [groups, entries, date]);
+  }, [groups, entries, date, rolling]);
 
   const isToday = date === today;
   const hasGoals = groups.length > 0;

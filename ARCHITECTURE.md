@@ -130,6 +130,7 @@ All routes are under `/api`. Public: `POST /auth/signup`, `/auth/login`,
 | POST | `/categories/rename` | Renames the category on every goal too |
 | GET | `/history?date=` | One row per goal for the period containing that date |
 | GET | `/history/range?from=&to=[&interval=][&goalId=]` | Bounded window |
+| GET | `/history/rolling?date=` | Per rolling goal: window total before `date` and the last day done before it |
 | POST | `/history/progress` | `delta` increments atomically; `achieved` sets absolutely |
 | GET | `/stats/summary?from=&to=&bucket=` | `$dateTrunc` rollup, one row per bucket |
 | GET | `/stats/matrix?from=&to=&bucket=` | Goal × bucket rollup, one row per goal per bucket |
@@ -175,8 +176,19 @@ Collection names are unchanged from v1, so the existing data is the same data.
 ### `Goal`
 `task`, `interval` (`daily|weekly|monthly|yearly|none`), `defaultTarget`,
 `trackingMode` (`target` = done is done; `more` = overshoot counts and earns
-laps), `category` (free text), `order`, `accountId`, `hidden`, `color`, `icon`,
-`archivedAt`.
+laps), `rolling`, `category` (free text), `order`, `accountId`, `hidden`,
+`color`, `icon`, `archivedAt`.
+
+**Rolling goals.** A weekly or monthly goal is rolling unless `rolling` is
+`false` (absent counts as rolling, so no migration was needed). Its window is the
+trailing 7 days or month ending on the day being looked at, not the calendar
+period. Its taps are stored as **daily** rows (`targetPerDuration` 1 — "done that
+day") and the goal's own target applies to the window, summed on read by
+`GET /history/rolling`, which excludes the date's own row so the client can add
+the cached (optimistic) day row on top. Calendar-bucket rows written before a
+goal was rolling still count, as if done on their period's first day.
+`storageInterval(goal)` in both `periods.js` files is the one place that decides
+which interval a goal's rows live under.
 
 The legacy embedded `history` array is gone; `scripts/maintenance.js` folds any
 survivors into `GoalHistory`, summing collisions rather than dropping them.

@@ -14,6 +14,7 @@ const WRITABLE = [
   "color",
   "icon",
   "trackingMode",
+  "rolling",
 ];
 
 const pickWritable = (body) => {
@@ -22,6 +23,7 @@ const pickWritable = (body) => {
     if (body[field] === undefined) continue;
     if (field === "interval") out[field] = normalizeInterval(body[field]);
     else if (field === "defaultTarget" || field === "order") out[field] = Number(body[field]);
+    else if (field === "rolling") out[field] = body[field] !== false && body[field] !== "false";
     else out[field] = body[field];
   }
   return out;

@@ -150,6 +150,7 @@ export const api = {
     if (goalId) params.set("goalId", goalId);
     return request(`/history/range?${params}`, { signal });
   },
+  historyRolling: (date, signal) => request(`/history/rolling?date=${date}`, { signal }),
   recordProgress: (payload) => request("/history/progress", { method: "POST", body: payload }),
 
   summary: ({ from, to, bucket }, signal) =>

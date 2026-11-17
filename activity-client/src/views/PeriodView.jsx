@@ -13,8 +13,11 @@ import { selectGoalsStatus, selectVisibleGoals } from "../features/goals/goalsSl
 import {
   fetchMatrix,
   fetchRange,
+  fetchRolling,
   recordProgress,
+  ringReading,
   selectMatrix,
+  selectRolling,
 } from "../features/history/historySlice";
 import { useAutoFetch } from "../hooks/useAutoFetch";
 import { useTodayKey } from "../hooks/useTodayKey";
@@ -26,6 +29,7 @@ import {
   getPeriodKey,
   getPeriodStart,
   isFutureKey,
+  isRolling,
   periodLabel,
 } from "../lib/periods";
 
@@ -94,6 +98,21 @@ export default function PeriodView({ interval }) {
 
   const matrixRows = useSelector(selectMatrix("month", bounds.from, bounds.to));
 
+  // A rolling goal's ring here is its window ending on the period's last day —
+  // or today, while the period is still running. For a past week that window
+  // is exactly the calendar week.
+  const ringDate = bounds.to < today ? bounds.to : today;
+  const rolling = useSelector(selectRolling(ringDate));
+  const hasRolling = useMemo(
+    () => goals.some((goal) => goal.interval === interval && isRolling(goal)),
+    [goals, interval]
+  );
+  useAutoFetch(
+    () => (hasRolling && !rolling ? dispatch(fetchRolling(ringDate)) : undefined),
+    [ringDate, hasRolling, Boolean(rolling)]
+  );
+  const ringDateFor = (goal) => (isRolling(goal) ? ringDate : periodKey);
+
   const columns = useMemo(
     () => eachPeriod(innerInterval, bounds.from, bounds.to).map((d) => d.format("YYYY-MM-DD")),
     [innerInterval, bounds.from, bounds.to]
@@ -140,9 +159,9 @@ export default function PeriodView({ interval }) {
     let target = 0;
 
     cadenceGoals.forEach((goal) => {
-      const entry = entries[entryKey(goal._id, goal.interval, periodKey)];
-      achieved += entry?.achieved ?? 0;
-      target += entry?.target ?? (Number(goal.defaultTarget) || 0);
+      const reading = ringReading(goal, isRolling(goal) ? ringDate : periodKey, entries, rolling);
+      achieved += reading.achieved;
+      target += reading.target;
     });
 
     if (isYear) {
@@ -170,7 +189,7 @@ export default function PeriodView({ interval }) {
       });
     }
     return { achieved, target };
-  }, [cadenceGoals, staveGoals, entries, periodKey, columns, isYear, matrixRows, bounds]);
+  }, [cadenceGoals, staveGoals, entries, periodKey, columns, isYear, matrixRows, bounds, ringDate, rolling]);
 
   // setAnchor writes a URL param, so it takes a value rather than an updater.
   const shift = useCallback(
@@ -225,8 +244,8 @@ export default function PeriodView({ interval }) {
               }}
             >
               {cadenceGoals.map((goal) => {
-                const key = entryKey(goal._id, goal.interval, periodKey);
-                const entry = entries[key];
+                const date = ringDateFor(goal);
+                const { key, achieved, target, since } = ringReading(goal, date, entries, rolling);
                 return (
                   <Box
                     key={goal._id}
@@ -242,11 +261,12 @@ export default function PeriodView({ interval }) {
                   >
                     <Ring
                       goal={goal}
-                      achieved={entry?.achieved ?? 0}
-                      target={entry?.target ?? (Number(goal.defaultTarget) || 0)}
+                      achieved={achieved}
+                      target={target}
+                      since={since}
                       pending={Boolean(pending[key])}
                       error={errors[key] || null}
-                      onIncrement={() => dispatch(recordProgress({ goal, date: periodKey, delta: 1 }))}
+                      onIncrement={() => dispatch(recordProgress({ goal, date, delta: 1 }))}
                       onOpen={() => setOpenGoal(goal)}
                     />
                   </Box>
@@ -269,7 +289,11 @@ export default function PeriodView({ interval }) {
       </Container>
 
       {/* A ring is one period, so it gets the single-period sheet. */}
-      <GoalSheet goal={openGoal} date={periodKey} onClose={() => setOpenGoal(null)} />
+      <GoalSheet
+        goal={openGoal}
+        date={openGoal ? ringDateFor(openGoal) : periodKey}
+        onClose={() => setOpenGoal(null)}
+      />
 
       <GoalPeriodSheet
         goal={openStaveGoal}

@@ -44,6 +44,7 @@ router.post("/categories/rename", goalController.renameCategory);
 
 router.get("/history", historyController.getForDate);
 router.get("/history/range", historyController.getRange);
+router.get("/history/rolling", historyController.getRolling);
 router.post("/history/progress", historyController.recordProgress);
 
 router.get("/stats/summary", statsController.summary);

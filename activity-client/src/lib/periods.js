@@ -117,6 +117,39 @@ export const getPeriodKey = (interval, date, weekStart) =>
 export const addPeriods = (interval, date, count) =>
   dayjs.utc(date).add(count, addUnitFor(interval));
 
+/**
+ * Rolling cadences — mirrors activity-server/src/lib/periods.js. A weekly or
+ * monthly goal counts the trailing 7 days (or month) ending on the day being
+ * looked at, unless it opts out. Its taps are stored against the day.
+ */
+const ROLLING_INTERVALS = new Set(["weekly", "monthly"]);
+
+export const isRolling = (goal) =>
+  Boolean(goal) && ROLLING_INTERVALS.has(normalizeInterval(goal.interval)) && goal.rolling !== false;
+
+/** The interval a goal's history rows are written under. */
+export const storageInterval = (goal) =>
+  isRolling(goal) ? "daily" : normalizeInterval(goal?.interval);
+
+/** First day of the rolling window that ends on `date`, inclusive. */
+export const rollingWindowStart = (interval, date) => {
+  const day = dayjs.utc(date).startOf("day");
+  return normalizeInterval(interval) === "monthly"
+    ? day.subtract(1, "month").add(1, "day")
+    : day.subtract(6, "day");
+};
+
+/** Whole days from `from` to `to`, both "YYYY-MM-DD" labels. */
+export const daysBetween = (from, to) => dayjs.utc(to).diff(dayjs.utc(from), "day");
+
+/**
+ * A rolling goal seen one day at a time: what sheets and staves edit. Each day
+ * row reads as "done that day" (target 1); the goal's own target belongs to
+ * the window, which only the ring and the sheet's summary show.
+ */
+export const asDayGoal = (goal) =>
+  isRolling(goal) ? { ...goal, interval: "daily", defaultTarget: 1, windowInterval: goal.interval } : goal;
+
 /** Cache key for a single goal's slot in a single period. */
 export const entryKey = (goalId, interval, date, weekStart) =>
   `${goalId}|${normalizeInterval(interval)}|${getPeriodKey(interval, date, weekStart)}`;

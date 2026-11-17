@@ -3,8 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Box, Typography, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import Ring from "./Ring";
-import { recordProgress } from "../features/history/historySlice";
-import { entryKey } from "../lib/periods";
+import { recordProgress, ringReading, selectRolling } from "../features/history/historySlice";
 
 /**
  * One category: a rule, its name, and the rings beneath it.
@@ -22,6 +21,7 @@ function GoalRow({ category, goals, date, loading, onOpenGoal }) {
   const entries = useSelector((state) => state.history.entries);
   const errors = useSelector((state) => state.history.errors);
   const pending = useSelector((state) => state.history.pending);
+  const rolling = useSelector(selectRolling(date));
 
   const increment = useCallback(
     (goal) => dispatch(recordProgress({ goal, date, delta: 1 })),
@@ -30,9 +30,9 @@ function GoalRow({ category, goals, date, loading, onOpenGoal }) {
 
   const totals = goals.reduce(
     (acc, goal) => {
-      const entry = entries[entryKey(goal._id, goal.interval, date)];
-      acc.achieved += entry?.achieved ?? 0;
-      acc.target += entry?.target ?? (Number(goal.defaultTarget) || 0);
+      const reading = ringReading(goal, date, entries, rolling);
+      acc.achieved += reading.achieved;
+      acc.target += reading.target;
       return acc;
     },
     { achieved: 0, target: 0 }
@@ -85,8 +85,7 @@ function GoalRow({ category, goals, date, loading, onOpenGoal }) {
         }}
       >
         {goals.map((goal) => {
-          const key = entryKey(goal._id, goal.interval, date);
-          const entry = entries[key];
+          const { key, achieved, target, since } = ringReading(goal, date, entries, rolling);
           return (
             <Box
               key={goal._id}
@@ -102,8 +101,9 @@ function GoalRow({ category, goals, date, loading, onOpenGoal }) {
             >
               <Ring
                 goal={goal}
-                achieved={entry?.achieved ?? 0}
-                target={entry?.target ?? (Number(goal.defaultTarget) || 0)}
+                achieved={achieved}
+                target={target}
+                since={since}
                 pending={Boolean(pending[key])}
                 error={errors[key] || null}
                 onIncrement={() => increment(goal)}
