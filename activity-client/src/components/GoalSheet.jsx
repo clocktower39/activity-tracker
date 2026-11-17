@@ -291,8 +291,9 @@ function RollingSummary({ goal, reading }) {
           <Typography
             sx={{
               fontFamily: (t) => t.typography.h1.fontFamily,
-              fontSize: "1.75rem",
+              fontSize: { xs: "1.3rem", sm: "1.75rem" },
               lineHeight: 1.1,
+              whiteSpace: "nowrap",
               color: reading.lastDone === null ? "chart.vermilion" : "text.primary",
             }}
           >
