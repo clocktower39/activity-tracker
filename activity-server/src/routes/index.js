@@ -3,6 +3,7 @@ const authController = require("../controllers/authController");
 const goalController = require("../controllers/goalController");
 const historyController = require("../controllers/historyController");
 const statsController = require("../controllers/statsController");
+const calendarController = require("../controllers/calendarController");
 const { requireAuth, blockDemo } = require("../middleware/auth");
 const { rateLimit } = require("../middleware/rateLimit");
 const { asyncHandler } = require("../lib/apiError");
@@ -21,6 +22,16 @@ router.get("/health", (req, res) => res.json({ ok: true, uptime: process.uptime(
 router.post("/auth/signup", authLimiter, authController.signup);
 router.post("/auth/login", authLimiter, authController.login);
 router.post("/auth/refresh", authController.refresh);
+
+// The calendar feed Google Calendar subscribes to. Public by necessity — the
+// subscriber has no session — so the token in the path is the credential.
+// Generous enough for calendar clients, tight enough to stop token guessing.
+const feedLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  message: "Too many calendar requests, please wait a few minutes",
+});
+router.get("/calendar/:file", feedLimiter, calendarController.feed);
 
 // ----- Everything below requires a valid access token -------------------
 router.use(asyncHandler(requireAuth));
@@ -46,6 +57,10 @@ router.get("/history", historyController.getForDate);
 router.get("/history/range", historyController.getRange);
 router.get("/history/rolling", historyController.getRolling);
 router.post("/history/progress", historyController.recordProgress);
+
+router.get("/calendar", calendarController.status);
+router.post("/calendar/token", calendarController.rotate);
+router.delete("/calendar/token", calendarController.disable);
 
 router.get("/stats/summary", statsController.summary);
 router.get("/stats/matrix", statsController.matrix);

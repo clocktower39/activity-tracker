@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema(
     // Bumped whenever credentials change; refresh tokens carrying an older value
     // are rejected, which logs out every other session on password change.
     tokenVersion: { type: Number, default: 0 },
+    // Secret in the private calendar-feed URL (GET /api/calendar/:token.ics).
+    // Absent until the user creates a link; unset to turn the feed off. No
+    // default on purpose: a sparse unique index skips missing fields, not nulls.
+    calendarToken: { type: String, select: false },
   },
   { timestamps: true, minimize: false }
 );
@@ -45,6 +49,8 @@ userSchema.methods.comparePassword = function comparePassword(candidate) {
 };
 
 /** The only shape of a user that may leave the server. */
+userSchema.index({ calendarToken: 1 }, { unique: true, sparse: true });
+
 userSchema.methods.toPublicJSON = function toPublicJSON() {
   return {
     _id: this._id,

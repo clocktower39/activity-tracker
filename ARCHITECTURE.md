@@ -130,6 +130,8 @@ All routes are under `/api`. Public: `POST /auth/signup`, `/auth/login`,
 | POST | `/categories/rename` | Renames the category on every goal too |
 | GET | `/history?date=` | One row per goal for the period containing that date |
 | GET | `/history/range?from=&to=[&interval=][&goalId=]` | Bounded window |
+| GET | `/calendar` · POST/DELETE `/calendar/token` | The account's calendar-feed token: read, create/reset, turn off |
+| GET | `/calendar/<token>.ics?tz=` | **Public.** iCalendar feed for Google Calendar "From URL"; the token is the credential. One all-day event per weekly/monthly goal on the day it is next due. `tz` is the subscriber's zone, carried in the link because nothing is stored per user |
 | GET | `/history/rolling?date=` | Per rolling goal: window total before `date` and the last day done before it |
 | POST | `/history/progress` | `delta` increments atomically; `achieved` sets absolutely |
 | GET | `/stats/summary?from=&to=&bucket=` | `$dateTrunc` rollup, one row per bucket |

@@ -150,6 +150,10 @@ export const api = {
     if (goalId) params.set("goalId", goalId);
     return request(`/history/range?${params}`, { signal });
   },
+  calendarStatus: () => request("/calendar"),
+  calendarRotate: () => request("/calendar/token", { method: "POST" }),
+  calendarDisable: () => request("/calendar/token", { method: "DELETE" }),
+
   historyRolling: (date, signal) => request(`/history/rolling?date=${date}`, { signal }),
   recordProgress: (payload) => request("/history/progress", { method: "POST", body: payload }),
 

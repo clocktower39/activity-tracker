@@ -19,6 +19,7 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import AddIcon from "@mui/icons-material/Add";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CalendarFeedSection from "../components/CalendarFeedSection";
 import {
   changePassword,
   selectUser,
@@ -58,7 +59,7 @@ import {
 /**
  * Settings as an index and a body rather than one long scroll.
  *
- * The tree on the left is the whole map of the page — three folders, eight
+ * The tree on the left is the whole map of the page — three folders, nine
  * leaves — so what exists is visible without scrolling to find out. Each panel
  * on the right collapses, and picking a leaf opens that one and closes the
  * rest, which keeps the body roughly one screen whatever you are doing.
@@ -70,7 +71,7 @@ import {
 const GROUPS = [
   { id: "preferences", label: "Preferences", items: ["appearance", "display-size", "week-start"] },
   { id: "account", label: "Account", items: ["profile", "password", "session"] },
-  { id: "goals", label: "Goals", items: ["categories", "hidden"] },
+  { id: "goals", label: "Goals", items: ["categories", "hidden", "calendar"] },
 ];
 
 const SECTIONS = {
@@ -100,6 +101,11 @@ const SECTIONS = {
   hidden: {
     label: "Hidden goals",
     description: "These keep their history but stay off the chart. Bring one back whenever you like.",
+  },
+  calendar: {
+    label: "Google Calendar",
+    description:
+      "A private link Google Calendar can subscribe to. Each weekly and monthly goal shows up on the day it's next due, worked out from when you last did it; daily goals stay out.",
   },
 };
 
@@ -201,6 +207,7 @@ export default function SettingsView() {
       ),
       categories: <CategoriesSection categories={categories} goals={allGoals} />,
       hidden: <HiddenSection goals={hiddenGoals} />,
+      calendar: <CalendarFeedSection />,
     }),
     [dispatch, user, categories, allGoals, hiddenGoals]
   );

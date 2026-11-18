@@ -69,8 +69,10 @@ These are non-negotiable. If a task appears to require breaking one, stop and as
   queries the app makes and vanish from the UI while still holding the unique
   index.
 - **MUST** gate every authenticated endpoint with `requireAuth`. Public
-  endpoints: `POST /api/auth/signup`, `/api/auth/login`, `/api/auth/refresh`.
-  Nothing else.
+  endpoints: `POST /api/auth/signup`, `/api/auth/login`, `/api/auth/refresh`,
+  and `GET /api/calendar/<token>.ics` — the calendar feed, which Google
+  Calendar fetches with no session, so the account's random `calendarToken`
+  in the path is the credential (approved by Matt, 2026-11-18). Nothing else.
 - **MUST** keep `GoalHistory` writes idempotent on the unique key `(goalId, interval, periodStart)`. Use `findOneAndUpdate` with `upsert: true` and `$setOnInsert` for default fields.
 - **MUST NOT** trust the client `accountId`. It is always derived from `res.locals.user._id` after token verification.
 - **MUST NOT** put a document in a JWT payload. Tokens carry identifiers only

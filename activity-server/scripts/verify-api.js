@@ -280,6 +280,51 @@ const main = async () => {
   const badRefresh = await call("POST", "/auth/refresh", { refreshToken: "nope" });
   check("rejects a bogus refresh token", badRefresh.status === 401);
 
+  console.log("\nCalendar feed");
+  const calGoal = (
+    await call("POST", "/goals", {
+      task: `__verify_calendar_${Date.now()}`,
+      category: "Verification",
+      defaultTarget: 1,
+      interval: "weekly",
+    })
+  ).json?.goal;
+  if (calGoal) {
+    const doneOn = shift(-2);
+    await call("POST", "/history/progress", { goalId: calGoal._id, date: doneOn, delta: 1 });
+    const created = await call("POST", "/calendar/token");
+    const tok = created.json?.token;
+    check("creates a calendar link", created.status === 200 && /^[A-Za-z0-9_-]{32}$/.test(tok || ""));
+
+    const raw = async (path) => {
+      const res = await fetch(`${BASE}${path}`);
+      return { status: res.status, type: res.headers.get("content-type") || "", body: await res.text() };
+    };
+    const ics = await raw(`/calendar/${tok}.ics?tz=UTC`);
+    check("the feed is public and is iCalendar", ics.status === 200 && ics.type.startsWith("text/calendar"), `${ics.status} ${ics.type}`);
+    const event = ics.body.split("BEGIN:VEVENT").find((e) => e.includes(`UID:${calGoal._id}@`)) || "";
+    const expected = shift(5).replace(/-/g, "");
+    check(
+      "a rolling weekly goal falls due when its tap leaves the window",
+      event.includes(`DTSTART;VALUE=DATE:${expected}`),
+      `expected ${expected}, got ${(event.match(/DTSTART;VALUE=DATE:(\d+)/) || [])[1]}`
+    );
+    check("lines are CRLF-terminated", ics.body.includes("\r\nEND:VCALENDAR\r\n"));
+
+    const wrong = await raw(`/calendar/${"x".repeat(32)}.ics`);
+    check("an unknown token is a 404", wrong.status === 404);
+
+    const reset = await call("POST", "/calendar/token");
+    const old = await raw(`/calendar/${tok}.ics`);
+    check("resetting the link retires the old one", reset.json?.token !== tok && old.status === 404);
+
+    const off = await call("DELETE", "/calendar/token");
+    const gone = await raw(`/calendar/${reset.json?.token}.ics`);
+    check("turning it off removes the feed", off.json?.token === null && gone.status === 404);
+
+    await call("DELETE", `/goals/${calGoal._id}`);
+  }
+
   console.log("\nSign-up gate and password hashing");
   const signupAttempt = await call("POST", "/auth/signup", {
     email: `verify-${Date.now()}@example.invalid`,

@@ -202,6 +202,14 @@
       "title": "Rolling weekly/monthly windows and days-since",
       "status": "passing",
       "evidence": "Weekly/monthly goals count the trailing 7 days / month (opt out per goal). Rings show 'last done' with a draining hairline; GoalSheet summarises the window. yarn verify Rolling windows section passes; yarn lint + yarn build clean."
+    },
+    {
+      "id": "F19",
+      "priority": 2,
+      "area": "integration",
+      "title": "Google Calendar subscription feed",
+      "status": "passing",
+      "evidence": "Settings › Google Calendar creates a private .ics link (token per account, reset/turn off). Weekly/monthly goals appear on the day they next fall due (rolling: when the window would drop below target). yarn verify calendar section passes; lint + build clean."
     }
   ]
 }

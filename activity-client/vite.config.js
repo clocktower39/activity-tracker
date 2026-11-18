@@ -49,6 +49,11 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         injectRegister: "auto",
         registerType: "autoUpdate",
+        workbox: {
+          // API responses are never the app shell: opening the calendar feed
+          // link in a browser must download the .ics, not show the SPA.
+          navigateFallbackDenylist: [/^\/api\//],
+        },
         manifest: {
           name: "Activity Tracker",
           short_name: "Activity",
