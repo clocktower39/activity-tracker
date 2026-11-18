@@ -29,14 +29,12 @@ const userSchema = new mongoose.Schema(
   { timestamps: true, minimize: false }
 );
 
-userSchema.pre("save", async function hashPassword(next) {
-  if (!this.isModified("password")) return next();
-  try {
-    this.password = await bcrypt.hash(this.password, saltWorkFactor);
-    next();
-  } catch (err) {
-    next(err);
-  }
+// Mongoose 9 no longer passes `next` to async middleware: the returned promise
+// is the signal, and a throw is the error. Calling next() here threw on every
+// save, which broke sign-up and password changes alike.
+userSchema.pre("save", async function hashPassword() {
+  if (!this.isModified("password")) return;
+  this.password = await bcrypt.hash(this.password, saltWorkFactor);
 });
 
 userSchema.methods.comparePassword = function comparePassword(candidate) {

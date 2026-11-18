@@ -4,6 +4,9 @@ import { Link as RouterLink, Navigate, useLocation } from "react-router";
 import { Box, Button, Container, Link, TextField, Typography } from "@mui/material";
 import { clearError, selectAuthError, selectAuthStatus, selectUser, signIn } from "../features/auth/authSlice";
 
+// Mirrors SIGNUPS_OPEN on the server, which is what actually enforces it.
+const SIGNUPS_OPEN = import.meta.env.VITE_SIGNUPS_OPEN === "true";
+
 export default function SignInView() {
   const dispatch = useDispatch();
   const location = useLocation();
@@ -81,12 +84,14 @@ export default function SignInView() {
           </Button>
         </Box>
 
-        <Typography variant="body2" sx={{ color: "text.secondary", mt: 8 }}>
-          No account yet?{" "}
-          <Link component={RouterLink} to="/signup" sx={{ color: "chart.vermilion" }}>
-            Create one
-          </Link>
-        </Typography>
+        {SIGNUPS_OPEN && (
+          <Typography variant="body2" sx={{ color: "text.secondary", mt: 8 }}>
+            No account yet?{" "}
+            <Link component={RouterLink} to="/signup" sx={{ color: "chart.vermilion" }}>
+              Create one
+            </Link>
+          </Typography>
+        )}
       </Box>
     </Container>
   );

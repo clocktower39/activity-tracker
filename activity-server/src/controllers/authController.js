@@ -4,6 +4,7 @@ const { ApiError, asyncHandler } = require("../lib/apiError");
 const { createTokens, verifyRefresh } = require("../lib/tokens");
 const { normalizeWeekStart } = require("../lib/periods");
 const { rebucketWeeks } = require("../lib/rebucketWeeks");
+const { signupsOpen } = require("../config/env");
 
 const DEFAULT_CATEGORIES = [
   { category: "Health", order: 0 },
@@ -12,6 +13,9 @@ const DEFAULT_CATEGORIES = [
 ];
 
 const signup = asyncHandler(async (req, res) => {
+  // The real gate. The client also hides the form, but that is cosmetic.
+  if (!signupsOpen) throw new ApiError(403, "Sign-ups are closed for now");
+
   const { email, password, firstName, lastName } = req.body;
 
   if (!email || !password || !firstName || !lastName) {

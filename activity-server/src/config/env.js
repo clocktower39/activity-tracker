@@ -64,6 +64,9 @@ module.exports = {
   host: process.env.HOST || (isProduction ? "127.0.0.1" : "0.0.0.0"),
   dbUrl: required("DBURL"),
   saltWorkFactor: int("SALT_WORK_FACTOR", 12),
+  // New accounts are closed unless this is exactly "true". Closed is the safe
+  // default: forgetting the variable can never open the app to the public.
+  signupsOpen: process.env.SIGNUPS_OPEN === "true",
   accessTokenSecret,
   refreshTokenSecret,
   accessTokenTtl: process.env.ACCESS_TOKEN_TTL || "180m",

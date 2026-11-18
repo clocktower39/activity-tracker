@@ -4,6 +4,9 @@ import { Link as RouterLink, Navigate } from "react-router";
 import { Box, Button, Container, Link, TextField, Typography } from "@mui/material";
 import { clearError, selectAuthError, selectAuthStatus, selectUser, signUp } from "../features/auth/authSlice";
 
+// Mirrors SIGNUPS_OPEN on the server, which is what actually enforces it.
+const SIGNUPS_OPEN = import.meta.env.VITE_SIGNUPS_OPEN === "true";
+
 export default function SignUpView() {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
@@ -72,6 +75,27 @@ export default function SignUpView() {
       fullWidth
     />
   );
+
+  if (!SIGNUPS_OPEN) {
+    return (
+      <Container maxWidth="xs" sx={{ minHeight: "100dvh", display: "flex", alignItems: "center" }}>
+        <Box sx={{ width: "100%" }}>
+          <Typography variant="overline" sx={{ color: "chart.vermilion", display: "block", mb: 2 }}>
+            Activity Tracker
+          </Typography>
+          <Typography variant="h3" sx={{ mb: 3 }}>
+            Sign-ups are closed for now
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 8 }}>
+            New accounts aren&apos;t open yet. If you already have one, sign in.
+          </Typography>
+          <Link component={RouterLink} to="/signin" sx={{ color: "chart.vermilion" }}>
+            Go to sign in
+          </Link>
+        </Box>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xs" sx={{ minHeight: "100dvh", display: "flex", alignItems: "center" }}>

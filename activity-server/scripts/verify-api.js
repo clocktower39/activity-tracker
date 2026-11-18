@@ -280,6 +280,40 @@ const main = async () => {
   const badRefresh = await call("POST", "/auth/refresh", { refreshToken: "nope" });
   check("rejects a bogus refresh token", badRefresh.status === 401);
 
+  console.log("\nSign-up gate and password hashing");
+  const signupAttempt = await call("POST", "/auth/signup", {
+    email: `verify-${Date.now()}@example.invalid`,
+    password: "verify-signup-pw",
+    firstName: "Verify",
+    lastName: "Gate",
+  });
+  if (process.env.SIGNUPS_OPEN === "true") {
+    check("sign-up works when opened", signupAttempt.status === 201, `status ${signupAttempt.status}`);
+  } else {
+    check("sign-up is closed by default", signupAttempt.status === 403, `status ${signupAttempt.status}`);
+  }
+
+  // Runs last: a password change bumps tokenVersion, retiring every earlier token.
+  if (EMAIL !== "demo@fakeaccount.com") {
+    const changedTo = `${PASSWORD}-rotated`;
+    const changed = await call("POST", "/auth/change-password", {
+      currentPassword: PASSWORD,
+      newPassword: changedTo,
+    });
+    check("a password change saves (the hash hook runs)", changed.status === 200, `status ${changed.status}`);
+    if (changed.status === 200) {
+      token = changed.json.accessToken;
+      const relogin = await call("POST", "/auth/login", { email: EMAIL, password: changedTo });
+      check("the new password signs in", relogin.status === 200);
+      token = relogin.json?.accessToken || token;
+      const back = await call("POST", "/auth/change-password", {
+        currentPassword: changedTo,
+        newPassword: PASSWORD,
+      });
+      check("restores the original password", back.status === 200);
+    }
+  }
+
   console.log(`\n=== ${passed} passed, ${failed} failed ===\n`);
   process.exit(failed === 0 ? 0 : 1);
 };
