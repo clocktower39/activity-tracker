@@ -6,6 +6,7 @@ import InsightsIcon from "@mui/icons-material/Insights";
 import TuneIcon from "@mui/icons-material/Tune";
 import { loadGoals, selectGoalsStatus } from "../features/goals/goalsSlice";
 import Toast from "./Toast";
+import { useLiveUpdates } from "../app/live";
 
 const CADENCES = [
   { to: "/", label: "Today", end: true },
@@ -27,6 +28,10 @@ export default function AppShell() {
   useEffect(() => {
     if (status === "idle") dispatch(loadGoals());
   }, [dispatch, status]);
+
+  // The shell only renders for a signed-in account: keep its other open pages
+  // in step with this one.
+  useLiveUpdates(true);
 
   return (
     <Box

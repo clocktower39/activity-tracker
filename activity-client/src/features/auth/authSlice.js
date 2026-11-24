@@ -40,6 +40,13 @@ export const restoreSession = createAsyncThunk("auth/restore", async () => {
   return user;
 });
 
+/** Re-reads the profile after another tab changed it (week start, name). */
+export const refreshProfile = createAsyncThunk("auth/refreshProfile", async () => {
+  const { user } = await api.me();
+  persist(user);
+  return user;
+});
+
 export const updateProfile = createAsyncThunk("auth/updateProfile", async (patch) => {
   // Returns the whole response, not just the user: changing weekStart also
   // reports how much weekly history was moved, and the caller shows that.
@@ -98,6 +105,9 @@ const authSlice = createSlice({
         state.status = "unauthenticated";
         tokens.clear();
         persist(null);
+      })
+      .addCase(refreshProfile.fulfilled, (state, action) => {
+        state.user = action.payload;
       })
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.user = action.payload.user;

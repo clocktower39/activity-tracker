@@ -12,6 +12,7 @@ import {
   selectStatsError,
   selectStreaks,
   selectSummary,
+  selectRevision,
 } from "../features/history/historySlice";
 import {
   selectGoalsStatus,
@@ -76,6 +77,7 @@ export default function ReviewView() {
   const dispatch = useDispatch();
   const goalsStatus = useSelector(selectGoalsStatus);
   const goals = useSelector(selectVisibleGoals);
+  const revision = useSelector(selectRevision);
   const recordRange = useSelector(selectRecordRange);
   const [windowId, setWindowId] = useState("1y");
   const [openGoal, setOpenGoal] = useState(null);
@@ -134,9 +136,9 @@ export default function ReviewView() {
 
   useAutoFetch(
     () => dispatch(fetchSummary({ from: range.from, to: range.to, bucket: range.bucket })),
-    [range.from, range.to, range.bucket]
+    [range.from, range.to, range.bucket, revision]
   );
-  useAutoFetch(() => dispatch(fetchStreaks(streakWindow)), [streakWindow]);
+  useAutoFetch(() => dispatch(fetchStreaks(streakWindow)), [streakWindow, revision]);
 
   // The goal x period grid only makes sense once the window is long enough to
   // have more than a couple of columns.
@@ -147,7 +149,7 @@ export default function ReviewView() {
     if (wantsStave) {
       dispatch(fetchMatrix({ from: range.from, to: range.to, bucket: staveBucket }));
     }
-  }, [range.from, range.to, staveBucket, wantsStave]);
+  }, [range.from, range.to, staveBucket, wantsStave, revision]);
 
   const buckets = useSelector(selectSummary(range.bucket, range.from, range.to));
   const streaks = useSelector(selectStreaks(streakWindow));

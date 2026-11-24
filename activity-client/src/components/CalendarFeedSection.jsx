@@ -26,12 +26,17 @@ export default function CalendarFeedSection() {
 
   useEffect(() => {
     let live = true;
-    api
-      .calendarStatus()
-      .then((data) => live && setToken(data.token))
-      .catch(() => live && setToken(null));
+    const load = () =>
+      api
+        .calendarStatus()
+        .then((data) => live && setToken(data.token))
+        .catch(() => live && setToken(null));
+    load();
+    // Another open tab rotated or turned off the link (see app/live.js).
+    window.addEventListener("activity:calendar-changed", load);
     return () => {
       live = false;
+      window.removeEventListener("activity:calendar-changed", load);
     };
   }, []);
 

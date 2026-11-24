@@ -188,6 +188,9 @@ const initialState = {
   rolling: {},
   pending: {},
   errors: {},
+  // Bumped when another open tab changes this account's history. Views list it
+  // in their fetch dependencies, so they ask again for what they are showing.
+  revision: 0,
 };
 
 const historySlice = createSlice({
@@ -201,6 +204,25 @@ const historySlice = createSlice({
       state.ranges = {};
       state.summaries = {};
       state.rolling = {};
+    },
+    /**
+     * Another tab wrote to this account. Mark every cached read stale so the
+     * open views re-fetch, but keep what is on screen until the answer lands:
+     * entries survive, and a rolling window keeps its numbers under a "stale"
+     * status the fetch condition lets through. Stats are small and re-fetched
+     * outright.
+     */
+    remoteChanged(state) {
+      state.dates = {};
+      state.ranges = {};
+      state.summaries = {};
+      state.matrices = {};
+      state.statsErrors = {};
+      state.streaks = {};
+      for (const date of Object.keys(state.rolling)) {
+        if (state.rolling[date]?.status === "ready") state.rolling[date].status = "stale";
+      }
+      state.revision += 1;
     },
     dismissError(state, action) {
       delete state.errors[action.payload];
@@ -348,7 +370,8 @@ const historySlice = createSlice({
   },
 });
 
-export const { reset: resetHistory, invalidate, dismissError } = historySlice.actions;
+export const { reset: resetHistory, invalidate, remoteChanged, dismissError } = historySlice.actions;
+export const selectRevision = (state) => state.history.revision;
 export default historySlice.reducer;
 
 // ----- Selectors -------------------------------------------------------------

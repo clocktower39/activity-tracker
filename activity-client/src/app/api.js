@@ -8,6 +8,17 @@
  */
 const BASE = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
+/**
+ * Identifies this tab to the live-updates stream, so the server can tell this
+ * tab's own writes from another tab's and not echo them back. Random per page
+ * load; it is not a credential and carries no account information.
+ */
+const newClientId = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+export const CLIENT_ID = newClientId();
+
 const ACCESS_KEY = "activity.accessToken";
 const REFRESH_KEY = "activity.refreshToken";
 
@@ -80,7 +91,7 @@ const parse = async (res) => {
  * @param {object} opts  { method, body, signal, auth }
  */
 export const request = async (path, { method = "GET", body, signal, auth = true, _retried } = {}) => {
-  const headers = { "Content-Type": "application/json" };
+  const headers = { "Content-Type": "application/json", "X-Client-Id": CLIENT_ID };
   if (auth) {
     const token = tokens.access();
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -170,6 +181,25 @@ export const api = {
     request(`/stats/streaks?${new URLSearchParams({ days: String(days), ...(today ? { today } : {}) })}`, {
       signal,
     }),
+};
+
+/**
+ * Opens this tab's live-updates stream (server-sent events over fetch, so it
+ * can carry the Authorization header that EventSource cannot). Resolves to the
+ * Response once the server has accepted it; an expired access token is
+ * refreshed once, exactly as `request` does.
+ */
+export const openLiveStream = async (signal, _retried = false) => {
+  const headers = { Accept: "text/event-stream", "X-Client-Id": CLIENT_ID };
+  const token = tokens.access();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${BASE}/api/live`, { headers, signal, cache: "no-store" });
+  if (res.status === 401 && !_retried && tokens.refresh()) {
+    await doRefresh();
+    return openLiveStream(signal, true);
+  }
+  if (!res.ok || !res.body) throw new ApiError(res.status, "Live updates unavailable");
+  return res;
 };
 
 export { BASE as API_BASE };

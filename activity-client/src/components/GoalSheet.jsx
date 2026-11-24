@@ -21,6 +21,7 @@ import {
   recordProgress,
   rollingProgress,
   selectRolling,
+  selectRevision,
 } from "../features/history/historySlice";
 import { useAutoFetch } from "../hooks/useAutoFetch";
 import {
@@ -47,9 +48,10 @@ export default function GoalSheet({ goal: sourceGoal, date, onClose }) {
   const rolling = isRolling(sourceGoal);
   const goal = useMemo(() => (sourceGoal ? asDayGoal(sourceGoal) : null), [sourceGoal]);
   const windowState = useSelector(selectRolling(date));
+  const revision = useSelector(selectRevision);
   useAutoFetch(
-    () => (rolling && !windowState ? dispatch(fetchRolling(date)) : undefined),
-    [rolling, date, Boolean(windowState)]
+    () => (rolling ? dispatch(fetchRolling(date)) : undefined),
+    [rolling, date, Boolean(windowState), revision]
   );
   const [editing, setEditing] = useState(false);
   const [noteDraft, setNoteDraft] = useState(null);
@@ -64,7 +66,10 @@ export default function GoalSheet({ goal: sourceGoal, date, onClose }) {
     return { from, to, interval: goal.interval, goalId: goal._id };
   }, [goal, date]);
 
-  useAutoFetch(() => (range ? dispatch(fetchRange(range)) : undefined), [range?.from, range?.to, range?.goalId]);
+  useAutoFetch(
+    () => (range ? dispatch(fetchRange(range)) : undefined),
+    [range?.from, range?.to, range?.goalId, revision]
+  );
 
   const entry = goal ? entries[entryKey(goal._id, goal.interval, date)] : null;
   const achieved = entry?.achieved ?? 0;

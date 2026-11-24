@@ -18,6 +18,7 @@ import {
   ringReading,
   selectMatrix,
   selectRolling,
+  selectRevision,
 } from "../features/history/historySlice";
 import { useAutoFetch } from "../hooks/useAutoFetch";
 import { useTodayKey } from "../hooks/useTodayKey";
@@ -53,6 +54,7 @@ export default function PeriodView({ interval }) {
   const ringCellWidth = Math.round((roomy ? 96 : 60) * (theme.scale ?? 1)) + 12;
   const goals = useSelector(selectVisibleGoals);
   const goalsStatus = useSelector(selectGoalsStatus);
+  const revision = useSelector(selectRevision);
   const entries = useSelector((state) => state.history.entries);
   const errors = useSelector((state) => state.history.errors);
   const pending = useSelector((state) => state.history.pending);
@@ -94,7 +96,7 @@ export default function PeriodView({ interval }) {
     } else {
       dispatch(fetchRange(bounds));
     }
-  }, [bounds.from, bounds.to, isYear]);
+  }, [bounds.from, bounds.to, isYear, revision]);
 
   const matrixRows = useSelector(selectMatrix("month", bounds.from, bounds.to));
 
@@ -108,8 +110,8 @@ export default function PeriodView({ interval }) {
     [goals, interval]
   );
   useAutoFetch(
-    () => (hasRolling && !rolling ? dispatch(fetchRolling(ringDate)) : undefined),
-    [ringDate, hasRolling, Boolean(rolling)]
+    () => (hasRolling ? dispatch(fetchRolling(ringDate)) : undefined),
+    [ringDate, hasRolling, Boolean(rolling), revision]
   );
   const ringDateFor = (goal) => (isRolling(goal) ? ringDate : periodKey);
 

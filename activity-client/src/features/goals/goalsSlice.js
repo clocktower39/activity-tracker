@@ -7,6 +7,8 @@ import { normalizeInterval } from "../../lib/periods";
  * the data: fetched once per session and mutated in place thereafter.
  */
 export const loadGoals = createAsyncThunk("goals/load", async () => api.bootstrap());
+/** The same read, without the loading state: used when another tab changed goals. */
+export const refreshGoals = createAsyncThunk("goals/refresh", async () => api.bootstrap());
 
 export const createGoal = createAsyncThunk("goals/create", async (goal) => {
   const { goal: created } = await api.createGoal(goal);
@@ -59,6 +61,15 @@ const goalsSlice = createSlice({
       .addCase(loadGoals.pending, (state) => {
         state.status = "loading";
         state.error = null;
+      })
+      .addCase(refreshGoals.fulfilled, (state, action) => {
+        state.status = "ready";
+        state.goals = action.payload.goals.map((goal) => ({
+          ...goal,
+          interval: normalizeInterval(goal.interval),
+        }));
+        state.categories = action.payload.categories;
+        state.recordRange = action.payload.recordRange || { first: null, last: null };
       })
       .addCase(loadGoals.fulfilled, (state, action) => {
         state.status = "ready";

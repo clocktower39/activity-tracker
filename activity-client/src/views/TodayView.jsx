@@ -15,6 +15,7 @@ import {
   ringReading,
   selectDateStatus,
   selectRolling,
+  selectRevision,
 } from "../features/history/historySlice";
 import { dayjs, isFutureKey, isRolling, periodLabel } from "../lib/periods";
 import { useAutoFetch } from "../hooks/useAutoFetch";
@@ -53,12 +54,13 @@ export default function TodayView() {
   );
 
   // Cached: revisiting a date the session has already seen costs no request.
-  useAutoFetch(() => dispatch(fetchDate(date)), [date]);
+  const revision = useSelector(selectRevision);
+  useAutoFetch(() => dispatch(fetchDate(date)), [date, revision]);
   // Rolling goals also need their window and last-done day. `rolling` is in the
   // deps so a window dropped by a tap on another day is fetched again.
   useAutoFetch(
-    () => (hasRolling && !rolling ? dispatch(fetchRolling(date)) : undefined),
-    [date, hasRolling, Boolean(rolling)]
+    () => (hasRolling ? dispatch(fetchRolling(date)) : undefined),
+    [date, hasRolling, Boolean(rolling), revision]
   );
 
   // setDate writes a URL param, so it takes a value rather than an updater.

@@ -4,6 +4,7 @@ const goalController = require("../controllers/goalController");
 const historyController = require("../controllers/historyController");
 const statsController = require("../controllers/statsController");
 const calendarController = require("../controllers/calendarController");
+const liveController = require("../controllers/liveController");
 const { requireAuth, blockDemo } = require("../middleware/auth");
 const { rateLimit } = require("../middleware/rateLimit");
 const { asyncHandler } = require("../lib/apiError");
@@ -35,6 +36,11 @@ router.get("/calendar/:file", feedLimiter, calendarController.feed);
 
 // ----- Everything below requires a valid access token -------------------
 router.use(asyncHandler(requireAuth));
+// After a successful write, tell the account's other open tabs to re-fetch.
+router.use(liveController.publishWrites);
+
+// One server-sent-events stream per open tab. Read-only: it only listens.
+router.get("/live", liveController.stream);
 
 router.get("/auth/me", authController.me);
 router.patch("/auth/profile", authController.updateProfile);
