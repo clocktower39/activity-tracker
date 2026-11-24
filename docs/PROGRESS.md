@@ -18,6 +18,14 @@
 
 ## Session record
 
+### Session — 2026-11-24 (live updates, F20)
+
+- **Goal:** Studio request "Socket.io or whatever is best for live updates between open pages".
+- **Completed:** `GET /api/live` server-sent-events stream per tab; successful writes publish `goals` / `history` / `profile` / `calendar` scopes to the account's other tabs, which re-read through the normal API (see ARCHITECTURE §7.1). SSE chosen over Socket.io because the live nginx has no WebSocket upgrade and a 30 s read timeout.
+- **Verification run:** two-tab API test on a scratch local DB (anonymous 401; B's writes reach A; A's own write not echoed; reads silent). Browser two-tab test at 390 and 1280 px: A's ring followed B's taps with no action in A, no page errors. `yarn lint` + `yarn build` clean.
+- **Known risks:** in-memory hub assumes one API process. Stats charts in other tabs re-fetch outright, so they blank for a moment after a remote change.
+- **Next best action:** unchanged — F01 (rotate secrets).
+
 ### Session 1 — 2026-07-24 (v2 rebuild)
 
 - **Goal:** Fix the app up — keep the MongoDB data, fix the data-loading problem, add weekly/monthly/yearly cadences, redesign the UI.

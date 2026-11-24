@@ -210,6 +210,14 @@
       "title": "Google Calendar subscription feed",
       "status": "passing",
       "evidence": "Settings › Google Calendar creates a private .ics link (token per account, reset/turn off). Weekly/monthly goals appear on the day they next fall due (rolling: when the window would drop below target). yarn verify calendar section passes; lint + build clean."
+    },
+    {
+      "id": "F20",
+      "priority": 2,
+      "area": "realtime",
+      "title": "Live updates between open pages",
+      "status": "passing",
+      "evidence": "GET /api/live (SSE over fetch, auth required: anonymous gets 401). Two-tab test on a scratch DB: tab B's goal create and progress taps reached tab A as changed{goals,history} / changed{history}; tab A's own write was not echoed; reads published nothing. Browser at 390 and 1280 px: tab A's ring went 0→2→4 of 3 with no action in A, no page errors. lint + build clean."
     }
   ]
 }

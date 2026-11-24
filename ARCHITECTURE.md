@@ -138,6 +138,7 @@ All routes are under `/api`. Public: `POST /auth/signup`, `/auth/login`,
 | GET | `/stats/matrix?from=&to=&bucket=` | Goal × bucket rollup, one row per goal per bucket |
 | GET | `/stats/by-goal?from=&to=` | Per-goal totals |
 | GET | `/stats/streaks?days=` | Current and longest. `days=all` walks the whole record. |
+| GET | `/live` | Server-sent events, one stream per open tab. Emits `changed` with `{ scopes }` (`goals`, `history`, `profile`, `calendar`) after another tab's successful write; a 15 s heartbeat keeps it inside nginx's 30 s read timeout. Read-only — see §7.1 |
 
 ### 4.1 How ranges are bounded
 
@@ -307,7 +308,7 @@ while its own goal sheets read 8%.
 {
   auth:    { user, status, error },
   goals:   { goals, categories, status, error },
-  history: { entries, dates, ranges, summaries, streaks, pending, errors },
+  history: { entries, dates, ranges, summaries, streaks, rolling, pending, errors, revision },
   ui:      { themeMode, toast },
 }
 ```
@@ -329,6 +330,31 @@ empty.
 
 Optimistic writes track a per-entry `pending` count and a `_rollback` value, so a
 failure restores the exact pre-tap number even with several taps in flight.
+
+### 7.1 Live updates between open pages
+
+Every signed-in tab holds `GET /api/live` open (`app/live.js`, mounted in
+`AppShell`). It is server-sent events read over `fetch`, because `EventSource`
+cannot send the `Authorization` header. The server's `publishWrites`
+middleware, after `requireAuth`, publishes the scopes a successful non-GET
+request touched to the account's other streams; the writer's own tab is skipped
+by its `X-Client-Id` (random per page load, sent on every request — not a
+credential). On `changed`, the tab re-reads through the normal API:
+`profile` → `refreshProfile`, `goals` → `refreshGoals` (no loading state, so
+nothing flashes), `history` → `remoteChanged`, which marks every cached read
+stale and bumps `history.revision`. Views list `revision` in their
+`useAutoFetch` deps, so whatever is on screen is fetched again; entries stay put
+until the answer lands.
+
+Why not WebSockets / Socket.io: the live nginx proxies `/api` with no `Upgrade`
+headers and a 30 s `proxy_read_timeout`. SSE plus a heartbeat works through that
+unchanged and adds no dependency. The hub (`src/lib/liveHub.js`) is in memory,
+which holds while the API is one process; a second process would need a shared
+channel (Redis pub/sub or a Mongo change stream) first. A dropped stream
+reconnects with backoff and re-reads everything once.
+
+Because the stream never closes, a page never reaches "network idle" — browser
+tests should wait for content, not for `networkidle`.
 
 ## 8. Known gaps
 
